@@ -2,94 +2,100 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
   <title>打磚塊</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
       background: #0d0d1a;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
       min-height: 100vh;
       font-family: 'Segoe UI', system-ui, sans-serif;
-      color: #e2e8f0;
-      gap: 16px;
+      color: #e2e8f0; gap: 12px;
+      user-select: none;
     }
 
     #topbar {
-      display: flex;
-      align-items: center;
-      gap: 20px;
-      width: 480px;
+      display: flex; align-items: center; gap: 20px;
+      width: min(480px, 96vw);
     }
-
     #backBtn {
-      background: none;
-      border: 1px solid #333;
-      color: #888;
-      padding: 6px 14px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 13px;
-      text-decoration: none;
+      background: none; border: 1px solid #333; color: #888;
+      padding: 6px 14px; border-radius: 6px; cursor: pointer;
+      font-size: 13px; text-decoration: none; transition: all .2s;
     }
-    #backBtn:hover { border-color: #555; color: #ccc; }
-
+    #backBtn:hover { border-color: #f97316; color: #f97316; }
     #topbar h1 { font-size: 20px; font-weight: 700; flex: 1; text-align: center; }
 
+    /* HUD */
     .hud {
-      display: flex;
-      gap: 32px;
-      font-size: 14px;
-      color: #888;
+      display: flex; gap: 0;
+      background: #12102a; border: 1px solid #1a1a35;
+      border-radius: 10px; overflow: hidden;
+      width: min(480px, 96vw);
     }
-    .hud span { color: #f97316; font-weight: 700; font-size: 20px; }
+    .hud-item {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; padding: 10px 4px; gap: 2px;
+      border-right: 1px solid #1a1a35;
+    }
+    .hud-item:last-child { border-right: none; }
+    .hud-label { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: #4a5568; }
+    .hud-val { font-size: 22px; font-weight: 800; color: #f97316; line-height: 1; }
+    .hud-val.gold { color: #f5c518; }
+    .hud-val.red  { color: #ef4444; }
+    .hud-val.grn  { color: #22c55e; }
+
+    /* 道具狀態列 */
+    #power-bar {
+      width: min(480px,96vw); min-height: 28px;
+      display: flex; gap: 8px; align-items: center;
+      font-size: 12px; color: #555;
+    }
+    .power-tag {
+      padding: 3px 10px; border-radius: 99px;
+      font-size: 12px; font-weight: 600;
+      animation: powerPulse 1s ease infinite;
+    }
+    @keyframes powerPulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+    .pw-wide  { background:rgba(59,130,246,.2); color:#60a5fa; border:1px solid #3b82f6; }
+    .pw-multi { background:rgba(168,85,247,.2); color:#c084fc; border:1px solid #a855f7; }
+    .pw-fire  { background:rgba(239,68,68,.2);  color:#f87171; border:1px solid #ef4444; }
 
     canvas {
-      background: #080810;
+      background: #06060f;
       border: 2px solid #1a1a35;
-      border-radius: 4px;
-      display: block;
+      border-radius: 6px; display: block;
+      width: min(480px, 96vw);
+      cursor: none;
     }
 
     #wrap { position: relative; }
 
     #msg {
-      position: absolute;
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      background: rgba(8,8,16,0.92);
-      border: 1px solid #333;
-      border-radius: 12px;
-      padding: 28px 40px;
-      text-align: center;
-      min-width: 240px;
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%,-50%);
+      background: rgba(6,6,15,0.94);
+      border: 1px solid #1a1a35; border-radius: 14px;
+      padding: 24px 36px; text-align: center; min-width: 240px;
     }
     #msg h2 { font-size: 26px; color: #f97316; margin-bottom: 8px; }
-    #msg p  { font-size: 14px; color: #888; margin-bottom: 16px; }
+    #msg .sub { font-size: 13px; color: #555; margin-bottom: 16px; line-height: 1.7; }
 
-    button.startBtn {
-      padding: 10px 32px;
-      background: #f97316;
-      border: none;
-      border-radius: 6px;
-      color: #000;
-      font-size: 15px;
-      font-weight: 700;
-      cursor: pointer;
+    .btn-orange {
+      padding: 10px 32px; background: #f97316;
+      border: none; border-radius: 8px;
+      color: #000; font-size: 15px; font-weight: 700;
+      cursor: pointer; transition: background .15s;
     }
-    button.startBtn:hover { background: #ea6c10; }
+    .btn-orange:hover { background: #ea6c10; }
 
     #controls {
-      font-size: 12px;
-      color: #444;
-      text-align: center;
-      line-height: 2;
+      font-size: 12px; color: #333; text-align: center; line-height: 2;
     }
-    #controls span { color: #888; }
+    #controls span { color: #555; }
   </style>
 </head>
 <body>
@@ -97,26 +103,46 @@
 <div id="topbar">
   <a id="backBtn" href="index.html">← 返回</a>
   <h1>🧱 打磚塊</h1>
-  <div></div>
+  <div style="width:72px"></div>
 </div>
 
 <div class="hud">
-  <div>分數 <span id="scoreVal">0</span></div>
-  <div>關卡 <span id="levelVal">1</span></div>
-  <div>命數 <span id="livesVal">3</span></div>
+  <div class="hud-item">
+    <span class="hud-label">分數</span>
+    <span class="hud-val" id="scoreVal">0</span>
+  </div>
+  <div class="hud-item">
+    <span class="hud-label">最高</span>
+    <span class="hud-val gold" id="bestVal">0</span>
+  </div>
+  <div class="hud-item">
+    <span class="hud-label">關卡</span>
+    <span class="hud-val grn" id="levelVal">1</span>
+  </div>
+  <div class="hud-item">
+    <span class="hud-label">命數</span>
+    <span class="hud-val red" id="livesVal">3</span>
+  </div>
 </div>
+
+<div id="power-bar">道具：<span id="powerStatus">無</span></div>
 
 <div id="wrap">
   <canvas id="cv" width="480" height="520"></canvas>
   <div id="msg">
-    <h2>打磚塊</h2>
-    <p>移動球拍反彈小球<br>打破所有磚塊過關！</p>
-    <button class="startBtn" id="btnStart">開始遊戲</button>
+    <h2>🧱 打磚塊</h2>
+    <div class="sub">
+      用球拍反彈小球，打破所有磚塊！<br>
+      🔵 道具磚：拾取可獲得特殊能力<br>
+      🟡 寬球拍 &nbsp; 🟣 多重球 &nbsp; 🔴 火球穿透<br>
+      球拍擊中位置影響反彈角度
+    </div>
+    <button class="btn-orange" id="btnStart">開始遊戲</button>
   </div>
 </div>
 
 <div id="controls">
-  <span>← → / 滑鼠</span> 移動球拍 &nbsp;&nbsp; <span>Space</span> 發球 &nbsp;&nbsp; <span>P</span> 暫停
+  <span>← → / 滑鼠</span> 移動球拍 &nbsp; <span>Space / 點擊</span> 發球 &nbsp; <span>P</span> 暫停 &nbsp; <span>Enter</span> 重新開始
 </div>
 
 <script>
@@ -124,239 +150,387 @@ const W = 480, H = 520;
 const cv  = document.getElementById('cv');
 const ctx = cv.getContext('2d');
 
-// ─── 磚塊設定 ─────────────────────────────────────────
-const BRICK_COLS   = 10;
-const BRICK_ROWS   = 5;
-const BRICK_W      = 42;
-const BRICK_H      = 16;
-const BRICK_PAD    = 4;
-const BRICK_OFF_X  = 9;
-const BRICK_OFF_Y  = 40;
+// ─── 磚塊設定 ───────────────────────────────────────────
+const BRICK_COLS  = 10;
+const BRICK_W     = 42;
+const BRICK_H     = 16;
+const BRICK_PAD   = 4;
+const BRICK_OFF_X = 9;
+const BRICK_OFF_Y = 36;
 
-const ROW_COLORS = ['#ef4444','#f97316','#f5c518','#22c55e','#3b82f6'];
+const ROW_COLORS = ['#ef4444','#f97316','#f5c518','#22c55e','#3b82f6','#a855f7'];
 
-// ─── 球拍 ─────────────────────────────────────────────
-const PAD_H = 10, PAD_Y = H - 36;
+// ─── 球拍 ────────────────────────────────────────────────
+const BASE_PAD_W = 100;
+const PAD_H = 11, PAD_Y = H - 38;
 let padX, padW;
 
-// ─── 球 ───────────────────────────────────────────────
-let bx, by, bdx, bdy, ballR, launched;
-
-// ─── 遊戲狀態 ─────────────────────────────────────────
-let bricks, score, level, lives, gameOver, paused, animId;
-
-// 滑鼠 / 鍵盤控制
+// ─── 狀態 ────────────────────────────────────────────────
+let balls, bricks, drops, particles;
+let score, best = 0, level, lives;
+let gameOver, paused, animId;
+let powers = { wide: 0, fire: false, multi: false };
 let mouseX = W / 2;
 const keys = {};
+let launched = false;
+let combo = 0, lastBrickTs = 0;
 
+// ─── 初始化 ──────────────────────────────────────────────
 function initGame(lvl = 1) {
-  level  = lvl;
-  lives  = 3;
-  score  = 0;
+  level = lvl; lives = 3; score = 0;
+  powers = { wide: 0, fire: false, multi: false };
+  combo = 0;
   initLevel();
-  updateHUD();
-  hideMsg();
+  updateHUD(); hideMsg();
   cancelAnimationFrame(animId);
   gameOver = false; paused = false;
   animId = requestAnimationFrame(loop);
 }
 
 function initLevel() {
-  padW = Math.max(60, 100 - (level - 1) * 6);
-  padX = W / 2 - padW / 2;
-  ballR = 7;
-  resetBall();
+  padW = BASE_PAD_W - (level-1)*5;
+  if (powers.wide > 0) padW += 40;
+  padW = Math.max(55, padW);
+  padX = W/2 - padW/2;
+  drops = []; particles = [];
+  launched = false;
+  balls = [makeBall()];
   buildBricks();
 }
 
-function resetBall() {
-  bx = padX + padW / 2;
-  by = PAD_Y - ballR - 1;
-  const speed = 3.5 + (level - 1) * 0.4;
-  const angle = (-Math.PI / 2) + (Math.random() - 0.5) * 0.8;
-  bdx = Math.cos(angle) * speed;
-  bdy = Math.sin(angle) * speed;
-  launched = false;
+function makeBall(x, y, angle) {
+  const speed = 3.8 + (level-1)*0.35;
+  const a = angle ?? ((-Math.PI/2) + (Math.random()-0.5)*0.7);
+  return {
+    x: x ?? padX+padW/2,
+    y: y ?? PAD_Y - 8,
+    dx: Math.cos(a)*speed,
+    dy: Math.sin(a)*speed,
+    r: 7,
+    trail: [],
+  };
 }
 
 function buildBricks() {
   bricks = [];
-  for (let r = 0; r < BRICK_ROWS; r++) {
+  const rows = Math.min(5 + Math.floor((level-1)/2), 9);
+  for (let r = 0; r < rows; r++) {
     for (let c = 0; c < BRICK_COLS; c++) {
-      const hp = r < 2 ? 1 : (r < 4 ? 1 : 1); // 可擴充多血量
-      bricks.push({ c, r, hp, alive: true });
-    }
-  }
-  // 高等級多加一行
-  if (level >= 3) {
-    for (let c = 0; c < BRICK_COLS; c++) {
-      bricks.push({ c, r: BRICK_ROWS, hp: 2, alive: true });
+      const isHard   = level >= 4 && r < 2 && Math.random() < 0.35;
+      const isPower  = Math.random() < 0.10;
+      const powerType= ['wide','multi','fire'][Math.floor(Math.random()*3)];
+      bricks.push({ c, r, hp: isHard?2:1, maxHp: isHard?2:1,
+                    alive:true, isPower, powerType, flash:0 });
     }
   }
 }
 
-// ─── 主迴圈 ───────────────────────────────────────────
-function loop() {
+// ─── 主迴圈 ──────────────────────────────────────────────
+function loop(ts) {
   if (gameOver) return;
-  if (!paused) update();
+  if (!paused) update(ts);
   draw();
   animId = requestAnimationFrame(loop);
 }
 
-function update() {
+function update(ts) {
   // 球拍跟隨滑鼠
-  padX = Math.max(0, Math.min(W - padW, mouseX - padW / 2));
+  padX = Math.max(0, Math.min(W-padW, mouseX - padW/2));
+  if (keys['ArrowLeft'])  padX = Math.max(0, padX-7);
+  if (keys['ArrowRight']) padX = Math.min(W-padW, padX+7);
 
-  // 鍵盤移動球拍
-  if (keys['ArrowLeft'])  padX = Math.max(0, padX - 6);
-  if (keys['ArrowRight']) padX = Math.min(W - padW, padX + 6);
+  // 道具計時
+  if (powers.wide > 0) {
+    powers.wide -= 16;
+    if (powers.wide <= 0) { powers.wide=0; padW=Math.max(55,BASE_PAD_W-(level-1)*5); }
+  }
+
+  // 粒子
+  particles = particles.filter(p=>p.life>0);
+  particles.forEach(p=>{ p.x+=p.vx; p.y+=p.vy; p.vy+=0.25; p.life-=2; });
+
+  // 道具掉落
+  drops = drops.filter(d=>d.y<H+20);
+  for (const d of drops) {
+    d.y += 2.5;
+    if (d.y+10>PAD_Y && d.y-10<PAD_Y+PAD_H && d.x>padX-8 && d.x<padX+padW+8) {
+      applyPower(d.type);
+      d.y = H+100;
+    }
+  }
 
   if (!launched) {
-    bx = padX + padW / 2;
+    for (const b of balls) { b.x=padX+padW/2; b.y=PAD_Y-b.r-1; }
     return;
   }
 
-  bx += bdx;
-  by += bdy;
+  // 更新每顆球
+  const toRemove = [];
+  for (const ball of balls) {
+    updateBall(ball, ts);
+    if (ball.y - ball.r > H) toRemove.push(ball);
+  }
+  for (const b of toRemove) balls.splice(balls.indexOf(b), 1);
 
-  // 左右牆
-  if (bx - ballR < 0)  { bx = ballR;    bdx = Math.abs(bdx); }
-  if (bx + ballR > W)  { bx = W-ballR;  bdx = -Math.abs(bdx); }
-  // 上牆
-  if (by - ballR < 0)  { by = ballR;    bdy = Math.abs(bdy); }
+  if (balls.length === 0) {
+    lives--;
+    powers.multi = false; powers.fire = false; powers.wide = 0;
+    updateHUD();
+    if (lives <= 0) { endGame('💥 遊戲結束'); return; }
+    balls = [makeBall()];
+    launched = false;
+  }
+
+  // 過關
+  if (bricks.every(b=>!b.alive)) {
+    score += 300 * level;
+    updateHUD();
+    if (level >= 10) { endGame('🎉 全關通關！'); return; }
+    level++;
+    setTimeout(() => { if (!gameOver) { initLevel(); } }, 600);
+  }
+}
+
+function updateBall(ball, ts) {
+  // 軌跡
+  ball.trail.push({x:ball.x, y:ball.y});
+  if (ball.trail.length > 8) ball.trail.shift();
+
+  ball.x += ball.dx;
+  ball.y += ball.dy;
+
+  if (ball.x-ball.r<0)  { ball.x=ball.r;  ball.dx=Math.abs(ball.dx); }
+  if (ball.x+ball.r>W)  { ball.x=W-ball.r; ball.dx=-Math.abs(ball.dx); }
+  if (ball.y-ball.r<0)  { ball.y=ball.r;  ball.dy=Math.abs(ball.dy); }
 
   // 球拍碰撞
-  if (by + ballR >= PAD_Y && by + ballR <= PAD_Y + PAD_H &&
-      bx >= padX - 4 && bx <= padX + padW + 4) {
-    bdy = -Math.abs(bdy);
-    // 根據擊中位置改變角度
-    const hit = (bx - padX) / padW; // 0~1
-    bdx = (hit - 0.5) * 8;
-    by = PAD_Y - ballR - 1;
-  }
-
-  // 掉底
-  if (by - ballR > H) {
-    lives--;
-    updateHUD();
-    if (lives <= 0) { endGame('遊戲結束'); return; }
-    resetBall();
-    return;
+  if (ball.dy > 0 && ball.y+ball.r>=PAD_Y && ball.y-ball.r<=PAD_Y+PAD_H
+      && ball.x>=padX-6 && ball.x<=padX+padW+6) {
+    ball.dy = -Math.abs(ball.dy);
+    const hit = (ball.x-padX)/padW;
+    ball.dx = (hit-0.5)*9;
+    ball.y = PAD_Y - ball.r - 1;
+    combo = 0;
+    spawnPadSpark(ball.x);
   }
 
   // 磚塊碰撞
   for (const b of bricks) {
     if (!b.alive) continue;
-    const brickX = BRICK_OFF_X + b.c * (BRICK_W + BRICK_PAD);
-    const brickY = BRICK_OFF_Y + b.r * (BRICK_H + BRICK_PAD);
-    if (bx + ballR > brickX && bx - ballR < brickX + BRICK_W &&
-        by + ballR > brickY && by - ballR < brickY + BRICK_H) {
-      b.hp--;
-      if (b.hp <= 0) { b.alive = false; score += 10 * level; }
-      // 判斷碰哪面
-      const fromLeft  = bx < brickX;
-      const fromRight = bx > brickX + BRICK_W;
-      if (fromLeft || fromRight) bdx = -bdx;
-      else bdy = -bdy;
+    const bx = BRICK_OFF_X + b.c*(BRICK_W+BRICK_PAD);
+    const by = BRICK_OFF_Y + b.r*(BRICK_H+BRICK_PAD);
+    if (ball.x+ball.r>bx && ball.x-ball.r<bx+BRICK_W &&
+        ball.y+ball.r>by && ball.y-ball.r<by+BRICK_H) {
+      if (!powers.fire) {
+        const fromL=ball.x<bx, fromR=ball.x>bx+BRICK_W;
+        if (fromL||fromR) ball.dx=-ball.dx; else ball.dy=-ball.dy;
+      }
+      b.hp--; b.flash=8;
+      if (b.hp<=0) {
+        b.alive=false;
+        combo++;
+        const pts = 10*level*(1+Math.floor(combo/4));
+        score += pts;
+        lastBrickTs = ts;
+        spawnBrickParticles(bx+BRICK_W/2, by+BRICK_H/2, ROW_COLORS[Math.min(b.r,ROW_COLORS.length-1)]);
+        if (b.isPower) drops.push({x:bx+BRICK_W/2, y:by, type:b.powerType});
+      }
       updateHUD();
       break;
     }
   }
+}
 
-  // 過關
-  if (bricks.every(b => !b.alive)) {
-    score += 200 * level;
-    updateHUD();
-    if (level >= 10) { endGame('🎉 恭喜通關！'); return; }
-    level++;
-    initLevel();
+// ─── 道具 ────────────────────────────────────────────────
+function applyPower(type) {
+  if (type==='wide')  { powers.wide=8000; padW=Math.min(W*0.6, padW+44); }
+  if (type==='multi') {
+    powers.multi=true;
+    const orig = balls[0];
+    if (balls.length<5) {
+      balls.push(makeBall(orig.x, orig.y, Math.atan2(orig.dy,orig.dx)+0.4));
+      balls.push(makeBall(orig.x, orig.y, Math.atan2(orig.dy,orig.dx)-0.4));
+    }
+  }
+  if (type==='fire') { powers.fire=true; setTimeout(()=>powers.fire=false,7000); }
+  updatePowerBar();
+}
+
+function updatePowerBar() {
+  const tags = [];
+  if (powers.wide>0)  tags.push('<span class="power-tag pw-wide">🟡 寬球拍</span>');
+  if (powers.multi)   tags.push('<span class="power-tag pw-multi">🟣 多重球</span>');
+  if (powers.fire)    tags.push('<span class="power-tag pw-fire">🔴 火球</span>');
+  document.getElementById('powerStatus').innerHTML = tags.length ? tags.join(' ') : '無';
+}
+
+// ─── 粒子 ────────────────────────────────────────────────
+function spawnBrickParticles(cx,cy,color) {
+  for (let i=0;i<10;i++) {
+    const a=Math.random()*Math.PI*2, s=1.5+Math.random()*3;
+    particles.push({x:cx,y:cy,vx:Math.cos(a)*s,vy:Math.sin(a)*s-1.5,color,life:80,size:2+Math.random()*3});
+  }
+}
+function spawnPadSpark(x) {
+  for (let i=0;i<6;i++) {
+    const a=-Math.PI/2+(Math.random()-0.5)*1.2;
+    particles.push({x,y:PAD_Y,vx:Math.cos(a)*3,vy:Math.sin(a)*3,color:'#f97316',life:40,size:2});
   }
 }
 
-// ─── 繪製 ─────────────────────────────────────────────
+// ─── 繪製 ────────────────────────────────────────────────
+let tick=0;
 function draw() {
-  ctx.fillStyle = '#080810';
-  ctx.fillRect(0, 0, W, H);
+  tick++;
+  ctx.fillStyle='#06060f'; ctx.fillRect(0,0,W,H);
+
+  // 格線
+  ctx.strokeStyle='rgba(255,255,255,0.02)'; ctx.lineWidth=1;
+  for(let c=0;c<=10;c++){const x=BRICK_OFF_X+c*(BRICK_W+BRICK_PAD);ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
 
   // 磚塊
   for (const b of bricks) {
     if (!b.alive) continue;
-    const brickX = BRICK_OFF_X + b.c * (BRICK_W + BRICK_PAD);
-    const brickY = BRICK_OFF_Y + b.r * (BRICK_H + BRICK_PAD);
-    const row = Math.min(b.r, ROW_COLORS.length - 1);
-    ctx.fillStyle = b.hp >= 2 ? '#ffffff' : ROW_COLORS[row];
-    ctx.fillRect(brickX, brickY, BRICK_W, BRICK_H);
-    ctx.fillStyle = 'rgba(255,255,255,0.18)';
-    ctx.fillRect(brickX, brickY, BRICK_W, 4);
+    const bx=BRICK_OFF_X+b.c*(BRICK_W+BRICK_PAD), by=BRICK_OFF_Y+b.r*(BRICK_H+BRICK_PAD);
+    const col = ROW_COLORS[Math.min(b.r,ROW_COLORS.length-1)];
+    if (b.flash>0) { ctx.fillStyle='#fff'; b.flash--; }
+    else if (b.isPower) {
+      const g=ctx.createLinearGradient(bx,by,bx+BRICK_W,by);
+      g.addColorStop(0,col); g.addColorStop(0.5,'#fff'); g.addColorStop(1,col);
+      ctx.fillStyle=g;
+    } else if (b.hp>=2) {
+      ctx.fillStyle='#e2e8f0';
+    } else {
+      ctx.fillStyle=col;
+    }
+    ctx.beginPath();
+    if(ctx.roundRect) ctx.roundRect(bx+1,by+1,BRICK_W-2,BRICK_H-2,3); else ctx.rect(bx+1,by+1,BRICK_W-2,BRICK_H-2);
+    ctx.fill();
+    // 高光
+    ctx.fillStyle='rgba(255,255,255,0.22)';
+    ctx.fillRect(bx+1,by+1,BRICK_W-2,4);
+    // 道具磚標示
+    if (b.isPower) {
+      ctx.font='bold 9px Segoe UI'; ctx.textAlign='center'; ctx.fillStyle='#000';
+      ctx.fillText('PWR', bx+BRICK_W/2, by+BRICK_H-3);
+    }
+    // 雙血量裂紋
+    if (b.hp===1 && b.maxHp===2) {
+      ctx.strokeStyle='rgba(0,0,0,0.5)'; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(bx+10,by+4); ctx.lineTo(bx+BRICK_W-10,by+BRICK_H-4); ctx.stroke();
+    }
   }
 
-  // 球拍
-  ctx.fillStyle = '#f97316';
-  ctx.beginPath();
-  ctx.roundRect(padX, PAD_Y, padW, PAD_H, 4);
-  ctx.fill();
+  // 道具掉落
+  for (const d of drops) {
+    const colors={wide:'#3b82f6',multi:'#a855f7',fire:'#ef4444'};
+    const emojis={wide:'🟡',multi:'🟣',fire:'🔴'};
+    ctx.fillStyle=colors[d.type]+'99';
+    ctx.beginPath(); ctx.arc(d.x,d.y,9,0,Math.PI*2); ctx.fill();
+    ctx.font='12px serif'; ctx.textAlign='center';
+    ctx.fillText(emojis[d.type],d.x,d.y+5);
+  }
 
-  // 球
-  ctx.fillStyle = '#fff';
+  // 粒子
+  for (const p of particles) {
+    ctx.globalAlpha=p.life/80;
+    ctx.fillStyle=p.color;
+    ctx.beginPath(); ctx.arc(p.x,p.y,p.size,0,Math.PI*2); ctx.fill();
+  }
+  ctx.globalAlpha=1;
+
+  // 球拍
+  const padGrad=ctx.createLinearGradient(padX,PAD_Y,padX+padW,PAD_Y+PAD_H);
+  padGrad.addColorStop(0,'#f97316'); padGrad.addColorStop(1,'#ea6c10');
+  ctx.fillStyle = powers.wide>0 ? '#60a5fa' : powers.fire ? '#ef4444' : padGrad;
+  ctx.shadowColor = powers.fire ? '#ef4444' : '#f97316';
+  ctx.shadowBlur  = powers.fire ? 18 : 8;
   ctx.beginPath();
-  ctx.arc(bx, by, ballR, 0, Math.PI * 2);
+  if(ctx.roundRect) ctx.roundRect(padX,PAD_Y,padW,PAD_H,5); else ctx.rect(padX,PAD_Y,padW,PAD_H);
   ctx.fill();
+  ctx.shadowBlur=0;
+
+  // 球（含軌跡）
+  for (const ball of balls) {
+    // 軌跡
+    for (let i=0;i<ball.trail.length;i++) {
+      const t=ball.trail[i], a=(i/ball.trail.length)*0.4;
+      ctx.globalAlpha=a;
+      ctx.fillStyle = powers.fire ? '#f97316' : '#fff';
+      ctx.beginPath(); ctx.arc(t.x,t.y,ball.r*(i/ball.trail.length)*0.8,0,Math.PI*2); ctx.fill();
+    }
+    ctx.globalAlpha=1;
+    // 光暈
+    ctx.shadowColor=powers.fire?'#f97316':'#ffffff88'; ctx.shadowBlur=powers.fire?18:10;
+    ctx.fillStyle=powers.fire?'#f97316':'#fff';
+    ctx.beginPath(); ctx.arc(ball.x,ball.y,ball.r,0,Math.PI*2); ctx.fill();
+    ctx.shadowBlur=0;
+  }
+
+  // 自訂游標（十字線對準）
+  ctx.strokeStyle='rgba(249,115,22,0.6)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(mouseX,PAD_Y-10); ctx.lineTo(mouseX,PAD_Y-2); ctx.stroke();
 
   // 未發球提示
   if (!launched) {
-    ctx.fillStyle = 'rgba(255,255,255,0.35)';
-    ctx.font = '13px Segoe UI';
-    ctx.textAlign = 'center';
-    ctx.fillText('按 Space 或點擊發球', W / 2, PAD_Y - 24);
+    ctx.fillStyle='rgba(255,255,255,0.3)';
+    ctx.font='13px Segoe UI'; ctx.textAlign='center';
+    ctx.fillText('按 Space 或點擊發球', W/2, PAD_Y-22);
   }
 }
 
+// ─── 結束 ────────────────────────────────────────────────
 function endGame(title) {
-  gameOver = true;
+  gameOver=true;
   cancelAnimationFrame(animId);
-  showMsg(title, `分數：${score}`);
+  if (score>best) best=score;
+  updateHUD();
+  showMsg(title, `分數：${score.toLocaleString()}　最高：${best.toLocaleString()}`);
 }
 
 function updateHUD() {
-  document.getElementById('scoreVal').textContent = score;
+  document.getElementById('scoreVal').textContent = score.toLocaleString();
+  document.getElementById('bestVal').textContent  = best.toLocaleString();
   document.getElementById('levelVal').textContent = level;
   document.getElementById('livesVal').textContent = lives;
+  updatePowerBar();
 }
 
-function hideMsg() { document.getElementById('msg').style.display = 'none'; }
-function showMsg(title, sub) {
-  const m = document.getElementById('msg');
-  m.style.display = 'block';
-  m.innerHTML = `<h2>${title}</h2><p>${sub}</p><button class="startBtn" onclick="initGame()">再玩一次</button>`;
+function hideMsg() { document.getElementById('msg').style.display='none'; }
+function showMsg(title,sub) {
+  const m=document.getElementById('msg');
+  m.style.display='block';
+  m.innerHTML=`<h2>${title}</h2><div class="sub">${sub}</div><button class="btn-orange" onclick="initGame()">再玩一次</button>`;
 }
 
-// ─── 輸入 ─────────────────────────────────────────────
-cv.addEventListener('mousemove', e => {
-  const rect = cv.getBoundingClientRect();
-  mouseX = e.clientX - rect.left;
+// ─── 輸入 ────────────────────────────────────────────────
+cv.addEventListener('mousemove', e=>{
+  const rect=cv.getBoundingClientRect();
+  mouseX=(e.clientX-rect.left)*(W/rect.width);
 });
+cv.addEventListener('touchmove', e=>{
+  e.preventDefault();
+  const rect=cv.getBoundingClientRect();
+  mouseX=(e.touches[0].clientX-rect.left)*(W/rect.width);
+},{passive:false});
 
-cv.addEventListener('click', () => {
-  if (!launched && !gameOver && !paused) launched = true;
-});
+cv.addEventListener('click',   ()=>{ if(!launched&&!gameOver&&!paused) launched=true; });
+cv.addEventListener('touchend',()=>{ if(!launched&&!gameOver&&!paused) launched=true; });
 
-document.addEventListener('keydown', e => {
-  keys[e.key] = true;
-  if (e.key === ' ') { e.preventDefault(); if (!launched && !gameOver && !paused) launched = true; }
-  if (e.key === 'Enter') initGame();
-  if (e.key === 'p' || e.key === 'P') {
-    if (gameOver) return;
-    paused = !paused;
-    if (!paused) animId = requestAnimationFrame(loop);
+document.addEventListener('keydown', e=>{
+  keys[e.key]=true;
+  if (e.key===' ')     { e.preventDefault(); if(!launched&&!gameOver&&!paused) launched=true; }
+  if (e.key==='Enter') initGame();
+  if (e.key==='p'||e.key==='P') {
+    if(gameOver) return;
+    paused=!paused;
+    if(!paused) animId=requestAnimationFrame(loop);
   }
 });
-document.addEventListener('keyup', e => { keys[e.key] = false; });
+document.addEventListener('keyup', e=>{ keys[e.key]=false; });
+document.getElementById('btnStart').addEventListener('click', ()=>initGame());
 
-document.getElementById('btnStart').addEventListener('click', () => initGame());
-
-// 初始畫面
-ctx.fillStyle = '#080810';
-ctx.fillRect(0, 0, W, H);
+ctx.fillStyle='#06060f'; ctx.fillRect(0,0,W,H);
 </script>
 </body>
 </html>
