@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>爆爆問答</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0e0b1e;
+      --surface: #17143a;
+      --border: #2d2860;
+      --text: #e2e8f0;
+      --muted: #6b7280;
+    }
+
+    body {
+      background: var(--bg);
+      min-height: 100vh;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      color: var(--text);
+      display: flex; flex-direction: column; align-items: center;
+      overflow-x: hidden;
+    }
+
+    /* ── 頂部 ── */
+    #topbar {
+      width: 100%; display: flex; align-items: center; justify-content: space-between;
+      padding: 13px 24px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(14,11,30,0.95);
+      position: sticky; top: 0; z-index: 30;
+    }
+    #topbar a {
+      color: var(--muted); font-size: 13px; text-decoration: none;
+      border: 1px solid var(--border); padding: 5px 14px; border-radius: 6px;
+      transition: all .2s;
+    }
+    #topbar a:hover { color: var(--text); border-color: #a855f7; }
+    #topbar h1 { font-size: 18px; font-weight: 800; }
+    #topbar h1 em { font-style: normal; color: #a855f7; }
+
+    /* ── 畫面切換 ── */
+    .screen { display: none; }
+    .screen.active {
+      display: flex; flex-direction: column; align-items: center;
+      width: 100%; padding: 32px 16px 60px; gap: 24px;
+    }
+
+    /* ══ SCREEN 1：選題庫 ══ */
+    .page-title { text-align: center; }
+    .page-title h2 {
+      font-size: 34px; font-weight: 900;
+      background: linear-gradient(135deg, #c084fc, #a855f7, #7c3aed);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .page-title p { color: var(--muted); font-size: 14px; margin-top: 6px; }
+
+    .pack-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+      gap: 14px; width: 100%; max-width: 820px;
+    }
+    .pack-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 14px; padding: 20px 18px;
+      cursor: pointer; transition: border-color .18s, transform .15s;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .pack-card:hover { border-color: #a855f7; transform: translateY(-3px); }
+    .pack-card.selected { border-color: #a855f7; background: rgba(168,85,247,.12); }
+    .pack-icon { font-size: 32px; line-height: 1; }
+    .pack-name { font-size: 16px; font-weight: 700; }
+    .pack-count { font-size: 12px; color: var(--muted); }
+    .pack-card.custom-card {
+      border-style: dashed; align-items: center; justify-content: center;
+      min-height: 110px; text-align: center;
+    }
+    .pack-card.custom-card .pack-name { color: #a855f7; }
+
+    .start-section {
+      width: 100%; max-width: 820px;
+      display: flex; flex-direction: column; gap: 14px;
+    }
+    .settings-row { display: flex; gap: 12px; flex-wrap: wrap; }
+    .setting-group {
+      flex: 1; min-width: 140px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 12px 14px;
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .setting-group label { font-size: 11px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+    .setting-group select, .setting-group input[type=number] {
+      background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+      border-radius: 6px; color: var(--text); font-size: 15px; font-weight: 600;
+      padding: 6px 10px; outline: none; cursor: pointer; width: 100%;
+      transition: border-color .2s;
+    }
+    .setting-group select:focus, .setting-group input[type=number]:focus { border-color: #a855f7; }
+
+    .big-btn {
+      width: 100%; padding: 16px;
+      background: linear-gradient(135deg, #a855f7, #7c3aed);
+      border: none; border-radius: 12px;
+      color: #fff; font-size: 17px; font-weight: 800;
+      cursor: pointer; letter-spacing: 1px;
+      transition: opacity .15s, transform .1s;
+    }
+    .big-btn:hover { opacity: .88; transform: translateY(-1px); }
+    .big-btn:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+
+    /* ══ SCREEN 1.5：自訂編輯器 ══ */
+    .editor-header {
+      width: 100%; max-width: 720px;
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;
+    }
+    .editor-header h3 { font-size: 18px; font-weight: 700; }
+    #questionList { width: 100%; max-width: 720px; display: flex; flex-direction: column; gap: 12px; }
+    .q-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 16px 18px;
+      display: flex; flex-direction: column; gap: 10px; position: relative;
+    }
+    .q-card input[type=text] {
+      background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text); font-size: 14px;
+      padding: 9px 12px; outline: none; width: 100%; transition: border-color .2s;
+    }
+    .q-card input[type=text]:focus { border-color: #a855f7; }
+    .q-card input[type=text]::placeholder { color: #3a3a6a; }
+    .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .opt-row { display: flex; align-items: center; gap: 8px; }
+    .opt-badge {
+      width: 26px; height: 26px; border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 900; flex-shrink: 0;
+    }
+    .opt-badge.A { background: rgba(239,68,68,.25); color: #f87171; }
+    .opt-badge.B { background: rgba(59,130,246,.25); color: #60a5fa; }
+    .opt-badge.C { background: rgba(245,197,24,.25); color: #fcd34d; }
+    .opt-badge.D { background: rgba(34,197,94,.25); color: #4ade80; }
+    .correct-select { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+    .correct-select select {
+      background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+      border-radius: 6px; color: var(--text); font-size: 13px;
+      padding: 4px 8px; outline: none; cursor: pointer;
+    }
+    .del-btn {
+      position: absolute; top: 10px; right: 12px;
+      background: none; border: none; color: #4a4a7a;
+      cursor: pointer; font-size: 18px; line-height: 1; transition: color .15s;
+    }
+    .del-btn:hover { color: #f87171; }
+    .editor-actions { width: 100%; max-width: 720px; display: flex; gap: 10px; flex-wrap: wrap; }
+    .sec-btn { flex: 1; padding: 12px; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; transition: all .15s; }
+    .sec-btn.outline { background: var(--surface); border: 1px solid var(--border); color: var(--text); }
+    .sec-btn.outline:hover { border-color: #a855f7; }
+    .sec-btn.purple { background: linear-gradient(135deg,#a855f7,#7c3aed); border: none; color: #fff; }
+
+    /* ══ SCREEN 2：遊戲中 ══ */
+    #progress-bar-wrap {
+      width: 100%; max-width: 720px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    #progress-bar-bg { flex: 1; height: 8px; background: rgba(255,255,255,0.08); border-radius: 4px; overflow: hidden; }
+    #progress-bar-fill { height: 100%; background: linear-gradient(90deg,#a855f7,#7c3aed); border-radius: 4px; transition: width .4s; }
+    #q-counter { font-size: 13px; color: var(--muted); white-space: nowrap; }
+    #score-display { font-size: 13px; color: var(--muted); }
+    #score-display strong { font-size: 22px; color: #a855f7; font-weight: 900; }
+
+    #timer-ring-wrap { position: relative; width: 80px; height: 80px; }
+    #timer-svg { transform: rotate(-90deg); }
+    #timer-track { fill: none; stroke: rgba(255,255,255,0.08); stroke-width: 6; }
+    #timer-arc   { fill: none; stroke: #a855f7; stroke-width: 6; stroke-linecap: round;
+                   transition: stroke-dashoffset .9s linear, stroke .3s; }
+    #timer-num { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 900; }
+
+    #question-card {
+      width: 100%; max-width: 720px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 16px; padding: 28px 28px 24px; text-align: center;
+    }
+    #question-text { font-size: 22px; font-weight: 700; line-height: 1.5; }
+
+    #options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; max-width: 720px; }
+    .opt-btn {
+      border: none; border-radius: 14px; padding: 18px 16px;
+      display: flex; align-items: center; gap: 14px;
+      cursor: pointer; font-family: inherit;
+      font-size: 16px; font-weight: 700; color: #fff; text-align: left;
+      transition: transform .12s, opacity .15s, filter .2s;
+      position: relative; overflow: hidden;
+    }
+    .opt-btn:hover:not(:disabled) { transform: scale(1.03); }
+    .opt-btn:active:not(:disabled) { transform: scale(0.97); }
+    .opt-btn.A { background: linear-gradient(135deg,#ef4444,#b91c1c); }
+    .opt-btn.B { background: linear-gradient(135deg,#3b82f6,#1d4ed8); }
+    .opt-btn.C { background: linear-gradient(135deg,#d97706,#92400e); color: #fef9c3; }
+    .opt-btn.D { background: linear-gradient(135deg,#22c55e,#15803d); }
+    .opt-btn .opt-letter {
+      width: 34px; height: 34px; border-radius: 8px;
+      background: rgba(0,0,0,0.25);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 900; flex-shrink: 0;
+    }
+    .opt-btn .opt-text { flex: 1; line-height: 1.3; }
+    .opt-btn.reveal-correct { animation: correctPop .5s ease; filter: brightness(1.25); }
+    .opt-btn.wrong-chosen   { opacity: .35; filter: grayscale(.6); }
+    .opt-btn.dimmed         { opacity: .3; }
+    @keyframes correctPop {
+      0%{transform:scale(1)} 40%{transform:scale(1.06)} 100%{transform:scale(1)}
+    }
+
+    #feedback-bar {
+      width: 100%; max-width: 720px;
+      border-radius: 12px; padding: 14px 20px;
+      text-align: center; font-size: 16px; font-weight: 700;
+      display: none; animation: fadeSlide .35s ease;
+    }
+    @keyframes fadeSlide { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+    #feedback-bar.correct { background: rgba(34,197,94,.2); border: 1px solid #22c55e; color: #4ade80; }
+    #feedback-bar.wrong   { background: rgba(239,68,68,.15); border: 1px solid #ef4444; color: #f87171; }
+    #feedback-bar.timeout { background: rgba(168,85,247,.15); border: 1px solid #a855f7; color: #c084fc; }
+
+    .score-pop {
+      position: fixed; font-size: 28px; font-weight: 900; color: #fde047;
+      text-shadow: 0 0 12px rgba(253,224,71,.6);
+      pointer-events: none; animation: scoreFly 1s ease forwards; z-index: 100;
+    }
+    @keyframes scoreFly { 0%{opacity:1;transform:translateY(0) scale(1)} 100%{opacity:0;transform:translateY(-80px) scale(1.5)} }
+
+    /* ══ SCREEN 3：結果 ══ */
+    #result-screen { gap: 20px; }
+    .result-header { text-align: center; }
+    .result-header h2 {
+      font-size: 36px; font-weight: 900;
+      background: linear-gradient(135deg, #fde047, #f5c518, #d97706);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .result-header p { color: var(--muted); font-size: 14px; margin-top: 6px; }
+    .score-big {
+      font-size: 72px; font-weight: 900; line-height: 1;
+      background: linear-gradient(135deg, #a855f7, #c084fc);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-align: center;
+    }
+    .score-label { font-size: 14px; color: var(--muted); text-align: center; margin-top: 4px; }
+    .review-list { width: 100%; max-width: 640px; display: flex; flex-direction: column; gap: 10px; }
+    .review-item {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 14px 18px;
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .review-item .r-q { font-size: 14px; font-weight: 600; }
+    .review-item .r-row { display: flex; align-items: center; gap: 10px; font-size: 13px; flex-wrap: wrap; }
+    .r-badge { padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; }
+    .r-badge.correct { background: rgba(34,197,94,.2); color: #4ade80; }
+    .r-badge.wrong   { background: rgba(239,68,68,.15); color: #f87171; }
+    .r-badge.skip    { background: rgba(168,85,247,.1); color: #a855f7; }
+    .result-btns { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; width: 100%; max-width: 640px; }
+    .r-btn { flex: 1; min-width: 160px; padding: 14px; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; border: none; transition: opacity .15s; }
+    .r-btn:hover { opacity: .85; }
+    .r-btn.purple { background: linear-gradient(135deg,#a855f7,#7c3aed); color: #fff; }
+    .r-btn.ghost  { background: var(--surface); border: 1px solid var(--border); color: var(--text); }
+
+    .confetti { position: fixed; pointer-events: none; z-index: 200; font-size: 20px; animation: confettiFall linear forwards; }
+    @keyframes confettiFall { 0%{opacity:1;transform:translateY(0) rotate(0)} 100%{opacity:0;transform:translateY(300px) rotate(720deg)} }
+
+    @media (max-width: 500px) {
+      #options-grid { grid-template-columns: 1fr; }
+      .opt-btn { font-size: 15px; }
+      #question-text { font-size: 18px; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="topbar">
+  <a href="index.html">← 返回目錄</a>
+  <h1>🎯 爆爆<em>問答</em></h1>
+  <div style="width:90px"></div>
+</div>
+
+<!-- SCREEN 1：選題庫 -->
+<div id="home-screen" class="screen active">
+  <div class="page-title">
+    <h2>選擇題庫</h2>
+    <p>選一個內建題庫，或自訂你的問題</p>
+  </div>
+  <div class="pack-grid" id="packGrid"></div>
+  <div class="start-section">
+    <div class="settings-row">
+      <div class="setting-group">
+        <label>題數</label>
+        <input type="number" id="qCount" min="1" max="50" value="10" />
+      </div>
+      <div class="setting-group">
+        <label>每題秒數</label>
+        <select id="timeLimit">
+          <option value="10">10 秒</option>
+          <option value="15">15 秒</option>
+          <option value="20" selected>20 秒</option>
+          <option value="30">30 秒</option>
+          <option value="60">60 秒</option>
+        </select>
+      </div>
+    </div>
+    <button class="big-btn" id="btnStartGame" disabled>🚀 開始遊戲</button>
+  </div>
+</div>
+
+<!-- SCREEN 1.5：自訂編輯器 -->
+<div id="editor-screen" class="screen">
+  <div class="editor-header">
+    <h3>✏️ 自訂題庫</h3>
+    <button class="sec-btn outline" id="btnEditorBack" style="width:auto;padding:8px 16px;font-size:13px">← 返回</button>
+  </div>
+  <div id="questionList"></div>
+  <div class="editor-actions">
+    <button class="sec-btn outline" id="btnAddQ">＋ 新增題目</button>
+    <button class="sec-btn purple" id="btnSaveCustom">儲存並使用</button>
+  </div>
+</div>
+
+<!-- SCREEN 2：遊戲中 -->
+<div id="game-screen" class="screen">
+  <div id="progress-bar-wrap">
+    <div id="progress-bar-bg"><div id="progress-bar-fill" style="width:0%"></div></div>
+    <span id="q-counter">1 / 10</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:20px;width:100%;max-width:720px;justify-content:space-between">
+    <div id="score-display">分數 <strong id="scoreVal">0</strong></div>
+    <div id="timer-ring-wrap">
+      <svg id="timer-svg" width="80" height="80" viewBox="0 0 80 80">
+        <circle id="timer-track" cx="40" cy="40" r="34"/>
+        <circle id="timer-arc"   cx="40" cy="40" r="34" stroke-dasharray="213.6" stroke-dashoffset="0"/>
+      </svg>
+      <div id="timer-num">20</div>
+    </div>
+  </div>
+  <div id="question-card">
+    <div id="question-text">題目文字</div>
+  </div>
+  <div id="options-grid">
+    <button class="opt-btn A" data-opt="A"><span class="opt-letter">A</span><span class="opt-text" id="optA"></span></button>
+    <button class="opt-btn B" data-opt="B"><span class="opt-letter">B</span><span class="opt-text" id="optB"></span></button>
+    <button class="opt-btn C" data-opt="C"><span class="opt-letter">C</span><span class="opt-text" id="optC"></span></button>
+    <button class="opt-btn D" data-opt="D"><span class="opt-letter">D</span><span class="opt-text" id="optD"></span></button>
+  </div>
+  <div id="feedback-bar"></div>
+</div>
+
+<!-- SCREEN 3：結果 -->
+<div id="result-screen" class="screen">
+  <div class="result-header">
+    <h2 id="resultEmoji">🏆 完美！</h2>
+    <p id="resultSub">答題結果</p>
+  </div>
+  <div class="score-big" id="finalScore">0</div>
+  <div class="score-label" id="finalLabel">0 / 0 題正確</div>
+  <div class="review-list" id="reviewList"></div>
+  <div class="result-btns">
+    <button class="r-btn purple" id="btnPlayAgain">🔁 再玩一次</button>
+    <button class="r-btn ghost"  id="btnChangeSet">📚 換題庫</button>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+// ══ 內建題庫 ══════════════════════════════════════════
+const BUILTIN_PACKS = [
+  {
+    id:'general', name:'生活常識', icon:'🌍',
+    questions:[
+      {q:'地球是太陽系第幾顆行星？',opts:['第一顆','第二顆','第三顆','第四顆'],ans:'C'},
+      {q:'水的化學式是？',opts:['CO₂','H₂O','O₂','NaCl'],ans:'B'},
+      {q:'光速約為每秒多少公里？',opts:['3萬公里','30萬公里','300萬公里','3000萬公里'],ans:'B'},
+      {q:'哪個國家的面積最大？',opts:['中國','美國','加拿大','俄羅斯'],ans:'D'},
+      {q:'人體最大的器官是？',opts:['肝臟','心臟','皮膚','大腦'],ans:'C'},
+      {q:'1 公斤等於幾公克？',opts:['10','100','1000','10000'],ans:'C'},
+      {q:'彩虹有幾種顏色？',opts:['5','6','7','8'],ans:'C'},
+      {q:'直角是幾度？',opts:['45°','60°','90°','180°'],ans:'C'},
+      {q:'陸地上跑最快的動物是？',opts:['獅子','獵豹','馬','羚羊'],ans:'B'},
+      {q:'月球是地球的什麼？',opts:['行星','衛星','小行星','矮行星'],ans:'B'},
+      {q:'1年有幾天（平年）？',opts:['355','365','375','366'],ans:'B'},
+      {q:'DNA 雙螺旋結構由誰發現？',opts:['愛因斯坦','達爾文','Watson & Crick','牛頓'],ans:'C'},
+    ]
+  },
+  {
+    id:'tech', name:'科技資訊', icon:'💻',
+    questions:[
+      {q:'HTML 的全名是？',opts:['HyperText Markup Language','High Tech Modern Language','HyperText Modern Layout','High Text Markup Logic'],ans:'A'},
+      {q:'哪個公司開發了 iPhone？',opts:['Google','Samsung','Apple','Microsoft'],ans:'C'},
+      {q:'1 GB 等於多少 MB？',opts:['256','512','1024','2048'],ans:'C'},
+      {q:'JavaScript 最初由誰創建？',opts:['Linus Torvalds','Brendan Eich','Tim Berners-Lee','Mark Zuckerberg'],ans:'B'},
+      {q:'WWW 由誰發明？',opts:['Bill Gates','Steve Jobs','Tim Berners-Lee','Elon Musk'],ans:'C'},
+      {q:'Python 是哪種語言？',opts:['編譯型','解釋型','機器語言','組合語言'],ans:'B'},
+      {q:'CPU 中文全名是？',opts:['中央處理器','圖形處理器','記憶體','硬碟'],ans:'A'},
+      {q:'最廣泛使用的版本控制系統是？',opts:['SVN','Mercurial','Git','CVS'],ans:'C'},
+      {q:'HTTP 預設端口是？',opts:['21','443','80','8080'],ans:'C'},
+      {q:'WiFi 標準是？',opts:['IEEE 802.3','IEEE 802.11','IEEE 802.5','IEEE 802.15'],ans:'B'},
+    ]
+  },
+  {
+    id:'history', name:'世界歷史', icon:'🏛️',
+    questions:[
+      {q:'第一次世界大戰在哪一年結束？',opts:['1914','1916','1918','1920'],ans:'C'},
+      {q:'哥倫布到達美洲是哪一年？',opts:['1392','1492','1592','1692'],ans:'B'},
+      {q:'萬里長城主要建於哪個朝代？',opts:['漢朝','唐朝','明朝','清朝'],ans:'C'},
+      {q:'埃及金字塔最初作為什麼用途？',opts:['神廟','宮殿','陵墓','倉庫'],ans:'C'},
+      {q:'世界上第一個使用印刷術的國家？',opts:['埃及','希臘','中國','羅馬'],ans:'C'},
+      {q:'拿破崙是哪國人？',opts:['法國','義大利','西班牙','英國'],ans:'A'},
+      {q:'第二次世界大戰在哪一年結束？',opts:['1943','1944','1945','1946'],ans:'C'},
+      {q:'莎士比亞是哪國作家？',opts:['美國','法國','德國','英國'],ans:'D'},
+    ]
+  },
+  {
+    id:'sports', name:'運動體育', icon:'⚽',
+    questions:[
+      {q:'足球世界盃多少年舉辦一次？',opts:['2年','3年','4年','5年'],ans:'C'},
+      {q:'奧運五環代表幾大洲？',opts:['4','5','6','7'],ans:'B'},
+      {q:'網球大滿貫有幾個賽事？',opts:['2','3','4','5'],ans:'C'},
+      {q:'NBA 是哪個運動的聯盟？',opts:['棒球','美式足球','籃球','冰球'],ans:'C'},
+      {q:'馬拉松全程約多少公里？',opts:['35','40','42','45'],ans:'C'},
+      {q:'桌球球拍兩面除紅色外另一面是？',opts:['藍色','黑色','綠色','白色'],ans:'B'},
+      {q:'足球場上每隊幾名球員？',opts:['9','10','11','12'],ans:'C'},
+    ]
+  },
+  {
+    id:'taiwan', name:'台灣知識', icon:'🇹🇼',
+    questions:[
+      {q:'台灣最高的山是？',opts:['雪山','合歡山','玉山','奇萊山'],ans:'C'},
+      {q:'台灣面積約多少平方公里？',opts:['16000','36000','56000','76000'],ans:'B'},
+      {q:'台灣有幾個直轄市？',opts:['4','5','6','7'],ans:'C'},
+      {q:'台灣日治時期始於哪一年？',opts:['1885','1895','1905','1915'],ans:'B'},
+      {q:'台灣最長的河流是？',opts:['淡水河','大甲溪','秀姑巒溪','濁水溪'],ans:'D'},
+      {q:'台灣東邊是哪個海？',opts:['台灣海峽','南海','菲律賓海','東海'],ans:'C'},
+      {q:'台北101 高度約多少公尺？',opts:['401','501','508','600'],ans:'C'},
+    ]
+  },
+];
+
+// ══ localStorage 自訂題庫 ═════════════════════════════
+function loadCustomPack() {
+  try { return JSON.parse(localStorage.getItem('quiz_custom') || 'null'); } catch { return null; }
+}
+function saveCustomPack(pack) { localStorage.setItem('quiz_custom', JSON.stringify(pack)); }
+
+// ══ 全域狀態 ══════════════════════════════════════════
+let selectedPackId = null;
+let currentPack    = null;
+let gameQuestions  = [];
+let currentQIndex  = 0;
+let playerScore    = 0;
+let timerInterval  = null;
+let timeLeft       = 20;
+let timeLimitSec   = 20;
+let answered       = false;
+let reviewLog      = [];
+
+// ══ 畫面切換 ══════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ══ 渲染題庫卡片 ══════════════════════════════════════
+function renderPackGrid() {
+  const grid = document.getElementById('packGrid');
+  grid.innerHTML = '';
+  const packs = [...BUILTIN_PACKS];
+  const custom = loadCustomPack();
+  if (custom) packs.unshift({ id:'custom', name: custom.name || '我的題庫', icon:'✏️', questions: custom.questions });
+
+  packs.forEach(pack => {
+    const card = document.createElement('div');
+    card.className = 'pack-card'; card.dataset.id = pack.id;
+    card.innerHTML = `<div class="pack-icon">${pack.icon}</div><div class="pack-name">${pack.name}</div><div class="pack-count">${pack.questions.length} 題</div>`;
+    card.addEventListener('click', () => selectPack(pack.id, packs));
+    grid.appendChild(card);
+  });
+
+  const addCard = document.createElement('div');
+  addCard.className = 'pack-card custom-card';
+  addCard.innerHTML = `<div style="font-size:28px">✏️</div><div class="pack-name">新增自訂題庫</div>`;
+  addCard.addEventListener('click', openEditor);
+  grid.appendChild(addCard);
+}
+
+function selectPack(id, packs) {
+  selectedPackId = id;
+  document.querySelectorAll('.pack-card').forEach(c => c.classList.toggle('selected', c.dataset.id === id));
+  const pack = packs.find(p => p.id === id);
+  if (pack) {
+    currentPack = pack;
+    const inp = document.getElementById('qCount');
+    inp.max = pack.questions.length;
+    if (parseInt(inp.value) > pack.questions.length) inp.value = pack.questions.length;
+  }
+  document.getElementById('btnStartGame').disabled = false;
+}
+
+document.getElementById('btnStartGame').addEventListener('click', () => {
+  if (!currentPack) return;
+  timeLimitSec = parseInt(document.getElementById('timeLimit').value);
+  const count = Math.min(parseInt(document.getElementById('qCount').value), currentPack.questions.length);
+  gameQuestions = shuffle([...currentPack.questions]).slice(0, count);
+  currentQIndex = 0; playerScore = 0; reviewLog = [];
+  showScreen('game-screen');
+  loadQuestion();
+});
+
+// ══ 自訂題庫編輯器 ════════════════════════════════════
+function openEditor() {
+  renderEditor(); showScreen('editor-screen');
+}
+
+function renderEditor() {
+  const list = document.getElementById('questionList');
+  const custom = loadCustomPack() || { name:'我的題庫', questions:[] };
+  list.innerHTML = '';
+  if (custom.questions.length === 0) addQCard(list, null);
+  else custom.questions.forEach(q => addQCard(list, q));
+}
+
+function addQCard(list, q) {
+  const card = document.createElement('div');
+  card.className = 'q-card';
+  card.innerHTML = `
+    <button class="del-btn" title="刪除">✕</button>
+    <input type="text" class="q-text" placeholder="輸入題目內容" value="${esc(q?.q||'')}" />
+    <div class="options-grid">
+      ${['A','B','C','D'].map((l,i)=>`
+        <div class="opt-row">
+          <span class="opt-badge ${l}">${l}</span>
+          <input type="text" class="opt-inp" data-opt="${l}" placeholder="選項 ${l}" value="${esc(q?.opts?.[i]||'')}"/>
+        </div>`).join('')}
+    </div>
+    <div class="correct-select">
+      正確答案：
+      <select class="ans-sel">
+        ${['A','B','C','D'].map(l=>`<option value="${l}" ${q?.ans===l?'selected':''}>${l}</option>`).join('')}
+      </select>
+    </div>`;
+  card.querySelector('.del-btn').addEventListener('click', () => card.remove());
+  list.appendChild(card);
+}
+
+document.getElementById('btnAddQ').addEventListener('click', () => addQCard(document.getElementById('questionList'), null));
+
+document.getElementById('btnSaveCustom').addEventListener('click', () => {
+  const qs = [];
+  document.querySelectorAll('.q-card').forEach(card => {
+    const q    = card.querySelector('.q-text').value.trim();
+    const opts = ['A','B','C','D'].map(l => card.querySelector(`[data-opt="${l}"]`).value.trim());
+    const ans  = card.querySelector('.ans-sel').value;
+    if (q && opts.every(o => o)) qs.push({ q, opts, ans });
+  });
+  if (!qs.length) { alert('請至少填寫一道完整題目！'); return; }
+  const pack = { name:'我的題庫', questions: qs };
+  saveCustomPack(pack);
+  renderPackGrid();
+  selectPack('custom', [{ id:'custom', ...pack }, ...BUILTIN_PACKS]);
+  showScreen('home-screen');
+});
+
+document.getElementById('btnEditorBack').addEventListener('click', () => showScreen('home-screen'));
+
+// ══ 遊戲核心 ══════════════════════════════════════════
+function loadQuestion() {
+  answered = false;
+  const q = gameQuestions[currentQIndex];
+
+  document.getElementById('progress-bar-fill').style.width = (currentQIndex / gameQuestions.length * 100) + '%';
+  document.getElementById('q-counter').textContent = `${currentQIndex+1} / ${gameQuestions.length}`;
+  document.getElementById('question-text').textContent = q.q;
+  document.getElementById('optA').textContent = q.opts[0];
+  document.getElementById('optB').textContent = q.opts[1];
+  document.getElementById('optC').textContent = q.opts[2];
+  document.getElementById('optD').textContent = q.opts[3];
+  document.getElementById('scoreVal').textContent = playerScore.toLocaleString();
+
+  document.querySelectorAll('.opt-btn').forEach(b => {
+    b.disabled = false;
+    b.classList.remove('reveal-correct','wrong-chosen','dimmed');
+    b.style.opacity = '';
+  });
+  const fb = document.getElementById('feedback-bar');
+  fb.style.display = 'none'; fb.className = 'feedback-bar';
+
+  startTimer();
+}
+
+function startTimer() {
+  clearInterval(timerInterval);
+  timeLeft = timeLimitSec;
+  const circ = 213.6;
+  const arc  = document.getElementById('timer-arc');
+  const num  = document.getElementById('timer-num');
+  function tick() {
+    const p = timeLeft / timeLimitSec;
+    arc.style.strokeDashoffset = circ * (1 - p);
+    arc.style.stroke = p > .5 ? '#a855f7' : p > .25 ? '#f97316' : '#ef4444';
+    num.textContent  = timeLeft;
+    num.style.color  = p > .25 ? 'var(--text)' : '#ef4444';
+  }
+  tick();
+  timerInterval = setInterval(() => { timeLeft--; tick(); if (timeLeft <= 0) { clearInterval(timerInterval); handleAnswer(null); } }, 1000);
+}
+
+function handleAnswer(chosen) {
+  if (answered) return;
+  answered = true;
+  clearInterval(timerInterval);
+
+  const q = gameQuestions[currentQIndex];
+  const correct = q.ans;
+  const isRight = chosen === correct;
+  let pts = 0;
+
+  if (isRight) {
+    pts = Math.max(100, Math.round(1000 * timeLeft / timeLimitSec));
+    playerScore += pts;
+    spawnScorePop('+' + pts);
+  }
+  reviewLog.push({ q: q.q, correct, chosen, pts, opts: q.opts });
+
+  // 選項回饋
+  document.querySelectorAll('.opt-btn').forEach(btn => {
+    btn.disabled = true;
+    const o = btn.dataset.opt;
+    if (o === correct)                        btn.classList.add('reveal-correct');
+    else if (o === chosen && !isRight)        btn.classList.add('wrong-chosen');
+    else                                      btn.classList.add('dimmed');
+  });
+
+  // 回饋列
+  const fb = document.getElementById('feedback-bar');
+  fb.style.display = 'block';
+  if (!chosen) {
+    fb.className = 'feedback-bar timeout';
+    fb.textContent = `⏰ 時間到！正確答案是 ${correct} — ${q.opts['ABCD'.indexOf(correct)]}`;
+  } else if (isRight) {
+    fb.className = 'feedback-bar correct';
+    fb.textContent = `✅ 正確！+${pts} 分`;
+  } else {
+    fb.className = 'feedback-bar wrong';
+    fb.textContent = `❌ 答錯！正確答案是 ${correct} — ${q.opts['ABCD'.indexOf(correct)]}`;
+  }
+
+  setTimeout(() => {
+    currentQIndex++;
+    if (currentQIndex < gameQuestions.length) loadQuestion();
+    else showResults();
+  }, 1800);
+}
+
+document.querySelectorAll('.opt-btn').forEach(btn => btn.addEventListener('click', () => handleAnswer(btn.dataset.opt)));
+
+document.addEventListener('keydown', e => {
+  if (!document.getElementById('game-screen').classList.contains('active')) return;
+  const map = { a:'A',b:'B',c:'C',d:'D','1':'A','2':'B','3':'C','4':'D' };
+  const opt = map[e.key.toLowerCase()];
+  if (opt) handleAnswer(opt);
+});
+
+// ══ 分數飛出 ══════════════════════════════════════════
+function spawnScorePop(text) {
+  const el = document.createElement('div');
+  el.className = 'score-pop';
+  el.textContent = text;
+  el.style.left = (35 + Math.random() * 30) + '%';
+  el.style.top  = '45%';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1000);
+}
+
+// ══ 結果畫面 ══════════════════════════════════════════
+function showResults() {
+  showScreen('result-screen');
+  const maxScore = gameQuestions.length * 1000;
+  const pct = playerScore / maxScore;
+  const correct = reviewLog.filter(r => r.chosen === r.correct).length;
+
+  document.getElementById('finalScore').textContent = playerScore.toLocaleString();
+  document.getElementById('finalLabel').textContent = `${correct} / ${gameQuestions.length} 題正確`;
+
+  const [emoji, sub] =
+    pct >= .9 ? ['🏆 完美！','你是答題王！'] :
+    pct >= .7 ? ['🎉 優秀！','大部分都答對了！'] :
+    pct >= .5 ? ['😊 不錯！','繼續加油！'] :
+                ['💪 加油！','多練習就會進步！'];
+  document.getElementById('resultEmoji').textContent = emoji;
+  document.getElementById('resultSub').textContent   = sub;
+
+  const list = document.getElementById('reviewList');
+  list.innerHTML = '';
+  reviewLog.forEach((r, i) => {
+    const status = !r.chosen ? 'skip' : r.chosen === r.correct ? 'correct' : 'wrong';
+    const labels = ['A','B','C','D'];
+    const item = document.createElement('div');
+    item.className = 'review-item';
+    item.innerHTML = `
+      <div class="r-q">${i+1}. ${r.q}</div>
+      <div class="r-row">
+        <span class="r-badge ${status}">${{correct:'✅ 答對',wrong:'❌ 答錯',skip:'⏰ 超時'}[status]}</span>
+        <span style="color:var(--muted)">正確：${r.correct} — ${r.opts[labels.indexOf(r.correct)]}</span>
+        ${r.pts>0 ? `<span style="color:#a855f7;font-weight:700">+${r.pts}</span>` : ''}
+      </div>`;
+    list.appendChild(item);
+  });
+
+  if (pct >= .7) spawnConfetti();
+}
+
+function spawnConfetti() {
+  const s = ['🎉','⭐','✨','🎊','🏆','💫'];
+  for (let i = 0; i < 20; i++) {
+    setTimeout(() => {
+      const el = document.createElement('div');
+      el.className = 'confetti';
+      el.textContent = s[Math.floor(Math.random()*s.length)];
+      el.style.left = Math.random()*100+'vw';
+      el.style.top  = '-30px';
+      el.style.animationDuration = (1+Math.random()*1.5)+'s';
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 2500);
+    }, i * 80);
+  }
+}
+
+document.getElementById('btnPlayAgain').addEventListener('click', () => {
+  currentQIndex = 0; playerScore = 0; reviewLog = [];
+  gameQuestions = shuffle([...currentPack.questions]).slice(0, Math.min(parseInt(document.getElementById('qCount').value), currentPack.questions.length));
+  showScreen('game-screen');
+  loadQuestion();
+});
+document.getElementById('btnChangeSet').addEventListener('click', () => showScreen('home-screen'));
+
+// ══ 工具 ══════════════════════════════════════════════
+function shuffle(a) {
+  for (let i=a.length-1;i>0;i--) { const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+  return a;
+}
+function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ══ 初始化 ════════════════════════════════════════════
+renderPackGrid();
+</script>
+</body>
+</html>
