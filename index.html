@@ -40,8 +40,9 @@
 
     .grid {
       display: grid;
-      grid-template-columns: repeat(4, 220px);
+      grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
       gap: 20px;
+      max-width: 1120px;
     }
 
     .card {
@@ -109,11 +110,7 @@
       text-align: center;
     }
 
-    @media (max-width: 960px) {
-      .grid { grid-template-columns: repeat(2, 220px); }
-    }
     @media (max-width: 500px) {
-      .grid { grid-template-columns: 1fr; }
       header h1 { font-size: 28px; }
     }
   </style>
@@ -153,6 +150,13 @@
     <h2>塔羅占卜</h2>
     <p>輸入問題抽牌，3D 翻牌動畫，一鍵產生 GPT 提示詞！</p>
     <span class="badge">Tarot</span>
+  </a>
+
+  <a class="card" href="tetris-battle.html" style="--accent:#ef4444;">
+    <div class="card-icon">🆚</div>
+    <h2>俄羅斯方塊對戰</h2>
+    <p>房間碼配對，即時聯線對決，消行攻擊送垃圾行給對手！</p>
+    <span class="badge">Battle</span>
   </a>
 
 </div>

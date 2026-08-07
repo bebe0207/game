@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>俄羅斯方塊 對戰</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0812;
+      --surface: #12102a;
+      --border: #2a2550;
+      --accent: #ef4444;
+      --text: #e2e8f0;
+      --muted: #6b7280;
+      --green: #22c55e;
+      --gold: #f5c518;
+    }
+
+    body {
+      background: var(--bg);
+      min-height: 100vh;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* ── 頂部導覽 ── */
+    #topbar {
+      width: 100%;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 24px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(10,8,18,0.9);
+      position: sticky; top: 0; z-index: 20;
+    }
+    #topbar a {
+      color: var(--muted); font-size: 13px; text-decoration: none;
+      border: 1px solid var(--border); padding: 5px 14px; border-radius: 6px;
+      transition: all .2s;
+    }
+    #topbar a:hover { color: var(--text); border-color: var(--accent); }
+    #topbar h1 { font-size: 18px; font-weight: 800; letter-spacing: 1px; }
+    #topbar h1 span { color: var(--accent); }
+
+    /* ══════════════════════════════
+       LOBBY 畫面
+    ══════════════════════════════ */
+    #lobby {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      min-height: calc(100vh - 56px);
+      gap: 28px; padding: 40px 20px;
+    }
+
+    .lobby-title { text-align: center; }
+    .lobby-title h2 {
+      font-size: 32px; font-weight: 800;
+      background: linear-gradient(135deg, #f87171, #ef4444, #b91c1c);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+    }
+    .lobby-title p { color: var(--muted); font-size: 14px; }
+
+    .lobby-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px 32px;
+      width: 100%; max-width: 400px;
+      display: flex; flex-direction: column; gap: 16px;
+    }
+    .lobby-box h3 {
+      font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .lobby-btn {
+      width: 100%; padding: 14px;
+      background: linear-gradient(135deg, #ef4444, #b91c1c);
+      border: none; border-radius: 10px;
+      color: #fff; font-size: 15px; font-weight: 700;
+      cursor: pointer; transition: opacity .15s, transform .1s;
+    }
+    .lobby-btn:hover { opacity: .88; transform: translateY(-1px); }
+    .lobby-btn.secondary {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+    .lobby-btn.secondary:hover { border-color: var(--accent); }
+
+    .room-input-row { display: flex; gap: 10px; }
+    .room-input-row input {
+      flex: 1; background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border); border-radius: 8px;
+      color: var(--text); font-size: 22px; font-weight: 800;
+      padding: 10px 14px; letter-spacing: 6px; text-align: center;
+      outline: none; transition: border-color .2s;
+    }
+    .room-input-row input:focus { border-color: var(--accent); }
+    .room-input-row input::placeholder { letter-spacing: 1px; font-size: 14px; font-weight: 400; }
+
+    #roomCodeDisplay {
+      font-size: 48px; font-weight: 900;
+      color: var(--gold); letter-spacing: 12px;
+      text-align: center; text-shadow: 0 0 20px rgba(245,197,24,.4);
+    }
+
+    .status-text {
+      font-size: 13px; color: var(--muted); text-align: center;
+      line-height: 1.6;
+    }
+    .status-text.waiting::after {
+      content: ''; animation: dots 1.2s infinite;
+    }
+    @keyframes dots {
+      0%   { content: '.';   }
+      33%  { content: '..';  }
+      66%  { content: '...'; }
+    }
+
+    #lobbyError {
+      font-size: 13px; color: #f87171; text-align: center;
+      min-height: 18px;
+    }
+
+    /* ══════════════════════════════
+       BATTLE 畫面
+    ══════════════════════════════ */
+    #battle {
+      display: none;
+      width: 100%;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 16px;
+      padding: 20px 16px 40px;
+    }
+
+    /* ── 左欄：自己 ── */
+    #my-side {
+      display: flex; gap: 10px; align-items: flex-start;
+    }
+
+    #my-board-wrap {
+      position: relative;
+    }
+
+    canvas#myBoard {
+      display: block;
+      border: 2px solid #333;
+      background: #1a1a2e;
+      transition: box-shadow .15s;
+    }
+    canvas#myBoard.under-attack {
+      animation: flashRed .4s ease;
+    }
+    @keyframes flashRed {
+      0%,100% { box-shadow: none; }
+      50%      { box-shadow: 0 0 0 4px #ef4444, 0 0 30px #ef4444aa; }
+    }
+
+    #my-info {
+      width: 120px;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+
+    .info-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+    }
+    .info-panel h4 {
+      font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 4px;
+    }
+    .info-panel .val {
+      font-size: 22px; font-weight: 800; color: var(--text); line-height: 1;
+    }
+    .info-panel canvas { display: block; margin: 0 auto; }
+
+    /* ── 中欄：對戰狀態 ── */
+    #mid-col {
+      width: 130px;
+      display: flex; flex-direction: column;
+      align-items: center; gap: 12px;
+      padding-top: 10px;
+    }
+
+    .room-badge {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 12px;
+      text-align: center;
+      width: 100%;
+    }
+    .room-badge .label { font-size: 9px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+    .room-badge .code  { font-size: 20px; font-weight: 900; color: var(--gold); letter-spacing: 4px; }
+
+    .conn-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 6px var(--green);
+      display: inline-block; margin-right: 5px;
+      animation: pulse 1.5s ease infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+    .conn-label { font-size: 12px; color: var(--muted); }
+
+    #attack-alert {
+      display: none;
+      background: rgba(239,68,68,.18);
+      border: 1px solid #ef4444;
+      border-radius: 8px;
+      padding: 8px 10px;
+      text-align: center;
+      font-size: 12px; font-weight: 700; color: #f87171;
+      width: 100%;
+      animation: alertPop .3s ease;
+    }
+    @keyframes alertPop {
+      from { transform: scale(.8); opacity: 0; }
+      to   { transform: scale(1);  opacity: 1; }
+    }
+
+    .vs-text {
+      font-size: 28px; font-weight: 900;
+      color: var(--accent);
+      text-shadow: 0 0 16px rgba(239,68,68,.5);
+    }
+
+    #lines-compare {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px;
+      font-size: 11px; color: var(--muted);
+      text-align: center;
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    #lines-compare .bar-row { display: flex; align-items: center; gap: 6px; }
+    #lines-compare .bar-label { width: 22px; text-align: right; font-size: 10px; }
+    #lines-compare .bar-bg {
+      flex: 1; height: 6px; background: rgba(255,255,255,0.08);
+      border-radius: 3px; overflow: hidden;
+    }
+    #lines-compare .bar-fill {
+      height: 100%; border-radius: 3px;
+      transition: width .3s;
+    }
+    #my-bar-fill    { background: #3b82f6; }
+    #opp-bar-fill   { background: #ef4444; }
+
+    /* ── 右欄：對手 ── */
+    #opp-side {
+      display: flex; flex-direction: column;
+      align-items: center; gap: 8px;
+    }
+
+    #opp-label {
+      font-size: 11px; color: var(--muted); letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    #opp-board-wrap {
+      position: relative;
+    }
+
+    canvas#oppBoard {
+      display: block;
+      border: 2px solid #2a2550;
+      background: #12102a;
+    }
+
+    #opp-stats {
+      display: flex; gap: 12px; font-size: 12px; color: var(--muted);
+    }
+    #opp-stats strong { color: #f87171; }
+
+    /* ── 遊戲結果覆蓋 ── */
+    #result-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.75);
+      z-index: 50;
+      align-items: center; justify-content: center;
+    }
+    #result-overlay.show { display: flex; }
+
+    .result-box {
+      background: #12102a;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 40px 52px;
+      text-align: center;
+      display: flex; flex-direction: column; gap: 16px;
+    }
+    .result-box h2 { font-size: 42px; font-weight: 900; }
+    .result-box h2.win  { color: var(--gold); text-shadow: 0 0 24px rgba(245,197,24,.6); }
+    .result-box h2.lose { color: #f87171; }
+    .result-box p { font-size: 15px; color: var(--muted); }
+
+    .result-btns { display: flex; gap: 12px; justify-content: center; }
+    .result-btn {
+      padding: 12px 28px; border-radius: 10px;
+      font-size: 14px; font-weight: 700; cursor: pointer;
+      border: none; transition: opacity .15s;
+    }
+    .result-btn:hover { opacity: .85; }
+    .result-btn.primary { background: #ef4444; color: #fff; }
+    .result-btn.ghost   { background: var(--surface); border: 1px solid var(--border); color: var(--text); }
+
+    /* ── 等待對手覆蓋 ── */
+    #waiting-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.7);
+      z-index: 40;
+      align-items: center; justify-content: center;
+      flex-direction: column; gap: 16px;
+    }
+    #waiting-overlay.show { display: flex; }
+    #waiting-overlay p { font-size: 18px; color: var(--text); }
+    .spinner {
+      width: 40px; height: 40px;
+      border: 3px solid rgba(239,68,68,.2);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<!-- 頂部導覽 -->
+<div id="topbar">
+  <a href="index.html">← 返回目錄</a>
+  <h1>🆚 俄羅斯方塊 <span>對戰</span></h1>
+  <div style="width:100px"></div>
+</div>
+
+<!-- ══════ LOBBY ══════ -->
+<div id="lobby">
+  <div class="lobby-title">
+    <h2>🆚 聯線對戰</h2>
+    <p>建立房間並把房間碼傳給對手，或輸入對方的房間碼加入</p>
+  </div>
+
+  <div class="lobby-box">
+    <h3>建立新房間</h3>
+    <button class="lobby-btn" id="btnCreate">建立房間</button>
+
+    <div id="createResult" style="display:none">
+      <h3 style="margin-bottom:8px">房間碼（傳給對手）</h3>
+      <div id="roomCodeDisplay">----</div>
+      <p class="status-text waiting" style="margin-top:10px">等待對手加入</p>
+    </div>
+  </div>
+
+  <div class="lobby-box">
+    <h3>加入現有房間</h3>
+    <div class="room-input-row">
+      <input id="joinInput" type="text" maxlength="4" placeholder="輸入房間碼" />
+      <button class="lobby-btn secondary" id="btnJoin" style="width:auto;padding:10px 18px">加入</button>
+    </div>
+  </div>
+
+  <div id="lobbyError"></div>
+</div>
+
+<!-- ══════ BATTLE ══════ -->
+<div id="battle">
+
+  <!-- 左欄：自己 -->
+  <div id="my-side">
+    <div id="my-board-wrap">
+      <canvas id="myBoard" width="300" height="600"></canvas>
+    </div>
+    <div id="my-info">
+      <div class="info-panel">
+        <h4>分數</h4>
+        <div class="val" id="myScore">0</div>
+      </div>
+      <div class="info-panel">
+        <h4>等級</h4>
+        <div class="val" id="myLevel">1</div>
+      </div>
+      <div class="info-panel">
+        <h4>消行</h4>
+        <div class="val" id="myLines">0</div>
+      </div>
+      <div class="info-panel">
+        <h4>下一個</h4>
+        <canvas id="myNext" width="100" height="100"></canvas>
+      </div>
+      <div class="info-panel">
+        <h4>保留</h4>
+        <canvas id="myHold" width="100" height="100"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- 中欄：狀態 -->
+  <div id="mid-col">
+    <div class="room-badge">
+      <div class="label">房間</div>
+      <div class="code" id="battleRoomCode">----</div>
+    </div>
+    <div>
+      <span class="conn-dot"></span>
+      <span class="conn-label">已連線</span>
+    </div>
+    <div class="vs-text">VS</div>
+    <div id="attack-alert"></div>
+    <div id="lines-compare">
+      <div style="font-size:10px;color:var(--muted);margin-bottom:2px">消行進度</div>
+      <div class="bar-row">
+        <span class="bar-label" style="color:#60a5fa">我</span>
+        <div class="bar-bg"><div class="bar-fill" id="my-bar-fill" style="width:0%"></div></div>
+        <span style="font-size:10px;width:24px;text-align:left" id="myLinesSmall">0</span>
+      </div>
+      <div class="bar-row">
+        <span class="bar-label" style="color:#f87171">對</span>
+        <div class="bar-bg"><div class="bar-fill" id="opp-bar-fill" style="width:0%"></div></div>
+        <span style="font-size:10px;width:24px;text-align:left" id="oppLinesSmall">0</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 右欄：對手 -->
+  <div id="opp-side">
+    <div id="opp-label">對手棋盤</div>
+    <div id="opp-board-wrap">
+      <canvas id="oppBoard" width="150" height="300"></canvas>
+    </div>
+    <div id="opp-stats">
+      分 <strong id="oppScore">0</strong>
+      &nbsp; Lv <strong id="oppLevel">1</strong>
+    </div>
+  </div>
+
+</div>
+
+<!-- 等待對手 -->
+<div id="waiting-overlay">
+  <div class="spinner"></div>
+  <p>等待對手加入</p>
+</div>
+
+<!-- 遊戲結果 -->
+<div id="result-overlay">
+  <div class="result-box">
+    <h2 id="resultTitle">🏆 你贏了！</h2>
+    <p id="resultSub">精彩對決！</p>
+    <div class="result-btns">
+      <button class="result-btn primary" id="btnRematch">再來一局</button>
+      <button class="result-btn ghost"   id="btnBackLobby">返回大廳</button>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+// ══════════════════════════════════════════════════════
+// 常數
+// ══════════════════════════════════════════════════════
+const COLS = 10, ROWS = 20, CELL = 30;
+const BOARD_W = COLS * CELL, BOARD_H = ROWS * CELL;
+const OPP_CELL = 15; // 對手棋盤縮小版 cell 大小
+
+const SHAPES = {
+  I: { color: '#00cfcf', rotations: [[[0,1],[1,1],[2,1],[3,1]],[[2,0],[2,1],[2,2],[2,3]],[[0,2],[1,2],[2,2],[3,2]],[[1,0],[1,1],[1,2],[1,3]]] },
+  O: { color: '#f5c518', rotations: [[[1,0],[2,0],[1,1],[2,1]]] },
+  T: { color: '#a855f7', rotations: [[[1,0],[0,1],[1,1],[2,1]],[[1,0],[1,1],[2,1],[1,2]],[[0,1],[1,1],[2,1],[1,2]],[[1,0],[0,1],[1,1],[1,2]]] },
+  S: { color: '#22c55e', rotations: [[[1,0],[2,0],[0,1],[1,1]],[[1,0],[1,1],[2,1],[2,2]],[[1,1],[2,1],[0,2],[1,2]],[[0,0],[0,1],[1,1],[1,2]]] },
+  Z: { color: '#ef4444', rotations: [[[0,0],[1,0],[1,1],[2,1]],[[2,0],[1,1],[2,1],[1,2]],[[0,1],[1,1],[1,2],[2,2]],[[1,0],[0,1],[1,1],[0,2]]] },
+  J: { color: '#3b82f6', rotations: [[[0,0],[0,1],[1,1],[2,1]],[[1,0],[2,0],[1,1],[1,2]],[[0,1],[1,1],[2,1],[2,2]],[[1,0],[1,1],[0,2],[1,2]]] },
+  L: { color: '#f97316', rotations: [[[2,0],[0,1],[1,1],[2,1]],[[1,0],[1,1],[1,2],[2,2]],[[0,1],[1,1],[2,1],[0,2]],[[0,0],[1,0],[1,1],[1,2]]] },
+};
+const SHAPE_KEYS   = Object.keys(SHAPES);
+const SCORE_TABLE  = [0, 100, 300, 500, 800];
+// 消 n 行 → 送給對手幾行垃圾
+const ATTACK_TABLE = [0, 0, 1, 2, 4];
+
+// DAS / ARR
+const DAS = 170, ARR = 50;
+
+// ══════════════════════════════════════════════════════
+// 遊戲狀態
+// ══════════════════════════════════════════════════════
+let board, current, next, hold, canHold;
+let score, level, lines;
+let gameOver, paused;
+let animId, lastTime, dropTimer, dropInterval;
+let dasTimer, arrTimer, dasActive;
+const pressedKeys = {};
+
+// 待插入垃圾行數（收到攻擊後累積）
+let pendingGarbage = 0;
+
+// ══════════════════════════════════════════════════════
+// Canvas
+// ══════════════════════════════════════════════════════
+const myBoardCv  = document.getElementById('myBoard');
+const ctx        = myBoardCv.getContext('2d');
+const myNextCv   = document.getElementById('myNext');
+const nctx       = myNextCv.getContext('2d');
+const myHoldCv   = document.getElementById('myHold');
+const hctx       = myHoldCv.getContext('2d');
+const oppBoardCv = document.getElementById('oppBoard');
+const octx       = oppBoardCv.getContext('2d');
+
+// ══════════════════════════════════════════════════════
+// WebSocket 連線
+// ══════════════════════════════════════════════════════
+let ws = null;
+let myRoomId  = null;
+let myPlayerIndex = -1; // 0 = 建立者, 1 = 加入者
+
+function connectWS(onOpen) {
+  ws = new WebSocket(`ws://${location.host}`);
+  ws.onopen = onOpen;
+  ws.onmessage = e => handleMessage(JSON.parse(e.data));
+  ws.onclose   = () => {
+    if (!gameOver) {
+      showResult(false, '連線中斷');
+    }
+  };
+}
+
+function wsSend(obj) {
+  if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(obj));
+}
+
+function handleMessage(msg) {
+  switch (msg.type) {
+
+    case 'room_joined':
+      myRoomId = msg.roomId;
+      myPlayerIndex = msg.playerIndex;
+      if (myPlayerIndex === 0) {
+        // 建立者：顯示房間碼，等待對手
+        document.getElementById('roomCodeDisplay').textContent = myRoomId;
+        document.getElementById('createResult').style.display = 'block';
+      }
+      break;
+
+    case 'opponent_joined':
+      // 雙方都收到此訊息 → 隱藏 lobby，顯示對戰畫面，倒數後開始
+      startBattle();
+      break;
+
+    case 'opponent_update':
+      renderOppBoard(msg.board);
+      document.getElementById('oppScore').textContent = (msg.score || 0).toLocaleString();
+      document.getElementById('oppLevel').textContent = msg.level || 1;
+      updateLinesCompare(lines, msg.lines || 0);
+      break;
+
+    case 'incoming_attack':
+      pendingGarbage += msg.lines;
+      showAttackAlert(msg.lines);
+      break;
+
+    case 'opponent_lost':
+      endBattle(true);
+      break;
+
+    case 'opponent_disconnected':
+      showResult(true, '對手已離線');
+      break;
+
+    case 'room_error':
+      document.getElementById('lobbyError').textContent = '❌ ' + msg.reason;
+      break;
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// Lobby UI
+// ══════════════════════════════════════════════════════
+document.getElementById('btnCreate').addEventListener('click', () => {
+  setLobbyError('');
+  connectWS(() => wsSend({ type: 'create_room' }));
+});
+
+document.getElementById('btnJoin').addEventListener('click', joinRoom);
+document.getElementById('joinInput').addEventListener('keydown', e => { if (e.key === 'Enter') joinRoom(); });
+
+function joinRoom() {
+  const id = document.getElementById('joinInput').value.trim();
+  if (id.length !== 4 || isNaN(id)) { setLobbyError('請輸入 4 位數字的房間碼'); return; }
+  setLobbyError('');
+  connectWS(() => wsSend({ type: 'join_room', roomId: id }));
+}
+
+function setLobbyError(msg) {
+  document.getElementById('lobbyError').textContent = msg;
+}
+
+// ══════════════════════════════════════════════════════
+// 對戰開始 / 結束
+// ══════════════════════════════════════════════════════
+function startBattle() {
+  document.getElementById('lobby').style.display = 'none';
+  document.getElementById('battle').style.display = 'flex';
+  document.getElementById('battleRoomCode').textContent = myRoomId;
+
+  // 倒數 3 秒後開始
+  let count = 3;
+  const overlay = document.getElementById('waiting-overlay');
+  const p = overlay.querySelector('p');
+  overlay.classList.add('show');
+  overlay.querySelector('.spinner').style.display = 'none';
+  p.textContent = `遊戲即將開始 ${count}`;
+  const t = setInterval(() => {
+    count--;
+    if (count > 0) { p.textContent = `遊戲即將開始 ${count}`; }
+    else {
+      clearInterval(t);
+      overlay.classList.remove('show');
+      initGame();
+    }
+  }, 1000);
+}
+
+function endBattle(iWon) {
+  gameOver = true;
+  cancelAnimationFrame(animId);
+  // 若自己輸了已在 lock() 送出，若對手輸送 game_over 不需要再送
+  showResult(iWon, iWon ? `對手已陣亡！分數：${score.toLocaleString()}` : `分數：${score.toLocaleString()}`);
+}
+
+function showResult(win, sub) {
+  gameOver = true;
+  cancelAnimationFrame(animId);
+  const o = document.getElementById('result-overlay');
+  document.getElementById('resultTitle').textContent = win ? '🏆 你贏了！' : '💀 你輸了';
+  document.getElementById('resultTitle').className   = win ? 'win' : 'lose';
+  document.getElementById('resultSub').textContent   = sub;
+  o.classList.add('show');
+}
+
+document.getElementById('btnRematch').addEventListener('click', () => {
+  document.getElementById('result-overlay').classList.remove('show');
+  // 只能重新整理（需重新配對）
+  location.reload();
+});
+document.getElementById('btnBackLobby').addEventListener('click', () => location.reload());
+
+// ══════════════════════════════════════════════════════
+// 遊戲初始化
+// ══════════════════════════════════════════════════════
+function initGame() {
+  board        = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
+  score = 0; level = 1; lines = 0;
+  hold = null; canHold = true;
+  gameOver = false; paused = false;
+  pendingGarbage = 0;
+  dropInterval = levelInterval(level);
+  dropTimer    = 0;
+  dasTimer     = { ArrowLeft: 0, ArrowRight: 0 };
+  arrTimer     = { ArrowLeft: 0, ArrowRight: 0 };
+  dasActive    = { ArrowLeft: false, ArrowRight: false };
+  current      = spawnPiece();
+  next         = spawnPiece();
+  updateHUD();
+  lastTime = null;
+  animId = requestAnimationFrame(loop);
+}
+
+// ══════════════════════════════════════════════════════
+// 方塊工廠
+// ══════════════════════════════════════════════════════
+function makePiece(key) {
+  const def = SHAPES[key];
+  return {
+    key, color: def.color, rotations: def.rotations, rot: 0,
+    x: Math.floor((COLS - 4) / 2), y: 0,
+    get cells() { return this.rotations[this.rot]; }
+  };
+}
+function spawnPiece() {
+  return makePiece(SHAPE_KEYS[Math.floor(Math.random() * SHAPE_KEYS.length)]);
+}
+function levelInterval(lvl) { return Math.max(50, 800 - (lvl - 1) * 70); }
+
+// ══════════════════════════════════════════════════════
+// 棋盤邏輯
+// ══════════════════════════════════════════════════════
+function pieceBlocks(piece, dx = 0, dy = 0, rot = piece.rot) {
+  return piece.rotations[rot].map(([c, r]) => [piece.x + c + dx, piece.y + r + dy]);
+}
+
+function isValid(piece, dx = 0, dy = 0, rot = piece.rot) {
+  for (const [c, r] of pieceBlocks(piece, dx, dy, rot)) {
+    if (c < 0 || c >= COLS || r >= ROWS) return false;
+    if (r >= 0 && board[r][c]) return false;
+  }
+  return true;
+}
+
+function moveLeft()  { if (isValid(current, -1, 0)) current.x--; }
+function moveRight() { if (isValid(current,  1, 0)) current.x++; }
+function moveDown()  {
+  if (isValid(current, 0, 1)) { current.y++; return true; }
+  lock(); return false;
+}
+
+function rotate() {
+  const newRot = (current.rot + 1) % current.rotations.length;
+  for (const kick of [0, -1, 1, -2, 2]) {
+    if (isValid(current, kick, 0, newRot)) {
+      current.x += kick; current.rot = newRot; return;
+    }
+  }
+}
+
+function hardDrop() {
+  while (isValid(current, 0, 1)) current.y++;
+  lock();
+}
+
+function holdPiece() {
+  if (!canHold) return;
+  canHold = false;
+  if (hold === null) { hold = current.key; current = next; next = spawnPiece(); }
+  else               { const tmp = hold; hold = current.key; current = makePiece(tmp); }
+  updateHUD();
+}
+
+function lock() {
+  for (const [c, r] of pieceBlocks(current)) {
+    if (r < 0) { endBattle(false); wsSend({ type: 'game_over' }); return; }
+    board[r][c] = current.color;
+  }
+
+  const cleared = clearLines();
+
+  // 攻擊：消 2 行以上才送
+  if (cleared >= 2) {
+    const atk = ATTACK_TABLE[Math.min(cleared, 4)];
+    if (atk > 0) wsSend({ type: 'attack', lines: atk });
+  }
+
+  // 插入待處理的垃圾行
+  if (pendingGarbage > 0) {
+    insertGarbageLines(pendingGarbage);
+    pendingGarbage = 0;
+  }
+
+  canHold = true;
+  current = next;
+  next    = spawnPiece();
+  updateHUD();
+  sendBoardUpdate();
+
+  if (!isValid(current)) { endBattle(false); wsSend({ type: 'game_over' }); }
+}
+
+// 回傳消除行數
+function clearLines() {
+  let cleared = 0;
+  for (let r = ROWS - 1; r >= 0; r--) {
+    if (board[r].every(c => c !== null)) {
+      board.splice(r, 1);
+      board.unshift(Array(COLS).fill(null));
+      cleared++; r++;
+    }
+  }
+  if (cleared > 0) {
+    lines += cleared;
+    score += SCORE_TABLE[Math.min(cleared, 4)] * level;
+    level  = Math.floor(lines / 10) + 1;
+    dropInterval = levelInterval(level);
+    updateHUD();
+  }
+  return cleared;
+}
+
+// ══════════════════════════════════════════════════════
+// 攻擊：插入垃圾行
+// ══════════════════════════════════════════════════════
+function insertGarbageLines(n) {
+  for (let i = 0; i < n; i++) {
+    board.shift(); // 移除頂部一行
+    const gap = Math.floor(Math.random() * COLS);
+    const garbageRow = Array(COLS).fill('#5a5a6e');
+    garbageRow[gap] = null; // 隨機缺口
+    board.push(garbageRow);
+  }
+  // 閃紅警示
+  myBoardCv.classList.remove('under-attack');
+  void myBoardCv.offsetWidth; // reflow
+  myBoardCv.classList.add('under-attack');
+  setTimeout(() => myBoardCv.classList.remove('under-attack'), 400);
+}
+
+function showAttackAlert(n) {
+  const el = document.getElementById('attack-alert');
+  el.textContent = `⚠️ 收到 ${n} 行攻擊！`;
+  el.style.display = 'block';
+  setTimeout(() => { el.style.display = 'none'; }, 2000);
+}
+
+// ══════════════════════════════════════════════════════
+// 同步：傳送棋盤給對手
+// ══════════════════════════════════════════════════════
+function sendBoardUpdate() {
+  wsSend({ type: 'board_update', board, score, lines, level });
+}
+
+// ══════════════════════════════════════════════════════
+// Ghost piece
+// ══════════════════════════════════════════════════════
+function ghostY() {
+  let dy = 0;
+  while (isValid(current, 0, dy + 1)) dy++;
+  return dy;
+}
+
+// ══════════════════════════════════════════════════════
+// 繪製：自己棋盤
+// ══════════════════════════════════════════════════════
+function drawCell(context, col, row, color, alpha = 1, ox = 0, oy = 0, cs = CELL) {
+  const x = ox + col * cs, y = oy + row * cs;
+  context.globalAlpha = alpha;
+  context.fillStyle = color;
+  context.fillRect(x + 1, y + 1, cs - 2, cs - 2);
+  context.fillStyle = 'rgba(255,255,255,0.16)';
+  context.fillRect(x + 1, y + 1, cs - 2, Math.max(1, Math.floor(cs * 0.18)));
+  context.globalAlpha = 1;
+}
+
+function drawBoard() {
+  ctx.clearRect(0, 0, BOARD_W, BOARD_H);
+
+  // 格線
+  ctx.strokeStyle = 'rgba(255,255,255,0.04)'; ctx.lineWidth = 1;
+  for (let c = 0; c <= COLS; c++) { ctx.beginPath(); ctx.moveTo(c*CELL,0); ctx.lineTo(c*CELL,BOARD_H); ctx.stroke(); }
+  for (let r = 0; r <= ROWS; r++) { ctx.beginPath(); ctx.moveTo(0,r*CELL); ctx.lineTo(BOARD_W,r*CELL); ctx.stroke(); }
+
+  // 已落下方塊
+  for (let r = 0; r < ROWS; r++)
+    for (let c = 0; c < COLS; c++)
+      if (board[r][c]) drawCell(ctx, c, r, board[r][c]);
+
+  if (gameOver || paused) return;
+
+  // Ghost
+  const gy = ghostY();
+  if (gy > 0)
+    for (const [c, r] of pieceBlocks(current, 0, gy))
+      if (r >= 0) drawCell(ctx, c, r, current.color, 0.2);
+
+  // 當前方塊
+  for (const [c, r] of pieceBlocks(current))
+    if (r >= 0) drawCell(ctx, c, r, current.color);
+}
+
+function drawPiecePreview(context, key, size = 100) {
+  context.clearRect(0, 0, size, size);
+  if (!key) return;
+  const def = SHAPES[key];
+  const rots = def.rotations[0];
+  const cs = rots.map(([c]) => c), rs = rots.map(([,r]) => r);
+  const minC = Math.min(...cs), maxC = Math.max(...cs);
+  const minR = Math.min(...rs), maxR = Math.max(...rs);
+  const w = maxC - minC + 1, h = maxR - minR + 1;
+  const cs2 = Math.floor(size / 5);
+  const ox = Math.floor((size - w * cs2) / 2) - minC * cs2;
+  const oy = Math.floor((size - h * cs2) / 2) - minR * cs2;
+  for (const [c, r] of rots) drawCell(context, c, r, def.color, 1, ox, oy, cs2);
+}
+
+// ══════════════════════════════════════════════════════
+// 繪製：對手棋盤（縮小版）
+// ══════════════════════════════════════════════════════
+function renderOppBoard(oppBoard) {
+  octx.clearRect(0, 0, 150, 300);
+  octx.fillStyle = '#12102a';
+  octx.fillRect(0, 0, 150, 300);
+
+  if (!oppBoard) return;
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      if (oppBoard[r][c]) {
+        const x = c * OPP_CELL, y = r * OPP_CELL;
+        octx.fillStyle = oppBoard[r][c];
+        octx.fillRect(x + 1, y + 1, OPP_CELL - 2, OPP_CELL - 2);
+        octx.fillStyle = 'rgba(255,255,255,0.15)';
+        octx.fillRect(x + 1, y + 1, OPP_CELL - 2, 2);
+      }
+    }
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// HUD
+// ══════════════════════════════════════════════════════
+function updateHUD() {
+  document.getElementById('myScore').textContent = score.toLocaleString();
+  document.getElementById('myLevel').textContent = level;
+  document.getElementById('myLines').textContent = lines;
+  drawPiecePreview(nctx, next?.key);
+  drawPiecePreview(hctx, hold);
+}
+
+function updateLinesCompare(myL, oppL) {
+  const max = Math.max(myL, oppL, 10);
+  document.getElementById('my-bar-fill').style.width   = (myL  / max * 100) + '%';
+  document.getElementById('opp-bar-fill').style.width  = (oppL / max * 100) + '%';
+  document.getElementById('myLinesSmall').textContent  = myL;
+  document.getElementById('oppLinesSmall').textContent = oppL;
+}
+
+// ══════════════════════════════════════════════════════
+// 主迴圈
+// ══════════════════════════════════════════════════════
+function loop(ts) {
+  if (gameOver) return;
+  if (!lastTime) lastTime = ts;
+  const delta = ts - lastTime;
+  lastTime = ts;
+
+  if (!paused) {
+    dropTimer += delta;
+    if (dropTimer >= dropInterval) { dropTimer = 0; moveDown(); }
+
+    for (const dir of ['ArrowLeft', 'ArrowRight']) {
+      if (!pressedKeys[dir]) continue;
+      if (!dasActive[dir]) {
+        dasTimer[dir] += delta;
+        if (dasTimer[dir] >= DAS) { dasActive[dir] = true; arrTimer[dir] = ARR; }
+      } else {
+        arrTimer[dir] += delta;
+        if (arrTimer[dir] >= ARR) {
+          arrTimer[dir] = 0;
+          dir === 'ArrowLeft' ? moveLeft() : moveRight();
+        }
+      }
+    }
+  }
+
+  drawBoard();
+  animId = requestAnimationFrame(loop);
+}
+
+// ══════════════════════════════════════════════════════
+// 鍵盤
+// ══════════════════════════════════════════════════════
+document.addEventListener('keydown', e => {
+  if (gameOver || !myRoomId) return;
+
+  switch (e.key) {
+    case 'ArrowLeft':
+      e.preventDefault();
+      if (!pressedKeys['ArrowLeft'] && !paused) moveLeft();
+      pressedKeys['ArrowLeft'] = true;
+      break;
+    case 'ArrowRight':
+      e.preventDefault();
+      if (!pressedKeys['ArrowRight'] && !paused) moveRight();
+      pressedKeys['ArrowRight'] = true;
+      break;
+    case 'ArrowDown':  e.preventDefault(); if (!paused) { dropTimer = 0; moveDown(); } break;
+    case 'ArrowUp':
+    case 'z': case 'Z': e.preventDefault(); if (!paused) rotate(); break;
+    case ' ':  e.preventDefault(); if (!paused) hardDrop(); break;
+    case 'c': case 'C': e.preventDefault(); if (!paused) holdPiece(); break;
+    case 'p': case 'P':
+      paused = !paused;
+      break;
+  }
+});
+
+document.addEventListener('keyup', e => {
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+    pressedKeys[e.key] = false;
+    dasTimer[e.key] = 0; arrTimer[e.key] = 0; dasActive[e.key] = false;
+  }
+});
+
+// ══════════════════════════════════════════════════════
+// 初始畫面
+// ══════════════════════════════════════════════════════
+ctx.fillStyle = '#1a1a2e';
+ctx.fillRect(0, 0, BOARD_W, BOARD_H);
+octx.fillStyle = '#12102a';
+octx.fillRect(0, 0, 150, 300);
+</script>
+</body>
+</html>
