@@ -3,6 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- 部署到 GitHub Pages 後，將此 content 改為你的 Render WebSocket URL -->
+  <!-- 例如：content="wss://game-ws-server.onrender.com" -->
+  <!-- 本地測試時留空即可，會自動使用 ws://localhost:3000 -->
+  <meta name="ws-url" content="">
   <title>俄羅斯方塊 對戰</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -526,8 +530,19 @@ let ws = null;
 let myRoomId  = null;
 let myPlayerIndex = -1; // 0 = 建立者, 1 = 加入者
 
+// 自動偵測：本地用 ws://，HTTPS 頁面用 wss://
+// 若要指定 Render 伺服器，設定環境變數或在此直接填入 URL
+const WS_URL = (() => {
+  // 若有自訂環境（透過 meta tag 注入），優先使用
+  const meta = document.querySelector('meta[name="ws-url"]');
+  if (meta) return meta.content;
+  // 自動判斷：https → wss，http → ws
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  return `${proto}://${location.host}`;
+})();
+
 function connectWS(onOpen) {
-  ws = new WebSocket(`ws://${location.host}`);
+  ws = new WebSocket(WS_URL);
   ws.onopen = onOpen;
   ws.onmessage = e => handleMessage(JSON.parse(e.data));
   ws.onclose   = () => {
