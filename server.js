@@ -107,17 +107,25 @@ wss.on('connection', ws => {
         break;
       }
 
-      // ── 轉發棋盤更新 ──────────────────────────────
+      // ── 轉發棋盤更新（俄羅斯方塊）────────────────
       case 'board_update': {
         const opp = getOpponent(ws.roomId, ws);
         if (opp) send(opp, { type: 'opponent_update', board: msg.board, score: msg.score, lines: msg.lines, level: msg.level });
         break;
       }
 
-      // ── 轉發攻擊 ──────────────────────────────────
+      // ── 轉發攻擊（俄羅斯方塊）────────────────────
       case 'attack': {
         const opp = getOpponent(ws.roomId, ws);
         if (opp) send(opp, { type: 'incoming_attack', lines: msg.lines });
+        break;
+      }
+
+      // ── 貪吃蛇狀態同步 ────────────────────────────
+      // 傳送自己的蛇身、食物、分數，對手收到後渲染
+      case 'snake_state': {
+        const opp = getOpponent(ws.roomId, ws);
+        if (opp) send(opp, { type: 'opponent_snake', snake: msg.snake, food: msg.food, score: msg.score });
         break;
       }
 
