@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>打磚塊</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #0d0d1a;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      color: #e2e8f0;
+      gap: 16px;
+    }
+
+    #topbar {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      width: 480px;
+    }
+
+    #backBtn {
+      background: none;
+      border: 1px solid #333;
+      color: #888;
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      text-decoration: none;
+    }
+    #backBtn:hover { border-color: #555; color: #ccc; }
+
+    #topbar h1 { font-size: 20px; font-weight: 700; flex: 1; text-align: center; }
+
+    .hud {
+      display: flex;
+      gap: 32px;
+      font-size: 14px;
+      color: #888;
+    }
+    .hud span { color: #f97316; font-weight: 700; font-size: 20px; }
+
+    canvas {
+      background: #080810;
+      border: 2px solid #1a1a35;
+      border-radius: 4px;
+      display: block;
+    }
+
+    #wrap { position: relative; }
+
+    #msg {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(8,8,16,0.92);
+      border: 1px solid #333;
+      border-radius: 12px;
+      padding: 28px 40px;
+      text-align: center;
+      min-width: 240px;
+    }
+    #msg h2 { font-size: 26px; color: #f97316; margin-bottom: 8px; }
+    #msg p  { font-size: 14px; color: #888; margin-bottom: 16px; }
+
+    button.startBtn {
+      padding: 10px 32px;
+      background: #f97316;
+      border: none;
+      border-radius: 6px;
+      color: #000;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    button.startBtn:hover { background: #ea6c10; }
+
+    #controls {
+      font-size: 12px;
+      color: #444;
+      text-align: center;
+      line-height: 2;
+    }
+    #controls span { color: #888; }
+  </style>
+</head>
+<body>
+
+<div id="topbar">
+  <a id="backBtn" href="index.html">← 返回</a>
+  <h1>🧱 打磚塊</h1>
+  <div></div>
+</div>
+
+<div class="hud">
+  <div>分數 <span id="scoreVal">0</span></div>
+  <div>關卡 <span id="levelVal">1</span></div>
+  <div>命數 <span id="livesVal">3</span></div>
+</div>
+
+<div id="wrap">
+  <canvas id="cv" width="480" height="520"></canvas>
+  <div id="msg">
+    <h2>打磚塊</h2>
+    <p>移動球拍反彈小球<br>打破所有磚塊過關！</p>
+    <button class="startBtn" id="btnStart">開始遊戲</button>
+  </div>
+</div>
+
+<div id="controls">
+  <span>← → / 滑鼠</span> 移動球拍 &nbsp;&nbsp; <span>Space</span> 發球 &nbsp;&nbsp; <span>P</span> 暫停
+</div>
+
+<script>
+const W = 480, H = 520;
+const cv  = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+
+// ─── 磚塊設定 ─────────────────────────────────────────
+const BRICK_COLS   = 10;
+const BRICK_ROWS   = 5;
+const BRICK_W      = 42;
+const BRICK_H      = 16;
+const BRICK_PAD    = 4;
+const BRICK_OFF_X  = 9;
+const BRICK_OFF_Y  = 40;
+
+const ROW_COLORS = ['#ef4444','#f97316','#f5c518','#22c55e','#3b82f6'];
+
+// ─── 球拍 ─────────────────────────────────────────────
+const PAD_H = 10, PAD_Y = H - 36;
+let padX, padW;
+
+// ─── 球 ───────────────────────────────────────────────
+let bx, by, bdx, bdy, ballR, launched;
+
+// ─── 遊戲狀態 ─────────────────────────────────────────
+let bricks, score, level, lives, gameOver, paused, animId;
+
+// 滑鼠 / 鍵盤控制
+let mouseX = W / 2;
+const keys = {};
+
+function initGame(lvl = 1) {
+  level  = lvl;
+  lives  = 3;
+  score  = 0;
+  initLevel();
+  updateHUD();
+  hideMsg();
+  cancelAnimationFrame(animId);
+  gameOver = false; paused = false;
+  animId = requestAnimationFrame(loop);
+}
+
+function initLevel() {
+  padW = Math.max(60, 100 - (level - 1) * 6);
+  padX = W / 2 - padW / 2;
+  ballR = 7;
+  resetBall();
+  buildBricks();
+}
+
+function resetBall() {
+  bx = padX + padW / 2;
+  by = PAD_Y - ballR - 1;
+  const speed = 3.5 + (level - 1) * 0.4;
+  const angle = (-Math.PI / 2) + (Math.random() - 0.5) * 0.8;
+  bdx = Math.cos(angle) * speed;
+  bdy = Math.sin(angle) * speed;
+  launched = false;
+}
+
+function buildBricks() {
+  bricks = [];
+  for (let r = 0; r < BRICK_ROWS; r++) {
+    for (let c = 0; c < BRICK_COLS; c++) {
+      const hp = r < 2 ? 1 : (r < 4 ? 1 : 1); // 可擴充多血量
+      bricks.push({ c, r, hp, alive: true });
+    }
+  }
+  // 高等級多加一行
+  if (level >= 3) {
+    for (let c = 0; c < BRICK_COLS; c++) {
+      bricks.push({ c, r: BRICK_ROWS, hp: 2, alive: true });
+    }
+  }
+}
+
+// ─── 主迴圈 ───────────────────────────────────────────
+function loop() {
+  if (gameOver) return;
+  if (!paused) update();
+  draw();
+  animId = requestAnimationFrame(loop);
+}
+
+function update() {
+  // 球拍跟隨滑鼠
+  padX = Math.max(0, Math.min(W - padW, mouseX - padW / 2));
+
+  // 鍵盤移動球拍
+  if (keys['ArrowLeft'])  padX = Math.max(0, padX - 6);
+  if (keys['ArrowRight']) padX = Math.min(W - padW, padX + 6);
+
+  if (!launched) {
+    bx = padX + padW / 2;
+    return;
+  }
+
+  bx += bdx;
+  by += bdy;
+
+  // 左右牆
+  if (bx - ballR < 0)  { bx = ballR;    bdx = Math.abs(bdx); }
+  if (bx + ballR > W)  { bx = W-ballR;  bdx = -Math.abs(bdx); }
+  // 上牆
+  if (by - ballR < 0)  { by = ballR;    bdy = Math.abs(bdy); }
+
+  // 球拍碰撞
+  if (by + ballR >= PAD_Y && by + ballR <= PAD_Y + PAD_H &&
+      bx >= padX - 4 && bx <= padX + padW + 4) {
+    bdy = -Math.abs(bdy);
+    // 根據擊中位置改變角度
+    const hit = (bx - padX) / padW; // 0~1
+    bdx = (hit - 0.5) * 8;
+    by = PAD_Y - ballR - 1;
+  }
+
+  // 掉底
+  if (by - ballR > H) {
+    lives--;
+    updateHUD();
+    if (lives <= 0) { endGame('遊戲結束'); return; }
+    resetBall();
+    return;
+  }
+
+  // 磚塊碰撞
+  for (const b of bricks) {
+    if (!b.alive) continue;
+    const brickX = BRICK_OFF_X + b.c * (BRICK_W + BRICK_PAD);
+    const brickY = BRICK_OFF_Y + b.r * (BRICK_H + BRICK_PAD);
+    if (bx + ballR > brickX && bx - ballR < brickX + BRICK_W &&
+        by + ballR > brickY && by - ballR < brickY + BRICK_H) {
+      b.hp--;
+      if (b.hp <= 0) { b.alive = false; score += 10 * level; }
+      // 判斷碰哪面
+      const fromLeft  = bx < brickX;
+      const fromRight = bx > brickX + BRICK_W;
+      if (fromLeft || fromRight) bdx = -bdx;
+      else bdy = -bdy;
+      updateHUD();
+      break;
+    }
+  }
+
+  // 過關
+  if (bricks.every(b => !b.alive)) {
+    score += 200 * level;
+    updateHUD();
+    if (level >= 10) { endGame('🎉 恭喜通關！'); return; }
+    level++;
+    initLevel();
+  }
+}
+
+// ─── 繪製 ─────────────────────────────────────────────
+function draw() {
+  ctx.fillStyle = '#080810';
+  ctx.fillRect(0, 0, W, H);
+
+  // 磚塊
+  for (const b of bricks) {
+    if (!b.alive) continue;
+    const brickX = BRICK_OFF_X + b.c * (BRICK_W + BRICK_PAD);
+    const brickY = BRICK_OFF_Y + b.r * (BRICK_H + BRICK_PAD);
+    const row = Math.min(b.r, ROW_COLORS.length - 1);
+    ctx.fillStyle = b.hp >= 2 ? '#ffffff' : ROW_COLORS[row];
+    ctx.fillRect(brickX, brickY, BRICK_W, BRICK_H);
+    ctx.fillStyle = 'rgba(255,255,255,0.18)';
+    ctx.fillRect(brickX, brickY, BRICK_W, 4);
+  }
+
+  // 球拍
+  ctx.fillStyle = '#f97316';
+  ctx.beginPath();
+  ctx.roundRect(padX, PAD_Y, padW, PAD_H, 4);
+  ctx.fill();
+
+  // 球
+  ctx.fillStyle = '#fff';
+  ctx.beginPath();
+  ctx.arc(bx, by, ballR, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 未發球提示
+  if (!launched) {
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    ctx.font = '13px Segoe UI';
+    ctx.textAlign = 'center';
+    ctx.fillText('按 Space 或點擊發球', W / 2, PAD_Y - 24);
+  }
+}
+
+function endGame(title) {
+  gameOver = true;
+  cancelAnimationFrame(animId);
+  showMsg(title, `分數：${score}`);
+}
+
+function updateHUD() {
+  document.getElementById('scoreVal').textContent = score;
+  document.getElementById('levelVal').textContent = level;
+  document.getElementById('livesVal').textContent = lives;
+}
+
+function hideMsg() { document.getElementById('msg').style.display = 'none'; }
+function showMsg(title, sub) {
+  const m = document.getElementById('msg');
+  m.style.display = 'block';
+  m.innerHTML = `<h2>${title}</h2><p>${sub}</p><button class="startBtn" onclick="initGame()">再玩一次</button>`;
+}
+
+// ─── 輸入 ─────────────────────────────────────────────
+cv.addEventListener('mousemove', e => {
+  const rect = cv.getBoundingClientRect();
+  mouseX = e.clientX - rect.left;
+});
+
+cv.addEventListener('click', () => {
+  if (!launched && !gameOver && !paused) launched = true;
+});
+
+document.addEventListener('keydown', e => {
+  keys[e.key] = true;
+  if (e.key === ' ') { e.preventDefault(); if (!launched && !gameOver && !paused) launched = true; }
+  if (e.key === 'Enter') initGame();
+  if (e.key === 'p' || e.key === 'P') {
+    if (gameOver) return;
+    paused = !paused;
+    if (!paused) animId = requestAnimationFrame(loop);
+  }
+});
+document.addEventListener('keyup', e => { keys[e.key] = false; });
+
+document.getElementById('btnStart').addEventListener('click', () => initGame());
+
+// 初始畫面
+ctx.fillStyle = '#080810';
+ctx.fillRect(0, 0, W, H);
+</script>
+</body>
+</html>

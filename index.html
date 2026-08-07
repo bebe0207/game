@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>小遊戲合輯</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #0d0d1a;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      color: #e2e8f0;
+      padding: 40px 20px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    header h1 {
+      font-size: 38px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      color: #fff;
+    }
+
+    header p {
+      margin-top: 8px;
+      font-size: 14px;
+      color: #57606a;
+      letter-spacing: 1px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, 220px);
+      gap: 20px;
+    }
+
+    .card {
+      background: #1a1a2e;
+      border: 1px solid #2a2a45;
+      border-radius: 14px;
+      padding: 28px 24px 24px;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      transition: border-color 0.18s, transform 0.18s;
+      cursor: pointer;
+    }
+
+    .card:hover {
+      border-color: var(--accent);
+      transform: translateY(-4px);
+    }
+
+    .card-icon {
+      width: 72px;
+      height: 72px;
+      border-radius: 18px;
+      background: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 34px;
+      opacity: 0.92;
+    }
+
+    .card h2 {
+      font-size: 19px;
+      font-weight: 700;
+      color: #f0f4f8;
+    }
+
+    .card p {
+      font-size: 13px;
+      color: #57606a;
+      text-align: center;
+      line-height: 1.6;
+    }
+
+    .badge {
+      font-size: 11px;
+      padding: 3px 10px;
+      border-radius: 99px;
+      background: rgba(255,255,255,0.07);
+      color: #888;
+      letter-spacing: 0.5px;
+    }
+
+    footer {
+      margin-top: 56px;
+      font-size: 12px;
+      color: #333;
+      border-top: 1px solid #1e1e30;
+      padding-top: 16px;
+      width: 100%;
+      max-width: 760px;
+      text-align: center;
+    }
+
+    @media (max-width: 960px) {
+      .grid { grid-template-columns: repeat(2, 220px); }
+    }
+    @media (max-width: 500px) {
+      .grid { grid-template-columns: 1fr; }
+      header h1 { font-size: 28px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🎮 小遊戲合輯</h1>
+  <p>選擇一個遊戲開始挑戰</p>
+</header>
+
+<div class="grid">
+
+  <a class="card" href="tetris.html" style="--accent:#00cfcf;">
+    <div class="card-icon">🟦</div>
+    <h2>俄羅斯方塊</h2>
+    <p>消除方塊、挑戰高分，支援保留、Ghost 預覽與等級加速</p>
+    <span class="badge">Tetris</span>
+  </a>
+
+  <a class="card" href="snake.html" style="--accent:#22c55e;">
+    <div class="card-icon">🐍</div>
+    <h2>貪吃蛇</h2>
+    <p>控制蛇吃食物、身體越來越長，別碰到牆壁或自己！</p>
+    <span class="badge">Snake</span>
+  </a>
+
+  <a class="card" href="breakout.html" style="--accent:#f97316;">
+    <div class="card-icon">🧱</div>
+    <h2>打磚塊</h2>
+    <p>用球拍反彈小球，打破所有磚塊過關，速度越來越快！</p>
+    <span class="badge">Breakout</span>
+  </a>
+
+  <a class="card" href="tarot.html" style="--accent:#a855f7;">
+    <div class="card-icon">🔮</div>
+    <h2>塔羅占卜</h2>
+    <p>輸入問題、抽出塔羅牌，取得 GPT 提示詞進行深度解讀</p>
+    <span class="badge">Tarot</span>
+  </a>
+
+</div>
+
+<footer>Made with IBM Bob</footer>
+
+</body>
+</html>

@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>塔羅占卜</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0812;
+      --surface: #12102a;
+      --border: #2a2550;
+      --accent: #a855f7;
+      --accent2: #7c3aed;
+      --gold: #f5c518;
+      --text: #e2e8f0;
+      --muted: #6b7280;
+    }
+
+    body {
+      background: var(--bg);
+      min-height: 100vh;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      color: var(--text);
+      overflow-x: hidden;
+    }
+
+    /* ── 粒子背景 ── */
+    #particles {
+      position: fixed; inset: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── 頂部導覽 ── */
+    #topbar {
+      position: relative; z-index: 10;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 28px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(10,8,18,0.8);
+      backdrop-filter: blur(8px);
+    }
+
+    #topbar a {
+      color: var(--muted); font-size: 13px; text-decoration: none;
+      border: 1px solid var(--border); padding: 6px 14px; border-radius: 6px;
+      transition: color .2s, border-color .2s;
+    }
+    #topbar a:hover { color: var(--text); border-color: var(--accent); }
+
+    #topbar h1 { font-size: 20px; font-weight: 700; letter-spacing: 1px; }
+    #topbar h1 span { color: var(--accent); }
+
+    /* ── 步驟容器 ── */
+    .step { display: none; }
+    .step.active { display: flex; flex-direction: column; align-items: center; }
+
+    /* ══════════════════ STEP 1 ══════════════════ */
+    #step1 {
+      position: relative; z-index: 5;
+      min-height: calc(100vh - 60px);
+      justify-content: center;
+      padding: 48px 20px;
+      gap: 32px;
+    }
+
+    .intro-title {
+      text-align: center;
+    }
+    .intro-title h2 {
+      font-size: 36px; font-weight: 800;
+      background: linear-gradient(135deg, #c084fc, #a855f7, #7c3aed);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      margin-bottom: 10px;
+    }
+    .intro-title p { color: var(--muted); font-size: 15px; line-height: 1.7; max-width: 460px; margin: 0 auto; }
+
+    .question-box {
+      width: 100%; max-width: 520px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px;
+      display: flex; flex-direction: column; gap: 18px;
+    }
+
+    .question-box label { font-size: 13px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+
+    .question-box textarea {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-family: inherit; font-size: 15px;
+      padding: 14px 16px;
+      resize: vertical; min-height: 90px;
+      outline: none; transition: border-color .2s;
+      line-height: 1.6;
+    }
+    .question-box textarea:focus { border-color: var(--accent); }
+    .question-box textarea::placeholder { color: #3a3a5c; }
+
+    .count-select { display: flex; gap: 12px; }
+    .count-btn {
+      flex: 1; padding: 12px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--muted); font-size: 14px; font-weight: 600;
+      cursor: pointer; transition: all .2s;
+    }
+    .count-btn:hover { border-color: var(--accent); color: var(--text); }
+    .count-btn.selected {
+      background: rgba(168,85,247,0.18);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .draw-btn {
+      width: 100%; padding: 16px;
+      background: linear-gradient(135deg, #a855f7, #7c3aed);
+      border: none; border-radius: 12px;
+      color: #fff; font-size: 16px; font-weight: 700;
+      cursor: pointer; letter-spacing: 1px;
+      transition: opacity .2s, transform .15s;
+      position: relative; overflow: hidden;
+    }
+    .draw-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+    .draw-btn:active { transform: translateY(1px); }
+    .draw-btn::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent);
+      transform: translateX(-100%);
+      transition: transform 0.5s;
+    }
+    .draw-btn:hover::after { transform: translateX(100%); }
+
+    /* ══════════════════ STEP 2 ══════════════════ */
+    #step2 {
+      position: relative; z-index: 5;
+      min-height: calc(100vh - 60px);
+      padding: 40px 20px 60px;
+      gap: 28px;
+    }
+
+    #step2 .question-display {
+      text-align: center; max-width: 600px;
+      font-size: 14px; color: var(--muted);
+    }
+    #step2 .question-display strong { color: var(--text); font-size: 16px; }
+
+    #cards-row {
+      display: flex; flex-wrap: wrap;
+      justify-content: center; gap: 20px;
+    }
+
+    /* 塔羅牌外層（flip container） */
+    .card-wrap {
+      width: 110px; height: 180px;
+      perspective: 800px;
+      cursor: pointer;
+    }
+
+    .card-inner {
+      width: 100%; height: 100%;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 0.65s cubic-bezier(.4,0,.2,1);
+    }
+    .card-wrap.flipped .card-inner { transform: rotateY(180deg); }
+
+    .card-wrap:not(.flipped):hover .card-inner {
+      transform: rotateY(12deg) translateY(-6px);
+    }
+
+    .card-face, .card-back {
+      position: absolute; inset: 0;
+      border-radius: 12px;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+    }
+
+    /* 牌背 */
+    .card-back {
+      background: linear-gradient(160deg, #1e1040 0%, #2d1b69 50%, #1e1040 100%);
+      border: 1px solid #4c1d95;
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden;
+    }
+    .card-back::before {
+      content: '';
+      position: absolute; inset: 6px;
+      border: 1px solid rgba(168,85,247,0.3);
+      border-radius: 8px;
+    }
+    .card-back::after {
+      content: '✦';
+      font-size: 42px;
+      color: rgba(168,85,247,0.5);
+    }
+    /* 牌背幾何紋 */
+    .card-back-pattern {
+      position: absolute; inset: 0;
+      background-image:
+        repeating-linear-gradient(45deg, rgba(168,85,247,0.05) 0px, rgba(168,85,247,0.05) 1px, transparent 1px, transparent 12px),
+        repeating-linear-gradient(-45deg, rgba(168,85,247,0.05) 0px, rgba(168,85,247,0.05) 1px, transparent 1px, transparent 12px);
+      border-radius: 12px;
+    }
+
+    /* 牌面 */
+    .card-face {
+      transform: rotateY(180deg);
+      border: 1px solid rgba(168,85,247,0.4);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: space-between;
+      padding: 10px 8px;
+      overflow: hidden;
+    }
+    .card-face.reversed { transform: rotateY(180deg) rotate(180deg); }
+
+    .card-num {
+      font-size: 10px; color: rgba(255,255,255,0.5);
+      letter-spacing: 1px; align-self: flex-start;
+    }
+    .card-symbol { font-size: 44px; line-height: 1; }
+    .card-name {
+      font-size: 11px; font-weight: 700;
+      text-align: center; color: #fff;
+      text-shadow: 0 0 8px rgba(168,85,247,0.8);
+      line-height: 1.3;
+    }
+    .card-pos-badge {
+      font-size: 9px; padding: 2px 6px;
+      border-radius: 99px;
+      letter-spacing: 0.5px;
+    }
+    .card-pos-badge.upright { background: rgba(34,197,94,0.25); color: #4ade80; }
+    .card-pos-badge.reversed-badge { background: rgba(239,68,68,0.25); color: #f87171; }
+
+    /* 牌下資訊面板 */
+    #info-area {
+      width: 100%; max-width: 680px;
+    }
+
+    .info-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 22px 24px;
+      animation: fadeSlideUp 0.4s ease;
+    }
+
+    @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .info-panel .info-header {
+      display: flex; align-items: center; gap: 12px; margin-bottom: 14px;
+    }
+    .info-panel .info-symbol { font-size: 32px; }
+    .info-panel .info-title { flex: 1; }
+    .info-panel .info-title h3 { font-size: 18px; font-weight: 700; color: var(--accent); }
+    .info-panel .info-title .pos {
+      font-size: 12px; margin-top: 2px;
+    }
+    .info-panel .pos.upright { color: #4ade80; }
+    .info-panel .pos.rev     { color: #f87171; }
+
+    .keywords {
+      display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px;
+    }
+    .kw-tag {
+      font-size: 12px; padding: 4px 12px;
+      border-radius: 99px;
+      background: rgba(168,85,247,0.15);
+      border: 1px solid rgba(168,85,247,0.3);
+      color: #c4b5fd;
+    }
+
+    .info-meaning { font-size: 14px; color: #c9d1d9; line-height: 1.8; }
+
+    .position-label {
+      font-size: 11px; color: var(--gold); letter-spacing: 1px;
+      text-transform: uppercase; margin-bottom: 6px;
+    }
+
+    /* 翻牌提示 */
+    #flip-hint {
+      font-size: 13px; color: var(--muted);
+      text-align: center; letter-spacing: 0.5px;
+    }
+    #flip-hint span { color: var(--accent); }
+
+    /* 前往提示詞按鈕 */
+    #to-prompt-btn {
+      display: none;
+      padding: 14px 40px;
+      background: linear-gradient(135deg, #a855f7, #7c3aed);
+      border: none; border-radius: 10px;
+      color: #fff; font-size: 15px; font-weight: 700;
+      cursor: pointer; letter-spacing: 0.5px;
+      animation: fadeSlideUp 0.5s ease;
+      transition: opacity .2s, transform .15s;
+    }
+    #to-prompt-btn:hover { opacity: 0.88; transform: translateY(-2px); }
+
+    /* ══════════════════ STEP 3 ══════════════════ */
+    #step3 {
+      position: relative; z-index: 5;
+      min-height: calc(100vh - 60px);
+      padding: 48px 20px 60px;
+      gap: 24px;
+    }
+
+    #step3 h2 {
+      font-size: 26px; font-weight: 800;
+      background: linear-gradient(135deg, #c084fc, #a855f7);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+
+    #step3 p.sub { font-size: 14px; color: var(--muted); text-align: center; }
+
+    #prompt-box {
+      width: 100%; max-width: 680px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    #prompt-box header {
+      padding: 12px 18px;
+      background: rgba(168,85,247,0.1);
+      border-bottom: 1px solid var(--border);
+      font-size: 12px; color: var(--muted);
+      letter-spacing: 1px; text-transform: uppercase;
+    }
+
+    #prompt-text {
+      width: 100%; min-height: 260px; max-height: 400px;
+      background: transparent;
+      border: none; outline: none;
+      color: #c9d1d9; font-family: 'Consolas', monospace; font-size: 13px;
+      padding: 18px; line-height: 1.8; resize: vertical;
+    }
+
+    .prompt-actions {
+      display: flex; gap: 12px; flex-wrap: wrap;
+      width: 100%; max-width: 680px;
+    }
+
+    .action-btn {
+      flex: 1; min-width: 160px; padding: 14px;
+      border-radius: 10px;
+      font-size: 14px; font-weight: 700;
+      cursor: pointer; letter-spacing: 0.5px;
+      transition: opacity .2s, transform .15s;
+    }
+    .action-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+
+    #copy-btn {
+      background: var(--surface);
+      border: 1px solid var(--accent);
+      color: var(--accent);
+    }
+    #copy-btn.copied {
+      border-color: #4ade80; color: #4ade80;
+      background: rgba(34,197,94,0.1);
+    }
+
+    #gpt-btn {
+      background: linear-gradient(135deg, #a855f7, #7c3aed);
+      border: none; color: #fff;
+    }
+
+    #restart-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      width: 100%; max-width: 680px;
+      padding: 12px;
+      font-size: 14px; cursor: pointer; border-radius: 10px;
+      transition: border-color .2s, color .2s;
+    }
+    #restart-btn:hover { border-color: var(--accent); color: var(--text); }
+
+    /* ── 光暈裝飾 ── */
+    .glow-orb {
+      position: fixed; border-radius: 50%;
+      filter: blur(80px); pointer-events: none; z-index: 0;
+    }
+    .glow-orb.a { width: 400px; height: 400px; top: -100px; left: -100px; background: rgba(124,58,237,0.15); }
+    .glow-orb.b { width: 300px; height: 300px; bottom: 0; right: -80px; background: rgba(168,85,247,0.12); }
+
+    /* ── 牌進場動畫 ── */
+    @keyframes cardDeal {
+      from { opacity: 0; transform: scale(0.4) translateY(40px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .card-wrap { animation: cardDeal 0.5s ease both; }
+
+    /* ── 牌 hover 發光 ── */
+    .card-wrap:not(.flipped):hover .card-back {
+      box-shadow: 0 0 20px rgba(168,85,247,0.5);
+    }
+  </style>
+</head>
+<body>
+
+<!-- 粒子背景 -->
+<canvas id="particles"></canvas>
+
+<!-- 光暈 -->
+<div class="glow-orb a"></div>
+<div class="glow-orb b"></div>
+
+<!-- 頂部導覽 -->
+<div id="topbar">
+  <a href="index.html">← 返回目錄</a>
+  <h1>🔮 塔羅<span>占卜</span></h1>
+  <div style="width:90px"></div>
+</div>
+
+<!-- ════ STEP 1：問題輸入 ════ -->
+<section id="step1" class="step active">
+  <div class="intro-title">
+    <h2>✨ 塔羅占卜</h2>
+    <p>靜下心來，思考你想詢問的問題<br>讓塔羅牌為你指引方向</p>
+  </div>
+
+  <div class="question-box">
+    <label>你想問什麼？</label>
+    <textarea id="questionInput" placeholder="例如：我目前的感情狀況如何？工作上有什麼需要注意的？"></textarea>
+
+    <label>選擇抽牌數量</label>
+    <div class="count-select">
+      <button class="count-btn selected" data-count="1">1 張<br><small style="font-weight:400;color:inherit;opacity:.7">單一指引</small></button>
+      <button class="count-btn" data-count="3">3 張<br><small style="font-weight:400;color:inherit;opacity:.7">過去・現在・未來</small></button>
+      <button class="count-btn" data-count="5">5 張<br><small style="font-weight:400;color:inherit;opacity:.7">五牌陣詳解</small></button>
+    </div>
+
+    <button class="draw-btn" id="startDrawBtn">🃏 開始抽牌</button>
+  </div>
+</section>
+
+<!-- ════ STEP 2：翻牌 ════ -->
+<section id="step2" class="step">
+  <div class="question-display">
+    <div style="color:var(--muted);font-size:12px;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px">你的問題</div>
+    <strong id="questionDisplay"></strong>
+  </div>
+
+  <p id="flip-hint">點擊牌面翻開 — <span id="flipCount">0</span> / <span id="flipTotal">0</span> 張已翻開</p>
+
+  <div id="cards-row"></div>
+
+  <div id="info-area"></div>
+
+  <button id="to-prompt-btn">查看 GPT 提示詞 →</button>
+</section>
+
+<!-- ════ STEP 3：GPT 提示詞 ════ -->
+<section id="step3" class="step">
+  <h2>✦ GPT 提示詞</h2>
+  <p class="sub">複製下方提示詞，貼入 ChatGPT 或直接點擊開啟</p>
+
+  <div id="prompt-box">
+    <header>📋 提示詞內容</header>
+    <textarea id="prompt-text" readonly></textarea>
+  </div>
+
+  <div class="prompt-actions">
+    <button class="action-btn" id="copy-btn">📋 複製提示詞</button>
+    <button class="action-btn" id="gpt-btn">🤖 開啟 ChatGPT</button>
+  </div>
+
+  <button id="restart-btn">↺ 重新占卜</button>
+</section>
+
+<script>
+// ══════════════════════════════════════════════════
+// 粒子背景
+// ══════════════════════════════════════════════════
+(function () {
+  const cv = document.getElementById('particles');
+  const ctx = cv.getContext('2d');
+  let W, H, stars = [];
+
+  function resize() {
+    W = cv.width  = window.innerWidth;
+    H = cv.height = window.innerHeight;
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  for (let i = 0; i < 120; i++) {
+    stars.push({
+      x: Math.random() * window.innerWidth,
+      y: Math.random() * window.innerHeight,
+      r: Math.random() * 1.4 + 0.3,
+      alpha: Math.random() * 0.6 + 0.1,
+      speed: Math.random() * 0.25 + 0.05,
+      drift: (Math.random() - 0.5) * 0.15,
+    });
+  }
+
+  function tick() {
+    ctx.clearRect(0, 0, W, H);
+    for (const s of stars) {
+      s.y -= s.speed;
+      s.x += s.drift;
+      if (s.y < -4) { s.y = H + 4; s.x = Math.random() * W; }
+      if (s.x < -4) s.x = W + 4;
+      if (s.x > W + 4) s.x = -4;
+
+      // 閃爍
+      s.alpha += (Math.random() - 0.5) * 0.04;
+      s.alpha = Math.max(0.05, Math.min(0.75, s.alpha));
+
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(200,180,255,${s.alpha})`;
+      ctx.fill();
+    }
+    requestAnimationFrame(tick);
+  }
+  tick();
+})();
+
+// ══════════════════════════════════════════════════
+// 子任務 1：塔羅牌資料庫（22 張大阿爾克那）
+// ══════════════════════════════════════════════════
+const TAROT_CARDS = [
+  { id:0,  name:'愚者',     emoji:'🌟', color:['#1e3a5f','#0f2744'],
+    keywords:['冒險','純真','新開始'],
+    upright:'一個嶄新的旅程正在召喚你。放下恐懼，以開放的心態踏上未知，宇宙將在背後支持你前進。',
+    reversed:'衝動行事可能帶來風險。在邁出下一步之前，請先評估現況，避免因疏忽而錯失重要細節。' },
+  { id:1,  name:'魔術師',   emoji:'⚡', color:['#3b1f6e','#1e0f3a'],
+    keywords:['意志力','創造','顯化'],
+    upright:'你擁有一切必要的工具與能力。此刻是付諸行動的絕佳時機，意志力將把你的想法化為現實。',
+    reversed:'才能未被充分發揮，或資源遭到誤用。重新評估你的動機，確保行動出自真誠的意圖。' },
+  { id:2,  name:'女祭司',   emoji:'🌙', color:['#1a3a4a','#0d2030'],
+    keywords:['直覺','神秘','內在智慧'],
+    upright:'信任你的直覺與內在聲音。此時不適合外顯行動，而是深入傾聽潛意識，答案已在你心中。',
+    reversed:'忽視了內心的聲音，或過度依賴外部意見。花時間靜心，讓真正的智慧浮現。' },
+  { id:3,  name:'女皇',     emoji:'🌸', color:['#3a2a1a','#1e1510'],
+    keywords:['豐盛','孕育','感官享受'],
+    upright:'豐盛、創造力與生育之能量環繞你。與大自然連結，滋養自己與周遭的人，美好正在成長。',
+    reversed:'創造力受阻或自我價值感低落。重新連結內在的豐盛感，停止依賴外部認可。' },
+  { id:4,  name:'皇帝',     emoji:'👑', color:['#3a1a1a','#200f0f'],
+    keywords:['權威','結構','穩定'],
+    upright:'建立秩序與規則是當下的重點。以堅定的意志與邏輯思維，建構穩固的基礎，掌控局面。',
+    reversed:'過度控制或濫用權威正在造成問題。學習靈活變通，放下對結果的過度執著。' },
+  { id:5,  name:'教皇',     emoji:'✝️', color:['#1f2a3a','#111820'],
+    keywords:['傳統','指導','信仰'],
+    upright:'尋求智者的引導，或遵循傳統智慧。此時加入群體、接受正式學習或尋求精神指導都有益處。',
+    reversed:'質疑不適合自己的規則，或打破固有思想框架。尋找屬於你自己的信仰之路。' },
+  { id:6,  name:'戀人',     emoji:'💞', color:['#3a1a2a','#200f18'],
+    keywords:['選擇','結合','價值觀'],
+    upright:'面臨重要的選擇或深刻的連結。聆聽內心，做出符合真實價值觀的決定，愛與和諧將隨之而來。',
+    reversed:'關係中的不和諧，或逃避重要決定。誠實面對自己的需求，避免做出出於恐懼的選擇。' },
+  { id:7,  name:'戰車',     emoji:'🚀', color:['#1a2a3a','#0f1820'],
+    keywords:['意志','勝利','自律'],
+    upright:'以堅定的意志與自律推進前行。儘管困難重重，專注目標、控制衝動，勝利近在眼前。',
+    reversed:'失去控制或方向感散失。暫停下來重新校準自己的目標，不要讓情緒主宰你的行動。' },
+  { id:8,  name:'力量',     emoji:'🦁', color:['#2a1a3a','#180f20'],
+    keywords:['勇氣','耐心','內在力量'],
+    upright:'真正的力量來自溫柔而非強迫。用愛與耐心馴服內在的恐懼與野性，你比自己以為的更強大。',
+    reversed:'自我懷疑或軟弱正在佔據主導。重新找到自信，停止讓外部批評削弱你的內在力量。' },
+  { id:9,  name:'隱士',     emoji:'🕯️', color:['#1a1a2a','#0f0f18'],
+    keywords:['獨處','內省','指引'],
+    upright:'退回內心，進行深刻的自我反思。此時獨處與靜默比外界活動更有價值，智慧正在沉澱。',
+    reversed:'過度孤立或拒絕他人的幫助。在適當的時機重新回到人群，分享你的智慧。' },
+  { id:10, name:'命運之輪', emoji:'☯️', color:['#2a2a1a','#181810'],
+    keywords:['命運','轉機','循環'],
+    upright:'一個重要的轉折點即將到來。宇宙的輪轉帶來新機遇，接受改變，順應命運之流前進。',
+    reversed:'抗拒改變或陷入負面循環。反思是什麼讓你停滯，主動打破不良模式。' },
+  { id:11, name:'正義',     emoji:'⚖️', color:['#1a2a1a','#0f180f'],
+    keywords:['公平','真相','因果'],
+    upright:'公平與真相將會顯現。你的行為帶來相應的後果，誠實面對現實，做出符合道德的決定。',
+    reversed:'不公正的對待或逃避責任。停止自欺欺人，勇敢承擔自己行為的後果。' },
+  { id:12, name:'倒吊人',   emoji:'🙃', color:['#1a2a3a','#0f1820'],
+    keywords:['等待','犧牲','新視角'],
+    upright:'暫停與等待正是你需要的。從不同的角度審視情況，某種形式的犧牲將帶來深刻的領悟。',
+    reversed:'不必要的犧牲或拒絕改變觀點。評估目前的等待是否有意義，避免陷入無謂的停滯。' },
+  { id:13, name:'死神',     emoji:'🍂', color:['#1a1a1a','#0d0d0d'],
+    keywords:['轉化','結束','蛻變'],
+    upright:'一個時代的結束帶來新生的機會。放下舊有的執著，迎接轉化帶來的力量，改變是成長的必要。',
+    reversed:'抗拒改變或無法放手。停滯的恐懼讓你困在過去，是時候允許自己蛻變了。' },
+  { id:14, name:'節制',     emoji:'🌊', color:['#1a2a3a','#0f1a25'],
+    keywords:['平衡','耐心','融合'],
+    upright:'尋找中道，讓不同元素和諧共存。耐心地整合各方資源，穩定與平衡將帶你達到目標。',
+    reversed:'失衡或過度放縱。重新審視生活中的各個面向，找回節制與和諧。' },
+  { id:15, name:'惡魔',     emoji:'🔗', color:['#2a1a1a','#180f0f'],
+    keywords:['束縛','物質慾望','陰影'],
+    upright:'某種束縛或執著正在控制你。認識自己內心的陰暗面，有意識的選擇將打破這條鎖鏈。',
+    reversed:'從束縛中解脫，或認清錯誤的執著。勇氣與自我覺察幫助你重獲自由。' },
+  { id:16, name:'高塔',     emoji:'⚡', color:['#2a1a0f','#180f08'],
+    keywords:['突變','崩塌','啟示'],
+    upright:'突如其來的變化將打破舊有秩序。儘管過程痛苦，這場崩塌是為了清除不健康的基礎。',
+    reversed:'避免了一場災難，或變化正在以更溫和的方式進行。以開放的心迎接必要的改變。' },
+  { id:17, name:'星星',     emoji:'⭐', color:['#1a1a3a','#0f0f25'],
+    keywords:['希望','靈感','療癒'],
+    upright:'希望之光照亮前路。療癒的過程已經開始，相信宇宙的美好，讓夢想引領你前行。',
+    reversed:'失去希望或缺乏靈感。重新連結內心深處的夢想，找回前進的動力與信心。' },
+  { id:18, name:'月亮',     emoji:'🌕', color:['#1a1a2a','#0f0f1a'],
+    keywords:['幻象','潛意識','直覺'],
+    upright:'事情並非如表面所見。深入潛意識的迷霧，信任你的直覺，真相將在混沌中逐漸清晰。',
+    reversed:'迷茫正在消散，或面對了內心的恐懼。從幻象中醒來，以清醒的眼光看待現實。' },
+  { id:19, name:'太陽',     emoji:'☀️', color:['#3a2a0f','#201808'],
+    keywords:['喜悅','活力','成功'],
+    upright:'光明、快樂與成功正在向你靠近。展現真實的自我，充滿能量地迎接美好，一切都很順利。',
+    reversed:'暫時的烏雲遮蔽了陽光。不要讓短暫的挫折影響你的樂觀，太陽終將再度升起。' },
+  { id:20, name:'審判',     emoji:'🔔', color:['#1a2a2a','#0f1818'],
+    keywords:['覺醒','重生','呼喚'],
+    upright:'宇宙正在召喚你覺醒。聆聽更高自我的呼喚，做出影響深遠的決定，誠實地審視自己的人生。',
+    reversed:'自我懷疑或逃避人生的重大呼喚。停止自我批判，勇敢回應命運的邀請。' },
+  { id:21, name:'世界',     emoji:'🌍', color:['#1a3a2a','#0f2018'],
+    keywords:['完成','整合','成就'],
+    upright:'一個完整的循環即將圓滿結束。你的努力得到回報，慶祝這個成就，並準備好迎接下一段旅程。',
+    reversed:'尚未完成的事項阻礙了前進。找出還需努力的部分，給自己時間完整地結束這個篇章。' },
+];
+
+// 牌陣位置名稱
+const LAYOUTS = {
+  1: ['指引'],
+  3: ['過去', '現在', '未來'],
+  5: ['情況', '阻礙', '建議', '潛意識', '結果'],
+};
+
+// ══════════════════════════════════════════════════
+// 遊戲狀態
+// ══════════════════════════════════════════════════
+let selectedCount = 1;
+let drawnCards    = [];
+let question      = '';
+let flippedCount  = 0;
+
+// ══════════════════════════════════════════════════
+// 步驟切換
+// ══════════════════════════════════════════════════
+function showStep(n) {
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+  document.getElementById('step' + n).classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ══════════════════════════════════════════════════
+// Step 1：選牌數
+// ══════════════════════════════════════════════════
+document.querySelectorAll('.count-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.count-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    selectedCount = parseInt(btn.dataset.count);
+  });
+});
+
+document.getElementById('startDrawBtn').addEventListener('click', () => {
+  const q = document.getElementById('questionInput').value.trim();
+  if (!q) {
+    document.getElementById('questionInput').focus();
+    document.getElementById('questionInput').style.borderColor = '#f87171';
+    setTimeout(() => document.getElementById('questionInput').style.borderColor = '', 1200);
+    return;
+  }
+  question = q;
+  startDraw(selectedCount);
+  showStep(2);
+});
+
+// ══════════════════════════════════════════════════
+// 子任務 3：抽牌 & 渲染
+// ══════════════════════════════════════════════════
+function drawCards(n) {
+  const pool = [...TAROT_CARDS];
+  const result = [];
+  while (result.length < n) {
+    const idx = Math.floor(Math.random() * pool.length);
+    const card = pool.splice(idx, 1)[0];
+    result.push({ ...card, isReversed: Math.random() < 0.5 });
+  }
+  return result;
+}
+
+function startDraw(n) {
+  drawnCards   = drawCards(n);
+  flippedCount = 0;
+
+  document.getElementById('questionDisplay').textContent = question;
+  document.getElementById('flipCount').textContent = '0';
+  document.getElementById('flipTotal').textContent = n;
+  document.getElementById('to-prompt-btn').style.display = 'none';
+  document.getElementById('info-area').innerHTML = '';
+
+  renderCards(drawnCards);
+}
+
+function renderCards(cards) {
+  const row = document.getElementById('cards-row');
+  row.innerHTML = '';
+  const layout = LAYOUTS[cards.length];
+
+  cards.forEach((card, i) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'card-wrap';
+    wrap.style.animationDelay = `${i * 0.12}s`;
+
+    // 牌背
+    const inner = document.createElement('div');
+    inner.className = 'card-inner';
+
+    const back = document.createElement('div');
+    back.className = 'card-back';
+    const pat = document.createElement('div');
+    pat.className = 'card-back-pattern';
+    back.appendChild(pat);
+
+    // 牌面
+    const face = document.createElement('div');
+    face.className = 'card-face' + (card.isReversed ? ' reversed' : '');
+    face.style.background = `linear-gradient(160deg, ${card.color[0]}, ${card.color[1]})`;
+
+    face.innerHTML = `
+      <div class="card-num">${String(card.id).padStart(2,'0')}</div>
+      <div class="card-symbol">${card.emoji}</div>
+      <div class="card-name">${card.name}</div>
+      <div class="card-pos-badge ${card.isReversed ? 'reversed-badge' : 'upright'}">${card.isReversed ? '逆位' : '正位'}</div>
+    `;
+
+    // 位置標籤（在牌外上方）
+    const posLabel = document.createElement('div');
+    posLabel.style.cssText = 'font-size:11px;color:var(--gold);letter-spacing:1px;text-transform:uppercase;text-align:center;margin-bottom:4px;height:16px;';
+    posLabel.textContent = layout[i] || '';
+
+    inner.appendChild(back);
+    inner.appendChild(face);
+    wrap.appendChild(posLabel);
+    wrap.appendChild(inner);
+
+    wrap.addEventListener('click', () => flipCard(wrap, i));
+    row.appendChild(wrap);
+  });
+}
+
+function flipCard(wrap, index) {
+  if (wrap.classList.contains('flipped')) {
+    // 已翻開，重新高亮顯示資訊
+    showInfo(index);
+    return;
+  }
+  wrap.classList.add('flipped');
+  flippedCount++;
+  document.getElementById('flipCount').textContent = flippedCount;
+
+  setTimeout(() => showInfo(index), 350);
+
+  if (flippedCount === drawnCards.length) {
+    setTimeout(() => {
+      document.getElementById('to-prompt-btn').style.display = 'block';
+    }, 600);
+  }
+}
+
+function showInfo(index) {
+  const card = drawnCards[index];
+  const layout = LAYOUTS[drawnCards.length];
+  const isRev  = card.isReversed;
+
+  const area = document.getElementById('info-area');
+  area.innerHTML = `
+    <div class="info-panel">
+      <div class="position-label">${layout[index]}</div>
+      <div class="info-header">
+        <div class="info-symbol">${card.emoji}</div>
+        <div class="info-title">
+          <h3>${card.name}</h3>
+          <div class="pos ${isRev ? 'rev' : 'upright'}">${isRev ? '⬇ 逆位' : '⬆ 正位'}</div>
+        </div>
+      </div>
+      <div class="keywords">
+        ${card.keywords.map(k => `<span class="kw-tag">${k}</span>`).join('')}
+      </div>
+      <div class="info-meaning">${isRev ? card.reversed : card.upright}</div>
+    </div>
+  `;
+  area.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+document.getElementById('to-prompt-btn').addEventListener('click', () => {
+  buildAndShowPrompt();
+  showStep(3);
+});
+
+// ══════════════════════════════════════════════════
+// 子任務 4：GPT 提示詞
+// ══════════════════════════════════════════════════
+function buildPrompt(q, cards) {
+  const layout = LAYOUTS[cards.length];
+  const layoutName = { 1:'單張指引', 3:'三張牌陣（過去・現在・未來）', 5:'五張牌陣' }[cards.length];
+
+  const cardLines = cards.map((c, i) => {
+    const pos = c.isReversed ? '逆位' : '正位';
+    const kw  = c.keywords.join('、');
+    const meaning = c.isReversed ? c.reversed : c.upright;
+    return `【${layout[i]}】${c.name}（${pos}）\n  關鍵字：${kw}\n  牌義：${meaning}`;
+  }).join('\n\n');
+
+  return `你是一位資深的塔羅牌占卜師，擅長以直覺與象徵意義進行深度解讀。請用溫暖、正面且務實的語氣回答。
+
+【問題】
+${q}
+
+【牌陣】${layoutName}
+
+【抽到的牌】
+${cardLines}
+
+【請求】
+請根據以上牌陣，針對提問者的問題進行完整的塔羅解讀，說明每張牌在此位置的意義，以及整個牌陣所呈現的整體訊息。最後請給予一個具體可行的建議或行動方向。`;
+}
+
+function buildAndShowPrompt() {
+  const prompt = buildPrompt(question, drawnCards);
+  document.getElementById('prompt-text').value = prompt;
+}
+
+document.getElementById('copy-btn').addEventListener('click', () => {
+  const text = document.getElementById('prompt-text').value;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('copy-btn');
+    btn.textContent = '✅ 已複製！';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = '📋 複製提示詞'; btn.classList.remove('copied'); }, 2000);
+  });
+});
+
+document.getElementById('gpt-btn').addEventListener('click', () => {
+  const text = document.getElementById('prompt-text').value;
+  window.open('https://chatgpt.com/?q=' + encodeURIComponent(text), '_blank');
+});
+
+document.getElementById('restart-btn').addEventListener('click', () => {
+  document.getElementById('questionInput').value = '';
+  document.querySelectorAll('.count-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelector('.count-btn[data-count="1"]').classList.add('selected');
+  selectedCount = 1;
+  showStep(1);
+});
+</script>
+</body>
+</html>
