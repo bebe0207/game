@@ -277,14 +277,14 @@
     </div>
 
     <div class="stats-grid">
-      <div class="stat-box atk"><div class="sb-label">ATK</div><div class="sb-val" id="sp-atk">0</div></div>
-      <div class="stat-box def"><div class="sb-label">DEF</div><div class="sb-val" id="sp-def">0</div></div>
-      <div class="stat-box spd"><div class="sb-label">SPD</div><div class="sb-val" id="sp-spd">0</div></div>
-      <div class="stat-box gld"><div class="sb-label">GOLD</div><div class="sb-val" id="sp-gold">0</div></div>
+      <div class="stat-box atk"><div class="sb-label">攻擊</div><div class="sb-val" id="sp-atk">0</div></div>
+      <div class="stat-box def"><div class="sb-label">防禦</div><div class="sb-val" id="sp-def">0</div></div>
+      <div class="stat-box spd"><div class="sb-label">速度</div><div class="sb-val" id="sp-spd">0</div></div>
+      <div class="stat-box gld"><div class="sb-label">金幣</div><div class="sb-val" id="sp-gold">0</div></div>
     </div>
 
     <div id="sp-exp-wrap">
-      <div id="sp-exp-label"><span id="sp-lv-text">Lv.1</span><span id="sp-exp-text">0/50 EXP</span></div>
+      <div id="sp-exp-label"><span id="sp-lv-text">Lv.1</span><span id="sp-exp-text">0/50 經驗</span></div>
       <div id="sp-exp-bar"><div id="sp-exp-fill" style="width:0%"></div></div>
     </div>
 
@@ -468,7 +468,7 @@ function updatePanel() {
   // EXP
   const expPct = p.exp / p.expNext * 100;
   document.getElementById('sp-lv-text').textContent  = `Lv.${p.lv}`;
-  document.getElementById('sp-exp-text').textContent = `${p.exp}/${p.expNext} EXP`;
+  document.getElementById('sp-exp-text').textContent = `${p.exp}/${p.expNext} 經驗`;
   document.getElementById('sp-exp-fill').style.width  = expPct + '%';
 
   // 裝備槽
@@ -551,7 +551,8 @@ function showExploreButtons() {
 
 function triggerEvent() {
   if ([5,10,15,20].includes(floorNum)) {
-    const boss = { ...BOSSES[floorNum] };
+    const base = BOSSES[floorNum];
+    const boss = { ...base, maxHp: base.hp };
     addLog(``, 'info');
     addLog(`━━━━━━━━━━━━━━━━━━━━━━━━`, 'boss');
     addLog(`⚠️  B${floorNum}F BOSS 出現：${boss.icon} ${boss.name}！`, 'boss');
@@ -782,7 +783,7 @@ function battleWin() {
   kills++;
   player.gold += e.gold;
   addLog(``, 'info');
-  addLog(`✅ 擊敗 ${e.icon} ${e.name}！獲得 ${e.gold}G + ${e.exp} EXP`, 'good');
+  addLog(`✅ 擊敗 ${e.icon} ${e.name}！獲得 ${e.gold} 金幣 + ${e.exp} 經驗`, 'good');
   gainExp(e.exp);
   updatePanel();
   setTimeout(afterBattle, 600);
@@ -822,7 +823,7 @@ function gainExp(amount) {
     player.hp = Math.min(player.hp + 8, player.maxHp);
     player.atk += 2;
     player.def += 1;
-    addLog(`🌟 升級！現在是 Lv.${player.lv}！HP↑8 ATK↑2 DEF↑1`, 'sys');
+    addLog(`🌟 升級！現在是 Lv.${player.lv}！生命↑8 攻擊↑2 防禦↑1`, 'sys');
   }
 }
 
