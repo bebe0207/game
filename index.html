@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>小遊戲合輯</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -29,6 +30,14 @@
       font-weight: 800;
       letter-spacing: 2px;
       color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    header h1 i {
+      font-size: 36px;
     }
 
     header p {
@@ -38,11 +47,33 @@
       letter-spacing: 1px;
     }
 
+    /* ── Grid：桌機 4 欄 ── */
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+      grid-template-columns: repeat(4, 1fr);
       gap: 20px;
+      width: 100%;
       max-width: 1120px;
+    }
+
+    /* ── 平板：2 欄 ── */
+    @media (max-width: 991px) {
+      .grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    /* ── 手機：1 欄 ── */
+    @media (max-width: 575px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+      header h1 {
+        font-size: 28px;
+      }
+      header h1 i {
+        font-size: 26px;
+      }
     }
 
     .card {
@@ -73,8 +104,13 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 34px;
       opacity: 0.92;
+    }
+
+    .card-icon i {
+      font-size: 32px;
+      color: #fff;
+      line-height: 1;
     }
 
     .card h2 {
@@ -109,79 +145,75 @@
       max-width: 760px;
       text-align: center;
     }
-
-    @media (max-width: 500px) {
-      header h1 { font-size: 28px; }
-    }
   </style>
 </head>
 <body>
 
 <header>
-  <h1>🎮 小遊戲合輯</h1>
+  <h1><i class="bi bi-joystick"></i> 小遊戲合輯</h1>
   <p>選擇一個遊戲開始挑戰</p>
 </header>
 
 <div class="grid">
 
-  <a class="card" href="tetris.html" style="--accent:#00cfcf;">
-    <div class="card-icon">🟦</div>
+  <a class="card" href="games/tetris.html" style="--accent:#00cfcf;">
+    <div class="card-icon"><i class="bi bi-grid-3x3-gap-fill"></i></div>
     <h2>俄羅斯方塊</h2>
     <p>經典俄羅斯方塊，嘗試得到最高分吧</p>
     <span class="badge">Tetris</span>
   </a>
 
-  <a class="card" href="snake.html" style="--accent:#22c55e;">
-    <div class="card-icon">🐍</div>
+  <a class="card" href="games/snake.html" style="--accent:#22c55e;">
+    <div class="card-icon"><i class="bi bi-cursor-fill"></i></div>
     <h2>貪吃蛇</h2>
     <p>想辦法吃更多東西，小心不要撞到自己的身體</p>
     <span class="badge">Snake</span>
   </a>
 
-  <a class="card" href="breakout.html" style="--accent:#f97316;">
-    <div class="card-icon">🧱</div>
+  <a class="card" href="games/breakout.html" style="--accent:#f97316;">
+    <div class="card-icon"><i class="bi bi-layers-fill"></i></div>
     <h2>打磚塊</h2>
     <p>童年遊戲，試著把全部磚塊都打掉吧</p>
     <span class="badge">Breakout</span>
   </a>
 
-  <a class="card" href="tarot.html" style="--accent:#a855f7;">
-    <div class="card-icon">🔮</div>
+  <a class="card" href="games/tarot.html" style="--accent:#a855f7;">
+    <div class="card-icon"><i class="bi bi-stars"></i></div>
     <h2>塔羅占卜</h2>
     <p>有迷惘的事情嗎?想知道他/她在想什麼嗎?來試試塔羅牌吧</p>
     <span class="badge">Tarot</span>
   </a>
 
-  <a class="card" href="tetris-battle.html" style="--accent:#ef4444;">
-    <div class="card-icon">🆚</div>
+  <a class="card" href="games/tetris-battle.html" style="--accent:#ef4444;">
+    <div class="card-icon"><i class="bi bi-people-fill"></i></div>
     <h2>俄羅斯方塊對戰</h2>
     <p>俄羅斯方塊，與你的朋友一起對戰吧!</p>
     <span class="badge">Battle</span>
   </a>
 
-  <a class="card" href="snake-battle.html" style="--accent:#22c55e;">
-    <div class="card-icon">⚔️</div>
+  <a class="card" href="games/snake-battle.html" style="--accent:#22c55e;">
+    <div class="card-icon"><i class="bi bi-controller"></i></div>
     <h2>貪吃蛇對戰</h2>
     <p>想辦法活下去，殺死你的對手</p>
     <span class="badge">Snake Battle</span>
   </a>
 
-  <a class="card" href="quiz.html" style="--accent:#a855f7;">
-    <div class="card-icon">🎯</div>
+  <a class="card" href="games/quiz.html" style="--accent:#a855f7;">
+    <div class="card-icon"><i class="bi bi-patch-question-fill"></i></div>
     <h2>問答遊戲</h2>
     <p>問與答，想辦法得到最高分吧</p>
     <span class="badge">Quiz</span>
   </a>
 
-  <a class="card" href="dungeon.html" style="--accent:#ef4444;">
-    <div class="card-icon">⚔️</div>
+  <a class="card" href="games/dungeon.html" style="--accent:#ef4444;">
+    <div class="card-icon"><i class="bi bi-shield-fill-exclamation"></i></div>
     <h2>深淵地下城</h2>
     <p>文字 RPG！三種職業、20 層地下城、回合制戰鬥、商店裝備、Boss 結局！</p>
     <span class="badge">Dungeon RPG</span>
   </a>
 
-  <a class="card" href="quiz-lobby.html" style="--accent:#f5c518;">
-    <div class="card-icon">📡</div>
+  <a class="card" href="games/quiz-lobby.html" style="--accent:#f5c518;">
+    <div class="card-icon"><i class="bi bi-wifi"></i></div>
     <h2>問答聯線對戰</h2>
     <p>主持人出題、玩家搶答，多人即時排行！</p>
     <span class="badge">Live Quiz</span>

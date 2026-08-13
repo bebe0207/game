@@ -23,7 +23,7 @@ const server = http.createServer((req, res) => {
 
   if (!fs.existsSync(filePath)) {
     if (urlPath === '/index.html') {
-      filePath = path.join(ROOT, 'tetris.html');
+      filePath = path.join(ROOT, 'games', 'tetris.html');
     } else {
       res.writeHead(404);
       res.end('404 Not Found');
