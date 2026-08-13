@@ -136,11 +136,42 @@
     .stat-box.spd .sb-val { color: var(--green); }
     .stat-box.gld .sb-val { color: var(--gold); }
     .equip-section { display: flex; flex-direction: column; gap: 5px; }
-    .equip-section .sec-title { font-size: 10px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+    .equip-section .sec-title { font-size: 10px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; display:flex; justify-content:space-between; align-items:center; }
     .equip-slot { font-size: 12px; background: rgba(255,255,255,.03); border: 1px solid var(--border); border-radius: 7px; padding: 5px 8px; color: var(--muted); }
     .equip-slot.filled { color: var(--text); border-color: #3a3a60; }
     .potion-row { display: flex; align-items: center; gap: 8px; font-size: 13px; }
     .potion-row span { color: var(--muted); font-size: 11px; }
+
+    /* 🎒 背包按鈕 */
+    .inv-btn { font-size: 10px; padding: 2px 8px; background: rgba(168,85,247,.15); border: 1px solid rgba(168,85,247,.4); border-radius: 5px; color: #c084fc; cursor: pointer; font-family: inherit; font-weight: 700; transition: background .15s; }
+    .inv-btn:hover { background: rgba(168,85,247,.3); }
+
+    /* 背包 Overlay */
+    #inv-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.75); z-index:100; align-items:center; justify-content:center; }
+    #inv-overlay.open { display:flex; }
+    #inv-panel { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; width: min(480px, 92vw); max-height: 80vh; display:flex; flex-direction:column; overflow:hidden; }
+    #inv-header { padding: 14px 18px; border-bottom: 1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
+    #inv-header h3 { font-size: 15px; font-weight: 800; color: #c084fc; }
+    #inv-close { background: none; border: none; color: var(--muted); font-size: 20px; cursor: pointer; line-height: 1; padding: 0 4px; }
+    #inv-close:hover { color: var(--text); }
+    #inv-body { padding: 14px 16px; overflow-y: auto; flex:1; display:flex; flex-direction:column; gap: 14px; }
+    .inv-section-title { font-size: 10px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
+    #inv-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(130px,1fr)); gap:8px; }
+    .inv-item { background: rgba(255,255,255,.04); border: 1px solid var(--border); border-radius: 10px; padding: 10px 10px; cursor: pointer; transition: border-color .15s, transform .12s; display:flex; flex-direction:column; gap:4px; }
+    .inv-item:hover { border-color: #a855f7; transform: translateY(-1px); }
+    .inv-item .ii-name { font-size: 12px; font-weight: 700; }
+    .inv-item .ii-bonus { font-size: 10px; color: #4ade80; }
+    .inv-item .ii-for { font-size: 10px; padding: 1px 6px; border-radius: 4px; display:inline-block; font-weight: 700; margin-top:1px; }
+    .inv-item .ii-for.warrior { background: rgba(239,68,68,.15); color: #f87171; }
+    .inv-item .ii-for.mage    { background: rgba(168,85,247,.15); color: #c084fc; }
+    .inv-item .ii-for.rogue   { background: rgba(34,197,94,.15);  color: #4ade80; }
+    .inv-item .ii-equip-hint { font-size: 10px; color: var(--accent); font-weight: 700; margin-top:2px; }
+    .inv-empty { color: var(--muted); font-size: 13px; text-align: center; padding: 20px; }
+    #inv-equipped-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(130px,1fr)); gap:8px; }
+    .inv-equipped-item { background: rgba(59,130,246,.06); border: 1px solid rgba(59,130,246,.25); border-radius: 10px; padding: 10px 10px; display:flex; flex-direction:column; gap:4px; }
+    .inv-equipped-item .ii-slot { font-size: 10px; color: var(--muted); }
+    .inv-equipped-item .ii-name { font-size: 12px; font-weight: 700; color: var(--text); }
+    .inv-equipped-item .ii-bonus { font-size: 10px; color: #60a5fa; }
     #sp-exp-wrap { display: flex; flex-direction: column; gap: 3px; }
     #sp-exp-label { font-size: 10px; color: var(--muted); display: flex; justify-content: space-between; }
     #sp-exp-bar   { height: 6px; background: rgba(255,255,255,.06); border-radius: 3px; overflow: hidden; }
@@ -305,7 +336,10 @@
     </div>
 
     <div class="equip-section">
-      <div class="sec-title">裝備</div>
+      <div class="sec-title">
+        <span>裝備</span>
+        <button class="inv-btn" id="inv-open-btn" onclick="openInventory()">🎒 背包</button>
+      </div>
       <div class="equip-slot" id="eq-weapon">⚔️ 武器：無</div>
       <div class="equip-slot" id="eq-armor">🛡️ 護甲：無</div>
       <div class="equip-slot" id="eq-neck">📿 頸鍊：無</div>
@@ -314,6 +348,26 @@
 
     <div class="potion-row">
       🧪 藥水：<span id="sp-potions">0 / 3</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 物品欄 Overlay ══ -->
+<div id="inv-overlay">
+  <div id="inv-panel">
+    <div id="inv-header">
+      <h3>🎒 背包</h3>
+      <button id="inv-close" onclick="closeInventory()">✕</button>
+    </div>
+    <div id="inv-body">
+      <div>
+        <div class="inv-section-title">背包物品（點擊裝備）</div>
+        <div id="inv-grid"></div>
+      </div>
+      <div>
+        <div class="inv-section-title">已裝備</div>
+        <div id="inv-equipped-grid"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -507,6 +561,7 @@ function startGame(classId) {
     gold: 20, exp: 0, lv: 1, expNext: 50,
     potions: 1, poison: 0,
     equipment: { weapon:null, armor:null, neck:null, ring:null },
+    inventory: [],
     skills: cls.skills.map(s => ({ ...s, cd: 0 })),
     shield: false, guardActive: false,
   };
@@ -565,6 +620,104 @@ function setSlot(id, label, item) {
     el.className = 'equip-slot';
     el.textContent = label + '：無';
   }
+}
+
+// ════════════════════════════════════════════════════════
+// 物品欄（Inventory）
+// ════════════════════════════════════════════════════════
+const CLASS_NAMES = { warrior:'戰士', mage:'法師', rogue:'盜賊' };
+const SLOT_LABELS = { weapon:'武器', armor:'護甲', neck:'頸鍊', ring:'戒指' };
+
+// 職業專屬武器的攻擊加成（相較通用武器同 tier 高約 3~5）
+function classBonus(item) {
+  if (!item.for) return null;
+  const bonuses = [];
+  if (item.atk)  bonuses.push(`攻擊 +${item.atk}（${CLASS_NAMES[item.for]}加成）`);
+  if (item.spd)  bonuses.push(`速度 +${item.spd}`);
+  if (item.def)  bonuses.push(`防禦 +${item.def}`);
+  if (item.hp)   bonuses.push(`生命 +${item.hp}`);
+  if (item.crit) bonuses.push(`暴擊 +${Math.round(item.crit*100)}%`);
+  return bonuses.join('・');
+}
+
+function openInventory() {
+  if (!player) return;
+  renderInventory();
+  document.getElementById('inv-overlay').classList.add('open');
+}
+function closeInventory() {
+  document.getElementById('inv-overlay').classList.remove('open');
+}
+// 點擊 overlay 背景關閉
+document.getElementById('inv-overlay').addEventListener('click', function(e) {
+  if (e.target === this) closeInventory();
+});
+
+function renderInventory() {
+  // 背包物品
+  const grid = document.getElementById('inv-grid');
+  grid.innerHTML = '';
+  if (player.inventory.length === 0) {
+    grid.innerHTML = '<div class="inv-empty">背包是空的</div>';
+  } else {
+    player.inventory.forEach((item, idx) => {
+      const div = document.createElement('div');
+      div.className = 'inv-item';
+      const forLabel = item.for ? `<span class="ii-for ${item.for}">${CLASS_NAMES[item.for]}專屬</span>` : '';
+      const bonus = item.for ? (classBonus(item)||itemBonusText(item)) : itemBonusText(item);
+      div.innerHTML = `
+        <div class="ii-name">${item.icon} ${item.name}</div>
+        ${forLabel}
+        <div class="ii-bonus">${bonus}</div>
+        <div class="ii-equip-hint">▶ 點擊裝備</div>`;
+      div.addEventListener('click', () => { equipFromInventory(idx); renderInventory(); updatePanel(); });
+      grid.appendChild(div);
+    });
+  }
+
+  // 已裝備
+  const eqGrid = document.getElementById('inv-equipped-grid');
+  eqGrid.innerHTML = '';
+  let hasEquip = false;
+  for (const [slot, item] of Object.entries(player.equipment)) {
+    if (!item) continue;
+    hasEquip = true;
+    const div = document.createElement('div');
+    div.className = 'inv-equipped-item';
+    const bonus = item.for ? (classBonus(item)||itemBonusText(item)) : itemBonusText(item);
+    div.innerHTML = `
+      <div class="ii-slot">${SLOT_LABELS[slot]}</div>
+      <div class="ii-name">${item.icon} ${item.name}</div>
+      <div class="ii-bonus">${bonus}</div>`;
+    eqGrid.appendChild(div);
+  }
+  if (!hasEquip) eqGrid.innerHTML = '<div class="inv-empty">尚未裝備任何物品</div>';
+}
+
+// 從背包裝備物品：舊裝備退回背包
+function equipFromInventory(idx) {
+  const item = player.inventory[idx];
+  if (!item) return;
+  player.inventory.splice(idx, 1);
+  const slot = item.slot;
+  const old = player.equipment[slot];
+  if (old) {
+    player.inventory.push(old);
+    addLog(`🔄 ${old.icon} ${old.name} 退回背包`, 'info');
+  }
+  player.equipment[slot] = item;
+  addLog(`✅ 裝備了 ${item.icon} ${item.name}！`, 'good');
+}
+
+// 加入背包（上限 10）
+function addToInventory(item) {
+  if (player.inventory.length >= 10) {
+    addLog(`🎒 背包已滿（10/10），${item.icon} ${item.name} 無法拾取！`, 'bad');
+    return false;
+  }
+  player.inventory.push(item);
+  addLog(`🎒 ${item.icon} ${item.name} 已放入背包！`, 'good');
+  return true;
 }
 
 function totalAtk() {
@@ -1192,9 +1345,9 @@ function triggerCursedChest() {
       setEvent('✨','財寶！',`寶箱中藏著 ${g} 枚金幣！`);
     } else if (luck < 0.70) {
       const item = ITEMS[Math.floor(Math.random()*ITEMS.length)];
-      equipItem(item);
+      addToInventory(item);
       addLog(`✨ 詛咒消散！獲得 ${item.icon} ${item.name}！`,'good');
-      setEvent('✨','稀有裝備！',`${item.icon} ${item.name} 到手！`);
+      setEvent('✨','稀有裝備！',`${item.icon} ${item.name} 已放入背包！`);
     } else {
       const dmg = Math.round(player.maxHp * (0.20 + Math.random()*0.15));
       player.hp  = Math.max(1, player.hp - dmg);
@@ -1242,19 +1395,25 @@ function renderShop() {
   const buyGrid = document.createElement('div');
   buyGrid.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px;';
   pool.forEach(item => {
-    const cantBuy = player.gold < item.price;
+    const cantBuy = player.gold < item.price || (!item.potion && player.inventory.length >= 10);
     const div = document.createElement('div');
     div.className = 'shop-item' + (cantBuy?' cant-buy':'');
-    div.innerHTML = `<div class="si-name">${item.icon} ${item.name}</div><div class="si-bonus">${itemBonusText(item)}</div><div class="si-price">💰 ${item.price}G</div>`;
+    const forTag = item.for ? `<span style="font-size:10px;padding:1px 5px;border-radius:3px;background:rgba(168,85,247,.15);color:#c084fc;font-weight:700">${CLASS_NAMES[item.for]}專屬</span>` : '';
+    div.innerHTML = `<div class="si-name">${item.icon} ${item.name} ${forTag}</div><div class="si-bonus">${itemBonusText(item)}</div><div class="si-price">💰 ${item.price}G</div>`;
     if (!cantBuy) div.addEventListener('click', () => { buyItem(item); renderShop(); });
     buyGrid.appendChild(div);
   });
   buySection.appendChild(buyGrid);
   shopEl.appendChild(buySection);
 
-  // ── 賣出區（已裝備的物品）──
+  // ── 賣出區（已裝備 + 背包物品）──
   const equippedItems = Object.values(player.equipment).filter(Boolean);
-  if (equippedItems.length > 0) {
+  const invItems = player.inventory;
+  const sellableItems = [
+    ...equippedItems.map(it => ({ item: it, tag: '已裝備' })),
+    ...invItems.map(it => ({ item: it, tag: '背包' })),
+  ];
+  if (sellableItems.length > 0) {
     const sellSection = document.createElement('div');
     sellSection.style.cssText = 'width:100%;display:flex;flex-direction:column;gap:6px;margin-top:10px;';
     const sellLabel = document.createElement('div');
@@ -1263,12 +1422,12 @@ function renderShop() {
     sellSection.appendChild(sellLabel);
     const sellGrid = document.createElement('div');
     sellGrid.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px;';
-    equippedItems.forEach(item => {
+    sellableItems.forEach(({ item, tag }) => {
       const sp = sellPrice(item);
       const div = document.createElement('div');
       div.className = 'shop-item';
       div.style.borderColor = '#3a3a60';
-      div.innerHTML = `<div class="si-name">${item.icon} ${item.name}</div><div class="si-bonus" style="color:#f87171">${itemBonusText(item)}</div><div class="si-price" style="color:#4ade80">賣出 +${sp}G</div>`;
+      div.innerHTML = `<div class="si-name">${item.icon} ${item.name} <span style="font-size:10px;color:var(--muted)">[${tag}]</span></div><div class="si-bonus" style="color:#f87171">${itemBonusText(item)}</div><div class="si-price" style="color:#4ade80">賣出 +${sp}G</div>`;
       div.addEventListener('click', () => { sellItem(item); renderShop(); });
       sellGrid.appendChild(div);
     });
@@ -1294,25 +1453,40 @@ function buyItem(item) {
   if (player.gold < item.price) return;
   player.gold -= item.price;
   if (item.potion) {
-    if (player.potions >= 3) { addLog(`🧪 藥水已達上限！`,'info'); return; }
+    if (player.potions >= 3) { addLog(`🧪 藥水已達上限！`,'info'); player.gold += item.price; return; }
     player.potions++;
     addLog(`🧪 購買了回復藥水！(${player.potions}/3)`,'good');
   } else {
-    equipItem(item);
+    addToInventory(item);
   }
   updatePanel();
 }
 
+// 賣出：支援已裝備 + 背包物品
 function sellItem(item) {
+  // 先找背包
+  const invIdx = player.inventory.indexOf(item);
+  if (invIdx !== -1) {
+    player.inventory.splice(invIdx, 1);
+    const sp = sellPrice(item);
+    player.gold += sp;
+    addLog(`💰 賣出 ${item.icon} ${item.name}，獲得 ${sp}G！`, 'good');
+    updatePanel();
+    return;
+  }
+  // 再找裝備槽
   const slot = item.slot;
-  if (player.equipment[slot] !== item) return;
-  const sp = sellPrice(item);
-  player.equipment[slot] = null;
-  player.gold += sp;
-  addLog(`💰 賣出 ${item.icon} ${item.name}，獲得 ${sp}G！`, 'good');
-  updatePanel();
+  if (player.equipment[slot] === item) {
+    const sp = sellPrice(item);
+    player.equipment[slot] = null;
+    player.gold += sp;
+    addLog(`💰 賣出 ${item.icon} ${item.name}，獲得 ${sp}G！`, 'good');
+    updatePanel();
+  }
 }
 
+// equipItem 僅限內部特殊場景（祭壇/泉水等直接附加效果時，不走背包流程）
+// 一般取得裝備改用 addToInventory
 function equipItem(item) {
   const slot = item.slot;
   const old = player.equipment[slot];
@@ -1330,11 +1504,11 @@ function triggerChest() {
   let icon='📦', title='神秘寶箱！', desc='';
   if (roll < 0.5) {
     // 裝備
-    const pool = ITEMS.filter(it => !player.equipment[it.slot]);
+    const pool = ITEMS.filter(it => it.for === null || it.for === player.classId);
     const item = pool.length ? pool[Math.floor(Math.random()*pool.length)] : ITEMS[Math.floor(Math.random()*ITEMS.length)];
-    equipItem(item);
-    desc = `寶箱裡裝著 ${item.icon} ${item.name}！`;
-    addLog(`📦 寶箱！獲得裝備 ${item.icon} ${item.name}！`, 'good');
+    addToInventory(item);
+    desc = `寶箱裡裝著 ${item.icon} ${item.name}！已放入背包。`;
+    addLog(`📦 寶箱！獲得裝備 ${item.icon} ${item.name}，已放入背包！`, 'good');
   } else {
     const g = 10 + Math.floor(Math.random()*40) + floorNum*2;
     player.gold += g;
