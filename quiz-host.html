@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="ws-url" content="wss://game-ws-server-5xjh.onrender.com">
+  <title>爆爆問答 — 主持人</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0e0b1e; --surface: #17143a; --border: #2d2860;
+      --text: #e2e8f0; --muted: #6b7280; --accent: #a855f7;
+      --a: #ef4444; --b: #3b82f6; --c: #d97706; --d: #22c55e;
+    }
+    body { background: var(--bg); min-height: 100vh; font-family: 'Segoe UI', system-ui, sans-serif; color: var(--text); display: flex; flex-direction: column; align-items: center; }
+    #topbar { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 13px 24px; border-bottom: 1px solid var(--border); background: rgba(14,11,30,.95); position: sticky; top: 0; z-index: 30; }
+    #topbar a { color: var(--muted); font-size: 13px; text-decoration: none; border: 1px solid var(--border); padding: 5px 14px; border-radius: 6px; transition: all .2s; }
+    #topbar a:hover { color: var(--text); border-color: var(--accent); }
+    #topbar h1 { font-size: 18px; font-weight: 800; }
+    #topbar h1 em { font-style: normal; color: var(--accent); }
+
+    .screen { display: none; }
+    .screen.active { display: flex; flex-direction: column; align-items: center; width: 100%; padding: 32px 16px 60px; gap: 20px; }
+
+    /* ── 共用元件 ── */
+    .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 24px 28px; width: 100%; max-width: 760px; }
+    .panel h3 { font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
+    .big-btn { width: 100%; padding: 15px; background: linear-gradient(135deg,#a855f7,#7c3aed); border: none; border-radius: 12px; color: #fff; font-size: 16px; font-weight: 800; cursor: pointer; transition: opacity .15s, transform .1s; }
+    .big-btn:hover { opacity: .88; transform: translateY(-1px); }
+    .big-btn:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+    .sec-btn { padding: 11px 22px; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; transition: all .15s; }
+    .sec-btn.outline { background: var(--surface); border: 1px solid var(--border); color: var(--text); }
+    .sec-btn.outline:hover { border-color: var(--accent); }
+    .sec-btn.green { background: linear-gradient(135deg,#22c55e,#15803d); border: none; color: #fff; }
+    .sec-btn.red   { background: linear-gradient(135deg,#ef4444,#b91c1c); border: none; color: #fff; }
+    select, input[type=number] { background: rgba(255,255,255,0.06); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 14px; padding: 8px 12px; outline: none; cursor: pointer; transition: border-color .2s; }
+    select:focus, input[type=number]:focus { border-color: var(--accent); }
+    .err { font-size: 13px; color: #f87171; text-align: center; min-height: 18px; }
+
+    /* ── Setup ── */
+    .pack-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+    .pack-card { background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 10px; padding: 14px; cursor: pointer; transition: border-color .18s, transform .15s; }
+    .pack-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+    .pack-card.selected { border-color: var(--accent); background: rgba(168,85,247,.12); }
+    .pack-card .pi { font-size: 24px; margin-bottom: 6px; }
+    .pack-card .pn { font-size: 14px; font-weight: 700; }
+    .pack-card .pc { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .settings-row { display: flex; gap: 12px; flex-wrap: wrap; }
+    .sg { flex: 1; min-width: 120px; display: flex; flex-direction: column; gap: 6px; }
+    .sg label { font-size: 11px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+
+    /* ── Lobby ── */
+    .room-code-big { font-size: 64px; font-weight: 900; color: #f5c518; letter-spacing: 14px; text-align: center; text-shadow: 0 0 24px rgba(245,197,24,.4); }
+    .room-hint { font-size: 14px; color: var(--muted); text-align: center; }
+    .player-chips { display: flex; flex-wrap: wrap; gap: 8px; min-height: 44px; }
+    .chip { padding: 6px 14px; background: rgba(168,85,247,.15); border: 1px solid rgba(168,85,247,.35); border-radius: 99px; font-size: 13px; font-weight: 600; color: #c084fc; animation: chipIn .3s ease; }
+    @keyframes chipIn { from{opacity:0;transform:scale(.7)} to{opacity:1;transform:scale(1)} }
+    .player-count { font-size: 13px; color: var(--muted); }
+
+    /* ── Question ── */
+    .q-header { width: 100%; max-width: 900px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+    .q-prog { font-size: 13px; color: var(--muted); }
+    .answer-bar { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+    .answer-bar strong { font-size: 22px; color: var(--accent); font-weight: 900; }
+    .q-card { width: 100%; max-width: 900px; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 36px 32px; text-align: center; }
+    .q-text { font-size: 26px; font-weight: 800; line-height: 1.4; }
+    .opts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; max-width: 900px; }
+    .opt-disp { border-radius: 14px; padding: 20px 18px; display: flex; align-items: center; gap: 14px; font-size: 17px; font-weight: 700; color: #fff; }
+    .opt-disp .ol { width: 38px; height: 38px; border-radius: 8px; background: rgba(0,0,0,.25); display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 900; flex-shrink: 0; }
+    .opt-disp.A { background: linear-gradient(135deg,#ef4444,#b91c1c); }
+    .opt-disp.B { background: linear-gradient(135deg,#3b82f6,#1d4ed8); }
+    .opt-disp.C { background: linear-gradient(135deg,#d97706,#92400e); color:#fef9c3; }
+    .opt-disp.D { background: linear-gradient(135deg,#22c55e,#15803d); }
+    #timer-wrap { display: flex; align-items: center; justify-content: center; }
+    #timer-big { font-size: 80px; font-weight: 900; color: var(--accent); line-height: 1; text-shadow: 0 0 30px rgba(168,85,247,.5); transition: color .3s; }
+
+    /* ── Reveal ── */
+    .reveal-correct { font-size: 15px; color: #4ade80; font-weight: 700; text-align: center; }
+    .lb-table { width: 100%; max-width: 680px; border-collapse: collapse; }
+    .lb-table th { font-size: 11px; color: var(--muted); letter-spacing: 1px; text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--border); }
+    .lb-table td { padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,.04); font-size: 14px; }
+    .lb-table tr.top1 td { color: #f5c518; font-weight: 800; font-size: 16px; }
+    .lb-table tr.top2 td { color: #e2e8f0; font-weight: 700; }
+    .lb-table tr.top3 td { color: #f97316; }
+    .rank-icon { width: 28px; text-align: center; }
+
+    /* ── Ended ── */
+    .trophy { font-size: 80px; text-align: center; }
+    .winner-name { font-size: 36px; font-weight: 900; text-align: center; background: linear-gradient(135deg,#f5c518,#fde047); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+    @media(max-width:600px) { .opts-grid{grid-template-columns:1fr;} .q-text{font-size:20px;} }
+  </style>
+</head>
+<body>
+<div id="topbar">
+  <a href="quiz.html">← 返回問答</a>
+  <h1>🎯 爆爆問答 <em>主持人</em></h1>
+  <div style="width:90px"></div>
+</div>
+
+<!-- SETUP -->
+<div id="setup" class="screen active">
+  <div class="panel">
+    <h3>選擇題庫</h3>
+    <div class="pack-grid" id="packGrid"></div>
+  </div>
+  <div class="panel">
+    <h3>遊戲設定</h3>
+    <div class="settings-row">
+      <div class="sg"><label>題數</label><input type="number" id="qCount" min="1" max="50" value="10"/></div>
+      <div class="sg"><label>每題秒數</label>
+        <select id="timeLimit">
+          <option value="10">10 秒</option>
+          <option value="15">15 秒</option>
+          <option value="20" selected>20 秒</option>
+          <option value="30">30 秒</option>
+        </select>
+      </div>
+    </div>
+  </div>
+  <div class="err" id="setupErr"></div>
+  <button class="big-btn" id="btnCreate" disabled>🚀 建立房間</button>
+</div>
+
+<!-- LOBBY -->
+<div id="lobby" class="screen">
+  <div class="panel" style="text-align:center;gap:12px;display:flex;flex-direction:column;align-items:center">
+    <h3>房間碼（讓玩家前往 quiz-player.html 輸入）</h3>
+    <div class="room-code-big" id="roomCodeBig">------</div>
+    <div class="room-hint">玩家加入後點「開始遊戲」</div>
+  </div>
+  <div class="panel">
+    <h3>已加入玩家 <span class="player-count" id="playerCount">（0 人）</span></h3>
+    <div class="player-chips" id="playerChips"><span style="color:var(--muted);font-size:13px">等待玩家加入...</span></div>
+  </div>
+  <div class="err" id="lobbyErr"></div>
+  <button class="big-btn" id="btnStart" disabled>▶ 開始遊戲</button>
+</div>
+
+<!-- QUESTION -->
+<div id="question" class="screen">
+  <div class="q-header">
+    <span class="q-prog" id="qProg">第 1 / 10 題</span>
+    <div class="answer-bar">已答題：<strong id="ansCount">0</strong> / <span id="ansTotal">0</span></div>
+  </div>
+  <div id="timer-wrap"><div id="timer-big">20</div></div>
+  <div class="q-card"><div class="q-text" id="qText">題目</div></div>
+  <div class="opts-grid" id="optsDisp"></div>
+</div>
+
+<!-- REVEAL -->
+<div id="reveal" class="screen">
+  <div class="reveal-correct" id="revealCorrect"></div>
+  <table class="lb-table" id="lbTable">
+    <thead><tr><th class="rank-icon">#</th><th>玩家</th><th style="text-align:right">分數</th></tr></thead>
+    <tbody id="lbBody"></tbody>
+  </table>
+  <button class="big-btn" id="btnNext">下一題 →</button>
+</div>
+
+<!-- ENDED -->
+<div id="ended" class="screen">
+  <div class="trophy">🏆</div>
+  <div class="winner-name" id="winnerName">冠軍</div>
+  <table class="lb-table" id="finalLbTable">
+    <thead><tr><th class="rank-icon">#</th><th>玩家</th><th style="text-align:right">總分</th></tr></thead>
+    <tbody id="finalLbBody"></tbody>
+  </table>
+  <button class="big-btn" onclick="location.reload()">↺ 重新開始</button>
+</div>
+
+<script>
+'use strict';
+
+// ── 內建題庫（與 quiz.html 相同）──────────────────────
+const BUILTIN_PACKS = [
+  {id:'general',name:'生活常識',icon:'🌍',questions:[{q:'地球是太陽系第幾顆行星？',opts:['第一顆','第二顆','第三顆','第四顆'],ans:'C'},{q:'水的化學式是？',opts:['CO₂','H₂O','O₂','NaCl'],ans:'B'},{q:'光速約為每秒多少公里？',opts:['3萬公里','30萬公里','300萬公里','3000萬公里'],ans:'B'},{q:'哪個國家的面積最大？',opts:['中國','美國','加拿大','俄羅斯'],ans:'D'},{q:'人體最大的器官是？',opts:['肝臟','心臟','皮膚','大腦'],ans:'C'},{q:'1公斤等於幾公克？',opts:['10','100','1000','10000'],ans:'C'},{q:'彩虹有幾種顏色？',opts:['5','6','7','8'],ans:'C'},{q:'直角是幾度？',opts:['45°','60°','90°','180°'],ans:'C'},{q:'陸地上跑最快的動物？',opts:['獅子','獵豹','馬','羚羊'],ans:'B'},{q:'月球是地球的什麼？',opts:['行星','衛星','小行星','矮行星'],ans:'B'},{q:'1年有幾天（平年）？',opts:['355','365','375','366'],ans:'B'},{q:'DNA雙螺旋由誰發現？',opts:['愛因斯坦','達爾文','Watson&Crick','牛頓'],ans:'C'}]},
+  {id:'tech',name:'科技資訊',icon:'💻',questions:[{q:'HTML全名？',opts:['HyperText Markup Language','High Tech Modern Language','HyperText Modern Layout','High Text Markup Logic'],ans:'A'},{q:'哪個公司開發iPhone？',opts:['Google','Samsung','Apple','Microsoft'],ans:'C'},{q:'1 GB等於多少MB？',opts:['256','512','1024','2048'],ans:'C'},{q:'JavaScript由誰創建？',opts:['Linus Torvalds','Brendan Eich','Tim Berners-Lee','Mark Zuckerberg'],ans:'B'},{q:'WWW由誰發明？',opts:['Bill Gates','Steve Jobs','Tim Berners-Lee','Elon Musk'],ans:'C'},{q:'Python是哪種語言？',opts:['編譯型','解釋型','機器語言','組合語言'],ans:'B'},{q:'CPU中文全名？',opts:['中央處理器','圖形處理器','記憶體','硬碟'],ans:'A'},{q:'最廣泛版本控制系統？',opts:['SVN','Mercurial','Git','CVS'],ans:'C'},{q:'HTTP預設端口？',opts:['21','443','80','8080'],ans:'C'},{q:'WiFi標準？',opts:['IEEE 802.3','IEEE 802.11','IEEE 802.5','IEEE 802.15'],ans:'B'}]},
+  {id:'history',name:'世界歷史',icon:'🏛️',questions:[{q:'一戰在哪一年結束？',opts:['1914','1916','1918','1920'],ans:'C'},{q:'哥倫布到達美洲是哪一年？',opts:['1392','1492','1592','1692'],ans:'B'},{q:'萬里長城主要建於哪個朝代？',opts:['漢朝','唐朝','明朝','清朝'],ans:'C'},{q:'埃及金字塔最初用途？',opts:['神廟','宮殿','陵墓','倉庫'],ans:'C'},{q:'第一個使用印刷術的國家？',opts:['埃及','希臘','中國','羅馬'],ans:'C'},{q:'拿破崙是哪國人？',opts:['法國','義大利','西班牙','英國'],ans:'A'},{q:'二戰在哪一年結束？',opts:['1943','1944','1945','1946'],ans:'C'},{q:'莎士比亞是哪國作家？',opts:['美國','法國','德國','英國'],ans:'D'}]},
+  {id:'sports',name:'運動體育',icon:'⚽',questions:[{q:'足球世界盃多少年一次？',opts:['2年','3年','4年','5年'],ans:'C'},{q:'奧運五環代表幾大洲？',opts:['4','5','6','7'],ans:'B'},{q:'網球大滿貫有幾個？',opts:['2','3','4','5'],ans:'C'},{q:'NBA是哪個運動的聯盟？',opts:['棒球','美式足球','籃球','冰球'],ans:'C'},{q:'馬拉松全程約多少公里？',opts:['35','40','42','45'],ans:'C'},{q:'桌球另一面顏色？',opts:['藍色','黑色','綠色','白色'],ans:'B'},{q:'足球每隊幾名球員？',opts:['9','10','11','12'],ans:'C'}]},
+  {id:'taiwan',name:'台灣知識',icon:'🇹🇼',questions:[{q:'台灣最高的山？',opts:['雪山','合歡山','玉山','奇萊山'],ans:'C'},{q:'台灣面積約多少平方公里？',opts:['16000','36000','56000','76000'],ans:'B'},{q:'台灣有幾個直轄市？',opts:['4','5','6','7'],ans:'C'},{q:'台灣日治始於哪一年？',opts:['1885','1895','1905','1915'],ans:'B'},{q:'台灣最長的河流？',opts:['淡水河','大甲溪','秀姑巒溪','濁水溪'],ans:'D'},{q:'台灣東邊是哪個海？',opts:['台灣海峽','南海','菲律賓海','東海'],ans:'C'},{q:'台北101高度約多少公尺？',opts:['401','501','508','600'],ans:'C'}]},
+];
+
+function loadCustomPack() { try { return JSON.parse(localStorage.getItem('quiz_custom')||'null'); } catch { return null; } }
+function shuffle(a) { for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a; }
+
+// ── WS ────────────────────────────────────────────────
+const WS_URL = (() => { const m=document.querySelector('meta[name="ws-url"]'); if(m&&m.content)return m.content; return (location.protocol==='https:'?'wss':'ws')+'://'+location.host; })();
+let ws = null;
+function connectWS() {
+  ws = new WebSocket(WS_URL);
+  ws.onmessage = e => handle(JSON.parse(e.data));
+  ws.onclose   = () => { if(currentScreen!=='setup') alert('伺服器斷線，請重新整理'); };
+}
+function wsSend(o) { if(ws&&ws.readyState===1) ws.send(JSON.stringify(o)); }
+
+// ── 狀態 ─────────────────────────────────────────────
+let currentPack=null, gameQs=[], playerNames=[], currentScreen='setup', timerInterval=null, timeLimitSec=20;
+
+function showScreen(id) { document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); currentScreen=id; window.scrollTo({top:0,behavior:'smooth'}); }
+
+// ── Setup ─────────────────────────────────────────────
+const allPacks = [...BUILTIN_PACKS];
+const custom = loadCustomPack();
+if (custom) allPacks.unshift({id:'custom',name:custom.name||'我的題庫',icon:'✏️',questions:custom.questions});
+
+const packGrid = document.getElementById('packGrid');
+allPacks.forEach(p => {
+  const c = document.createElement('div'); c.className='pack-card'; c.dataset.id=p.id;
+  c.innerHTML=`<div class="pi">${p.icon}</div><div class="pn">${p.name}</div><div class="pc">${p.questions.length} 題</div>`;
+  c.onclick=()=>{ document.querySelectorAll('.pack-card').forEach(x=>x.classList.remove('selected')); c.classList.add('selected'); currentPack=p; const mx=p.questions.length; const inp=document.getElementById('qCount'); inp.max=mx; if(parseInt(inp.value)>mx)inp.value=mx; document.getElementById('btnCreate').disabled=false; };
+  packGrid.appendChild(c);
+});
+
+document.getElementById('btnCreate').addEventListener('click', () => {
+  if (!currentPack) return;
+  timeLimitSec = parseInt(document.getElementById('timeLimit').value);
+  const count = Math.min(parseInt(document.getElementById('qCount').value), currentPack.questions.length);
+  gameQs = shuffle([...currentPack.questions]).slice(0, count);
+  connectWS();
+  ws.onopen = () => wsSend({ type:'quiz_create', questions: gameQs, timeLimitSec });
+});
+
+// ── 訊息處理 ─────────────────────────────────────────
+function handle(msg) {
+  switch(msg.type) {
+    case 'quiz_room_created':
+      document.getElementById('roomCodeBig').textContent = msg.roomId;
+      showScreen('lobby');
+      break;
+    case 'quiz_player_joined':
+      playerNames.push(msg.name);
+      renderChips();
+      document.getElementById('playerCount').textContent = `（${msg.count} 人）`;
+      document.getElementById('btnStart').disabled = false;
+      break;
+    case 'quiz_player_left':
+      playerNames = playerNames.filter(n=>n!==msg.name);
+      renderChips();
+      document.getElementById('playerCount').textContent = `（${msg.count} 人）`;
+      if(msg.count===0) document.getElementById('btnStart').disabled=true;
+      break;
+    case 'quiz_question':
+      showQuestionScreen(msg);
+      break;
+    case 'quiz_answer_count':
+      document.getElementById('ansCount').textContent = msg.count;
+      break;
+    case 'quiz_reveal':
+      showRevealScreen(msg);
+      break;
+    case 'quiz_ended':
+      showEndedScreen(msg);
+      break;
+    case 'quiz_error':
+      document.getElementById('setupErr').textContent = '❌ '+msg.reason;
+      break;
+  }
+}
+
+function renderChips() {
+  const c = document.getElementById('playerChips'); c.innerHTML='';
+  if(playerNames.length===0){c.innerHTML='<span style="color:var(--muted);font-size:13px">等待玩家加入...</span>';return;}
+  playerNames.forEach(n=>{ const chip=document.createElement('div'); chip.className='chip'; chip.textContent=n; c.appendChild(chip); });
+}
+
+document.getElementById('btnStart').addEventListener('click',()=>wsSend({type:'quiz_start'}));
+
+// ── Question ──────────────────────────────────────────
+function showQuestionScreen(msg) {
+  showScreen('question');
+  document.getElementById('qProg').textContent = `第 ${msg.index+1} / ${msg.total} 題`;
+  document.getElementById('qText').textContent = msg.question;
+  document.getElementById('ansCount').textContent = '0';
+  document.getElementById('ansTotal').textContent = playerNames.length;
+
+  const grid = document.getElementById('optsDisp'); grid.innerHTML='';
+  ['A','B','C','D'].forEach((l,i)=>{
+    const d=document.createElement('div'); d.className=`opt-disp ${l}`;
+    d.innerHTML=`<div class="ol">${l}</div><div>${msg.opts[i]}</div>`;
+    grid.appendChild(d);
+  });
+
+  // 倒數
+  let t = msg.timeLimitSec;
+  const el = document.getElementById('timer-big');
+  clearInterval(timerInterval);
+  el.textContent = t;
+  el.style.color = 'var(--accent)';
+  timerInterval = setInterval(()=>{ t--; el.textContent=t; el.style.color=t>msg.timeLimitSec*.25?'var(--accent)':'#ef4444'; if(t<=0)clearInterval(timerInterval); },1000);
+}
+
+// ── Reveal ────────────────────────────────────────────
+function showRevealScreen(msg) {
+  clearInterval(timerInterval);
+  showScreen('reveal');
+  document.getElementById('revealCorrect').textContent = `✅ 正確答案：${msg.correctAns} — ${msg.correctText}`;
+  renderLb(document.getElementById('lbBody'), msg.leaderboard);
+  const btn = document.getElementById('btnNext');
+  btn.textContent = msg.isLast ? '查看最終結果 🏆' : '下一題 →';
+}
+
+document.getElementById('btnNext').addEventListener('click',()=>wsSend({type:'quiz_next'}));
+
+// ── Ended ─────────────────────────────────────────────
+function showEndedScreen(msg) {
+  showScreen('ended');
+  document.getElementById('winnerName').textContent = msg.leaderboard[0]?.name || '—';
+  renderLb(document.getElementById('finalLbBody'), msg.leaderboard);
+}
+
+function renderLb(tbody, lb) {
+  tbody.innerHTML='';
+  const icons=['🥇','🥈','🥉'];
+  lb.forEach((p,i)=>{
+    const tr=document.createElement('tr');
+    tr.className=i===0?'top1':i===1?'top2':i===2?'top3':'';
+    tr.innerHTML=`<td class="rank-icon">${icons[i]||i+1}</td><td>${p.name}</td><td style="text-align:right;font-weight:700">${p.score.toLocaleString()}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
+  <meta name="ws-url" content="wss://game-ws-server-5xjh.onrender.com">
+  <title>爆爆問答 — 加入遊戲</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0e0b1e; --surface: #17143a; --border: #2d2860;
+      --text: #e2e8f0; --muted: #6b7280; --accent: #a855f7;
+    }
+    body { background: var(--bg); min-height: 100vh; font-family: 'Segoe UI', system-ui, sans-serif; color: var(--text); display: flex; flex-direction: column; align-items: center; user-select: none; }
+
+    #topbar { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 13px 24px; border-bottom: 1px solid var(--border); background: rgba(14,11,30,.95); }
+    #topbar a { color: var(--muted); font-size: 13px; text-decoration: none; border: 1px solid var(--border); padding: 5px 14px; border-radius: 6px; }
+    #topbar h1 { font-size: 18px; font-weight: 800; }
+    #topbar h1 em { font-style: normal; color: var(--accent); }
+
+    .screen { display: none; }
+    .screen.active { display: flex; flex-direction: column; align-items: center; width: 100%; padding: 28px 16px 60px; gap: 20px; }
+
+    /* 共用 */
+    .box { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 24px 24px; width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: 14px; }
+    .box h3 { font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); }
+    .big-inp { background: rgba(255,255,255,0.06); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 26px; font-weight: 800; padding: 12px 16px; letter-spacing: 8px; text-align: center; outline: none; width: 100%; transition: border-color .2s; }
+    .big-inp:focus { border-color: var(--accent); }
+    .big-inp::placeholder { letter-spacing: 1px; font-size: 15px; font-weight: 400; }
+    .name-inp { background: rgba(255,255,255,0.06); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 18px; font-weight: 600; padding: 12px 16px; text-align: center; outline: none; width: 100%; transition: border-color .2s; }
+    .name-inp:focus { border-color: var(--accent); }
+    .big-btn { width: 100%; padding: 15px; background: linear-gradient(135deg,#a855f7,#7c3aed); border: none; border-radius: 12px; color: #fff; font-size: 16px; font-weight: 800; cursor: pointer; transition: opacity .15s, transform .1s; }
+    .big-btn:hover { opacity: .88; transform: translateY(-1px); }
+    .err { font-size: 13px; color: #f87171; text-align: center; min-height: 18px; }
+
+    /* Waiting */
+    .spinner { width: 44px; height: 44px; border: 3px solid rgba(168,85,247,.2); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; margin: 0 auto; }
+    @keyframes spin { to{transform:rotate(360deg)} }
+    .wait-text { font-size: 15px; color: var(--muted); text-align: center; }
+    .player-name-badge { font-size: 28px; font-weight: 900; color: var(--accent); text-align: center; }
+    .room-badge { font-size: 13px; color: var(--muted); text-align: center; }
+    .room-badge span { color: #f5c518; font-weight: 700; letter-spacing: 3px; }
+
+    /* Question */
+    #q-num { font-size: 12px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; text-align: center; }
+    #q-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 28px 20px; text-align: center; width: 100%; max-width: 560px; }
+    #q-text { font-size: 20px; font-weight: 700; line-height: 1.5; }
+    #opts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; max-width: 560px; }
+    .opt-btn { border: none; border-radius: 14px; padding: 20px 14px; display: flex; align-items: center; gap: 12px; cursor: pointer; font-family: inherit; font-size: 15px; font-weight: 700; color: #fff; text-align: left; transition: transform .12s, opacity .2s, filter .2s; -webkit-tap-highlight-color: transparent; }
+    .opt-btn:active { transform: scale(.95); }
+    .opt-btn .ol { width: 32px; height: 32px; border-radius: 7px; background: rgba(0,0,0,.25); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 900; flex-shrink: 0; }
+    .opt-btn.A { background: linear-gradient(135deg,#ef4444,#b91c1c); }
+    .opt-btn.B { background: linear-gradient(135deg,#3b82f6,#1d4ed8); }
+    .opt-btn.C { background: linear-gradient(135deg,#d97706,#92400e); color:#fef9c3; }
+    .opt-btn.D { background: linear-gradient(135deg,#22c55e,#15803d); }
+    .opt-btn.reveal-correct { animation: cpop .5s ease; filter: brightness(1.25); }
+    .opt-btn.wrong-chosen   { opacity: .3; filter: grayscale(.6); }
+    .opt-btn.dimmed         { opacity: .25; }
+    @keyframes cpop { 0%{transform:scale(1)} 40%{transform:scale(1.06)} 100%{transform:scale(1)} }
+
+    /* timer ring */
+    #timer-wrap { position: relative; width: 72px; height: 72px; margin: 0 auto; }
+    #tsv { transform: rotate(-90deg); }
+    #ttrack { fill: none; stroke: rgba(255,255,255,0.08); stroke-width: 5; }
+    #tarc   { fill: none; stroke: var(--accent); stroke-width: 5; stroke-linecap: round; transition: stroke-dashoffset .9s linear, stroke .3s; }
+    #tnum   { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 900; }
+
+    /* Feedback */
+    #feedback { width: 100%; max-width: 560px; border-radius: 12px; padding: 14px 18px; text-align: center; font-size: 16px; font-weight: 700; display: none; animation: fslide .3s ease; }
+    @keyframes fslide { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+    #feedback.correct { background: rgba(34,197,94,.2); border: 1px solid #22c55e; color: #4ade80; }
+    #feedback.wrong   { background: rgba(239,68,68,.15); border: 1px solid #ef4444; color: #f87171; }
+    #feedback.timeout { background: rgba(168,85,247,.15); border: 1px solid #a855f7; color: #c084fc; }
+
+    .score-pop { position: fixed; font-size: 28px; font-weight: 900; color: #fde047; text-shadow: 0 0 12px rgba(253,224,71,.6); pointer-events: none; animation: sflyp 1s ease forwards; z-index: 100; }
+    @keyframes sflyp { 0%{opacity:1;transform:translateY(0) scale(1)} 100%{opacity:0;transform:translateY(-80px) scale(1.5)} }
+
+    /* Leaderboard */
+    .lb-box { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px; width: 100%; max-width: 560px; }
+    .lb-title { font-size: 14px; font-weight: 700; margin-bottom: 12px; color: #c084fc; }
+    .lb-row { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,.04); font-size: 14px; }
+    .lb-rank { width: 28px; text-align: center; font-size: 16px; }
+    .lb-name { flex: 1; font-weight: 600; }
+    .lb-score { font-weight: 800; color: var(--accent); }
+    .lb-row.me .lb-name::after { content: ' 👈'; font-size: 12px; }
+    .lb-row.me .lb-score { color: #f5c518; }
+
+    .pts-big { font-size: 56px; font-weight: 900; text-align: center; line-height: 1; }
+    .pts-big.correct { background: linear-gradient(135deg,#4ade80,#22c55e); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .pts-big.wrong   { color: #f87171; }
+    .pts-sub { font-size: 14px; color: var(--muted); text-align: center; }
+
+    /* Ended */
+    .trophy { font-size: 64px; text-align: center; }
+    .my-rank-big { font-size: 48px; font-weight: 900; text-align: center; }
+    .my-score-big { font-size: 28px; font-weight: 700; color: var(--accent); text-align: center; }
+
+    @media(max-width:420px) { #opts-grid{grid-template-columns:1fr;} .opt-btn{font-size:14px;} #q-text{font-size:17px;} }
+  </style>
+</head>
+<body>
+<div id="topbar">
+  <a href="quiz.html">← 返回</a>
+  <h1>🎯 爆爆<em>問答</em></h1>
+  <div style="width:72px"></div>
+</div>
+
+<!-- JOIN -->
+<div id="join" class="screen active">
+  <div class="box">
+    <h3>輸入房間碼</h3>
+    <input class="big-inp" id="codeInp" type="text" maxlength="6" placeholder="6 位數房間碼"/>
+    <h3>你的暱稱</h3>
+    <input class="name-inp" id="nameInp" type="text" maxlength="12" placeholder="輸入暱稱（最多 12 字）"/>
+    <button class="big-btn" id="btnJoin">加入遊戲</button>
+    <div class="err" id="joinErr"></div>
+  </div>
+</div>
+
+<!-- WAITING -->
+<div id="waiting" class="screen">
+  <div class="player-name-badge" id="myNameBadge"></div>
+  <div class="room-badge">房間 <span id="waitRoomCode"></span></div>
+  <div class="spinner"></div>
+  <div class="wait-text">等待主持人開始遊戲...</div>
+</div>
+
+<!-- QUESTION -->
+<div id="question" class="screen">
+  <div id="q-num">第 1 / 10 題</div>
+  <div id="timer-wrap">
+    <svg id="tsv" width="72" height="72" viewBox="0 0 72 72">
+      <circle id="ttrack" cx="36" cy="36" r="30"/>
+      <circle id="tarc"   cx="36" cy="36" r="30" stroke-dasharray="188.5" stroke-dashoffset="0"/>
+    </svg>
+    <div id="tnum">20</div>
+  </div>
+  <div id="q-card"><div id="q-text">題目</div></div>
+  <div id="opts-grid">
+    <button class="opt-btn A" data-opt="A"><span class="ol">A</span><span id="optA"></span></button>
+    <button class="opt-btn B" data-opt="B"><span class="ol">B</span><span id="optB"></span></button>
+    <button class="opt-btn C" data-opt="C"><span class="ol">C</span><span id="optC"></span></button>
+    <button class="opt-btn D" data-opt="D"><span class="ol">D</span><span id="optD"></span></button>
+  </div>
+  <div id="feedback"></div>
+</div>
+
+<!-- REVEAL -->
+<div id="reveal" class="screen">
+  <div class="pts-big" id="ptsBig">+500</div>
+  <div class="pts-sub" id="ptsSub"></div>
+  <div class="lb-box">
+    <div class="lb-title">📊 即時排行</div>
+    <div id="lbRows"></div>
+  </div>
+  <div class="wait-text">等待主持人進入下一題...</div>
+</div>
+
+<!-- ENDED -->
+<div id="ended" class="screen">
+  <div class="trophy">🏆</div>
+  <div class="my-rank-big" id="myRankBig"></div>
+  <div class="my-score-big" id="myScoreBig"></div>
+  <div class="lb-box">
+    <div class="lb-title">🏁 最終排行榜</div>
+    <div id="finalLbRows"></div>
+  </div>
+  <button class="big-btn" onclick="location.reload()">↺ 再玩一次</button>
+</div>
+
+<script>
+'use strict';
+const WS_URL = (() => { const m=document.querySelector('meta[name="ws-url"]'); if(m&&m.content)return m.content; return(location.protocol==='https:'?'wss':'ws')+'://'+location.host; })();
+let ws=null, myName='', myRoomId='', timeLimitSec=20, timerInterval=null;
+
+function showScreen(id) { document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); window.scrollTo({top:0,behavior:'smooth'}); }
+
+// ── 加入 ─────────────────────────────────────────────
+document.getElementById('btnJoin').addEventListener('click', tryJoin);
+document.getElementById('codeInp').addEventListener('keydown', e=>{ if(e.key==='Enter') tryJoin(); });
+document.getElementById('nameInp').addEventListener('keydown', e=>{ if(e.key==='Enter') tryJoin(); });
+
+function tryJoin() {
+  const code = document.getElementById('codeInp').value.trim();
+  const name = document.getElementById('nameInp').value.trim();
+  const err  = document.getElementById('joinErr');
+  if (code.length!==6||isNaN(code)) { err.textContent='請輸入 6 位數字房間碼'; return; }
+  if (!name) { err.textContent='請輸入暱稱'; return; }
+  err.textContent='';
+  myName=name; myRoomId=code;
+  ws = new WebSocket(WS_URL);
+  ws.onopen    = ()=>{ ws.send(JSON.stringify({type:'quiz_join',roomId:code,name})); };
+  ws.onmessage = e=>handle(JSON.parse(e.data));
+  ws.onclose   = ()=>{ if(document.getElementById('ended').classList.contains('active'))return; alert('連線中斷，請重新整理'); };
+}
+
+// ── 訊息處理 ─────────────────────────────────────────
+function handle(msg) {
+  switch(msg.type) {
+    case 'quiz_joined':
+      document.getElementById('myNameBadge').textContent = msg.name;
+      document.getElementById('waitRoomCode').textContent = msg.roomId;
+      showScreen('waiting');
+      break;
+
+    case 'quiz_question':
+      timeLimitSec = msg.timeLimitSec;
+      showQuestionScreen(msg);
+      break;
+
+    case 'quiz_answer_ack':
+      // 已答題，禁用按鈕，等待揭曉
+      document.querySelectorAll('.opt-btn').forEach(b=>b.disabled=true);
+      const fb = document.getElementById('feedback');
+      fb.style.display='block';
+      if (msg.correct) {
+        fb.className='correct'; fb.textContent=`✅ 正確！+${msg.pts} 分`;
+        spawnScorePop('+'+msg.pts);
+      } else {
+        fb.className='wrong'; fb.textContent='❌ 答錯了！';
+      }
+      break;
+
+    case 'quiz_reveal':
+      clearInterval(timerInterval);
+      showRevealScreen(msg);
+      break;
+
+    case 'quiz_ended':
+      showEndedScreen(msg);
+      break;
+
+    case 'quiz_host_left':
+      alert('主持人已離開，遊戲結束');
+      location.reload();
+      break;
+
+    case 'quiz_error':
+      document.getElementById('joinErr').textContent='❌ '+msg.reason;
+      break;
+  }
+}
+
+// ── 題目畫面 ─────────────────────────────────────────
+let answered = false;
+function showQuestionScreen(msg) {
+  answered = false;
+  showScreen('question');
+  document.getElementById('q-num').textContent = `第 ${msg.index+1} / ${msg.total} 題`;
+  document.getElementById('q-text').textContent = msg.question;
+  document.getElementById('optA').textContent = msg.opts[0];
+  document.getElementById('optB').textContent = msg.opts[1];
+  document.getElementById('optC').textContent = msg.opts[2];
+  document.getElementById('optD').textContent = msg.opts[3];
+  document.querySelectorAll('.opt-btn').forEach(b=>{b.disabled=false;b.classList.remove('reveal-correct','wrong-chosen','dimmed');b.style.opacity='';});
+  const fb=document.getElementById('feedback'); fb.style.display='none';
+  startTimer(msg.timeLimitSec);
+}
+
+function startTimer(sec) {
+  clearInterval(timerInterval);
+  let t=sec; const circ=188.5;
+  const arc=document.getElementById('tarc'); const num=document.getElementById('tnum');
+  function tick() { const p=t/sec; arc.style.strokeDashoffset=circ*(1-p); arc.style.stroke=p>.5?'var(--accent)':p>.25?'#f97316':'#ef4444'; num.textContent=t; num.style.color=p>.25?'var(--text)':'#ef4444'; }
+  tick();
+  timerInterval=setInterval(()=>{ t--; tick(); if(t<=0){ clearInterval(timerInterval); if(!answered){ answered=true; const fb=document.getElementById('feedback'); fb.style.display='block'; fb.className='timeout'; fb.textContent='⏰ 時間到！'; } } },1000);
+}
+
+document.querySelectorAll('.opt-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    if(answered)return; answered=true;
+    clearInterval(timerInterval);
+    ws.send(JSON.stringify({type:'quiz_answer',answer:btn.dataset.opt}));
+    document.querySelectorAll('.opt-btn').forEach(b=>b.disabled=true);
+    // 先顯示「已提交」，等伺服器回應 quiz_answer_ack
+    const fb=document.getElementById('feedback'); fb.style.display='block'; fb.className='timeout'; fb.textContent='⌛ 已送出，等待揭曉...';
+  });
+});
+
+// 鍵盤
+document.addEventListener('keydown',e=>{
+  if(!document.getElementById('question').classList.contains('active'))return;
+  const m={a:'A',b:'B',c:'C',d:'D','1':'A','2':'B','3':'C','4':'D'}; const o=m[e.key.toLowerCase()];
+  if(o){ const btn=document.querySelector(`.opt-btn[data-opt="${o}"]`); if(btn&&!btn.disabled)btn.click(); }
+});
+
+// ── Reveal ────────────────────────────────────────────
+function showRevealScreen(msg) {
+  showScreen('reveal');
+  const ptsBig = document.getElementById('ptsBig');
+  const ptsSub = document.getElementById('ptsSub');
+  if (msg.myCorrect) { ptsBig.textContent=`+${msg.myPts}`; ptsBig.className='pts-big correct'; ptsSub.textContent=`累計 ${msg.myScore} 分`; }
+  else               { ptsBig.textContent='❌'; ptsBig.className='pts-big wrong'; ptsSub.textContent=`正確答案：${msg.correctAns} — ${msg.correctText}`; }
+  renderLbRows(document.getElementById('lbRows'), msg.leaderboard, myName);
+}
+
+// ── Ended ─────────────────────────────────────────────
+function showEndedScreen(msg) {
+  showScreen('ended');
+  const rank = msg.leaderboard.findIndex(p=>p.name===myName)+1;
+  const rankIcons=['🥇','🥈','🥉'];
+  document.getElementById('myRankBig').textContent = rankIcons[rank-1] || `第 ${rank} 名`;
+  const myEntry = msg.leaderboard.find(p=>p.name===myName);
+  document.getElementById('myScoreBig').textContent = `${myEntry?.score?.toLocaleString()||0} 分`;
+  renderLbRows(document.getElementById('finalLbRows'), msg.leaderboard, myName);
+}
+
+function renderLbRows(container, lb, me) {
+  container.innerHTML='';
+  const icons=['🥇','🥈','🥉'];
+  lb.forEach((p,i)=>{
+    const row=document.createElement('div'); row.className='lb-row'+(p.name===me?' me':'');
+    row.innerHTML=`<div class="lb-rank">${icons[i]||i+1}</div><div class="lb-name">${p.name}</div><div class="lb-score">${p.score.toLocaleString()}</div>`;
+    container.appendChild(row);
+  });
+}
+
+function spawnScorePop(text) {
+  const el=document.createElement('div'); el.className='score-pop'; el.textContent=text;
+  el.style.left=(35+Math.random()*30)+'%'; el.style.top='45%';
+  document.body.appendChild(el); setTimeout(()=>el.remove(),1000);
+}
+</script>
+</body>
+</html>
