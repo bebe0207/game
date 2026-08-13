@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>深淵地下城</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0d0d1a; --surface: #12121f; --panel: #1a1a2e;
+      --border: #2a2a45; --text: #e2e8f0; --muted: #57606a;
+      --accent: #f97316; --purple: #a855f7; --green: #22c55e;
+      --red: #ef4444; --blue: #3b82f6; --gold: #f5c518;
+    }
+    body { background: var(--bg); min-height: 100vh; font-family: 'Segoe UI', system-ui, sans-serif; color: var(--text); }
+
+    /* ── Topbar ── */
+    #topbar { display: flex; align-items: center; justify-content: space-between; padding: 11px 20px; border-bottom: 1px solid var(--border); background: rgba(13,13,26,.96); position: sticky; top: 0; z-index: 40; }
+    #topbar a { color: var(--muted); font-size: 13px; text-decoration: none; border: 1px solid var(--border); padding: 5px 13px; border-radius: 6px; transition: all .2s; }
+    #topbar a:hover { color: var(--text); border-color: var(--accent); }
+    #topbar h1 { font-size: 17px; font-weight: 800; color: var(--accent); letter-spacing: 1px; }
+
+    /* ── Screen ── */
+    .screen { display: none; }
+    .screen.active { display: flex; }
+
+    /* ══ TITLE ══ */
+    #title-screen { flex-direction: column; align-items: center; justify-content: center; min-height: calc(100vh - 50px); gap: 32px; padding: 40px 20px; }
+    .title-logo { font-size: 72px; text-align: center; animation: flicker 3s ease-in-out infinite; }
+    @keyframes flicker { 0%,100%{opacity:1} 92%{opacity:1} 94%{opacity:.7} 96%{opacity:1} 98%{opacity:.8} }
+    .title-name { font-size: 38px; font-weight: 900; text-align: center; background: linear-gradient(135deg,#f97316,#ef4444); -webkit-background-clip:text; -webkit-text-fill-color:transparent; letter-spacing: 2px; }
+    .title-sub { font-size: 14px; color: var(--muted); text-align: center; line-height: 1.8; max-width: 380px; }
+
+    /* ══ CLASS SELECT ══ */
+    #class-screen { flex-direction: column; align-items: center; gap: 28px; padding: 40px 16px 60px; min-height: calc(100vh - 50px); }
+    .class-title { text-align: center; }
+    .class-title h2 { font-size: 26px; font-weight: 900; }
+    .class-title p  { font-size: 13px; color: var(--muted); margin-top: 6px; }
+    .class-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; width: 100%; max-width: 760px; }
+    .class-card { background: var(--panel); border: 2px solid var(--border); border-radius: 16px; padding: 28px 20px; cursor: pointer; transition: border-color .2s, transform .18s; display: flex; flex-direction: column; gap: 10px; }
+    .class-card:hover { transform: translateY(-4px); }
+    .class-card.warrior:hover { border-color: #ef4444; }
+    .class-card.mage:hover    { border-color: #a855f7; }
+    .class-card.rogue:hover   { border-color: #22c55e; }
+    .class-card .ci { font-size: 44px; text-align: center; }
+    .class-card .cn { font-size: 20px; font-weight: 800; text-align: center; }
+    .class-card.warrior .cn { color: #ef4444; }
+    .class-card.mage .cn    { color: #a855f7; }
+    .class-card.rogue .cn   { color: #22c55e; }
+    .class-card .cd { font-size: 12px; color: var(--muted); line-height: 1.7; }
+    .stat-row { display: flex; gap: 6px; flex-wrap: wrap; }
+    .stat-pip { font-size: 11px; padding: 2px 8px; border-radius: 99px; font-weight: 700; }
+    .stat-pip.hp  { background: rgba(239,68,68,.15); color: #f87171; }
+    .stat-pip.atk { background: rgba(249,115,22,.15); color: #fb923c; }
+    .stat-pip.def { background: rgba(59,130,246,.15); color: #60a5fa; }
+    .stat-pip.spd { background: rgba(34,197,94,.15); color: #4ade80; }
+    .skill-list { display: flex; flex-direction: column; gap: 4px; margin-top: 4px; }
+    .skill-tag { font-size: 11px; background: rgba(255,255,255,.05); border: 1px solid var(--border); border-radius: 6px; padding: 3px 8px; color: #c084fc; }
+
+    /* ══ MAIN ══ */
+    #main-screen { align-items: flex-start; width: 100%; gap: 16px; padding: 16px; min-height: calc(100vh - 50px); }
+
+    /* 左欄 */
+    #left-col { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+
+    /* 事件框 */
+    #event-box { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 22px 22px; min-height: 160px; display: flex; flex-direction: column; gap: 12px; }
+    #event-icon { font-size: 48px; text-align: center; }
+    #event-title { font-size: 20px; font-weight: 800; text-align: center; }
+    #event-desc  { font-size: 14px; color: var(--muted); line-height: 1.7; text-align: center; }
+    /* 敵人血條（戰鬥用）*/
+    #enemy-hp-wrap { display: none; flex-direction: column; gap: 4px; }
+    #enemy-hp-label { font-size: 12px; color: var(--muted); display: flex; justify-content: space-between; }
+    #enemy-hp-bar { height: 10px; background: rgba(255,255,255,.08); border-radius: 5px; overflow: hidden; }
+    #enemy-hp-fill { height: 100%; background: var(--red); border-radius: 5px; transition: width .4s; }
+
+    /* 行動按鈕區 */
+    #action-btns { display: flex; flex-wrap: wrap; gap: 10px; }
+    .act-btn { flex: 1; min-width: 120px; padding: 13px 10px; border: none; border-radius: 11px; font-family: inherit; font-size: 14px; font-weight: 700; cursor: pointer; transition: opacity .15s, transform .1s; line-height: 1.3; }
+    .act-btn:hover:not(:disabled) { opacity: .85; transform: translateY(-1px); }
+    .act-btn:disabled { opacity: .35; cursor: not-allowed; transform: none; }
+    .act-btn.explore  { background: linear-gradient(135deg,#f97316,#c2410c); color:#fff; }
+    .act-btn.attack   { background: linear-gradient(135deg,#ef4444,#b91c1c); color:#fff; }
+    .act-btn.skill    { background: linear-gradient(135deg,#a855f7,#7c3aed); color:#fff; }
+    .act-btn.potion   { background: linear-gradient(135deg,#22c55e,#15803d); color:#fff; }
+    .act-btn.flee     { background: rgba(255,255,255,.06); border: 1px solid var(--border); color: var(--muted); }
+    .act-btn.buy      { background: linear-gradient(135deg,#f5c518,#d97706); color:#111; }
+    .act-btn.skip     { background: rgba(255,255,255,.06); border: 1px solid var(--border); color: var(--muted); }
+    .cd-badge { font-size: 10px; display: block; margin-top: 2px; color: rgba(255,255,255,.55); }
+
+    /* 日誌 */
+    #log-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+    #log-header { padding: 8px 14px; font-size: 11px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; border-bottom: 1px solid var(--border); }
+    #log { height: 200px; overflow-y: auto; padding: 10px 14px; display: flex; flex-direction: column; gap: 4px; scroll-behavior: smooth; }
+    #log::-webkit-scrollbar { width: 4px; }
+    #log::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    .log-line { font-size: 13px; line-height: 1.5; }
+    .log-line.info  { color: var(--muted); }
+    .log-line.good  { color: #4ade80; }
+    .log-line.bad   { color: #f87171; }
+    .log-line.boss  { color: var(--gold); font-weight: 700; }
+    .log-line.dmg   { color: #fb923c; }
+    .log-line.heal  { color: #34d399; }
+    .log-line.sys   { color: #c084fc; }
+
+    /* 右欄 狀態面板 */
+    #status-panel { width: 220px; flex-shrink: 0; background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 16px 14px; display: flex; flex-direction: column; gap: 12px; position: sticky; top: 66px; }
+    #sp-name  { font-size: 15px; font-weight: 800; text-align: center; }
+    #sp-class { font-size: 11px; color: var(--muted); text-align: center; margin-top: -8px; }
+    .sp-floor { font-size: 12px; text-align: center; color: var(--gold); font-weight: 700; letter-spacing: 1px; }
+    .hp-wrap  { display: flex; flex-direction: column; gap: 4px; }
+    .hp-label { font-size: 11px; display: flex; justify-content: space-between; color: var(--muted); }
+    .hp-bar   { height: 12px; background: rgba(255,255,255,.06); border-radius: 6px; overflow: hidden; }
+    .hp-fill  { height: 100%; border-radius: 6px; transition: width .4s, background .3s; }
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .stat-box { background: rgba(255,255,255,.04); border: 1px solid var(--border); border-radius: 8px; padding: 6px 8px; display: flex; flex-direction: column; gap: 1px; }
+    .stat-box .sb-label { font-size: 10px; color: var(--muted); letter-spacing: .5px; }
+    .stat-box .sb-val   { font-size: 16px; font-weight: 800; }
+    .stat-box.atk .sb-val { color: var(--accent); }
+    .stat-box.def .sb-val { color: var(--blue); }
+    .stat-box.spd .sb-val { color: var(--green); }
+    .stat-box.gld .sb-val { color: var(--gold); }
+    .equip-section { display: flex; flex-direction: column; gap: 5px; }
+    .equip-section .sec-title { font-size: 10px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+    .equip-slot { font-size: 12px; background: rgba(255,255,255,.03); border: 1px solid var(--border); border-radius: 7px; padding: 5px 8px; color: var(--muted); }
+    .equip-slot.filled { color: var(--text); border-color: #3a3a60; }
+    .potion-row { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+    .potion-row span { color: var(--muted); font-size: 11px; }
+    #sp-exp-wrap { display: flex; flex-direction: column; gap: 3px; }
+    #sp-exp-label { font-size: 10px; color: var(--muted); display: flex; justify-content: space-between; }
+    #sp-exp-bar   { height: 6px; background: rgba(255,255,255,.06); border-radius: 3px; overflow: hidden; }
+    #sp-exp-fill  { height: 100%; background: var(--purple); border-radius: 3px; transition: width .4s; }
+
+    /* 戰鬥傷害浮字 */
+    .dmg-pop { position: fixed; font-size: 26px; font-weight: 900; pointer-events: none; animation: dpop .9s ease forwards; z-index: 200; text-shadow: 0 2px 8px rgba(0,0,0,.6); }
+    @keyframes dpop { 0%{opacity:1;transform:translateY(0) scale(1)} 100%{opacity:0;transform:translateY(-60px) scale(1.3)} }
+
+    /* ══ RESULT ══ */
+    #result-screen { flex-direction: column; align-items: center; justify-content: center; gap: 24px; min-height: calc(100vh - 50px); padding: 40px 20px; }
+    .result-icon  { font-size: 72px; text-align: center; }
+    .result-title { font-size: 32px; font-weight: 900; text-align: center; }
+    .result-title.win  { background: linear-gradient(135deg,#f5c518,#f97316); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .result-title.lose { color: var(--red); }
+    .result-stats { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 20px 28px; display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 400px; }
+    .rs-row { display: flex; justify-content: space-between; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,.04); padding-bottom: 8px; }
+    .rs-row:last-child { border: none; padding: 0; }
+    .rs-row span:last-child { font-weight: 700; color: var(--accent); }
+
+    /* 通用大按鈕 */
+    .big-btn { width: 100%; max-width: 360px; padding: 15px; background: linear-gradient(135deg,#f97316,#c2410c); border: none; border-radius: 12px; color: #fff; font-size: 16px; font-weight: 800; cursor: pointer; transition: opacity .15s, transform .1s; font-family: inherit; }
+    .big-btn:hover { opacity: .87; transform: translateY(-1px); }
+
+    /* 商店格 */
+    #shop-items { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; width: 100%; }
+    .shop-item { background: rgba(255,255,255,.04); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; min-width: 130px; display: flex; flex-direction: column; gap: 6px; cursor: pointer; transition: border-color .18s, transform .15s; }
+    .shop-item:hover:not(.cant-buy) { border-color: var(--gold); transform: translateY(-2px); }
+    .shop-item.cant-buy { opacity: .4; cursor: not-allowed; }
+    .si-name  { font-size: 13px; font-weight: 700; }
+    .si-bonus { font-size: 11px; color: #4ade80; }
+    .si-price { font-size: 12px; color: var(--gold); font-weight: 700; }
+
+    @media(max-width:600px) {
+      #main-screen { flex-direction: column; }
+      #status-panel { width: 100%; position: static; }
+      .class-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="topbar">
+  <a href="index.html">← 返回目錄</a>
+  <h1>⚔️ 深淵地下城</h1>
+  <div style="width:80px"></div>
+</div>
+
+<!-- ══ TITLE ══ -->
+<div id="title-screen" class="screen active">
+  <div class="title-logo">🏰</div>
+  <div class="title-name">深淵地下城</div>
+  <div class="title-sub">選擇你的職業，深入 20 層地下城，擊敗最終 Boss，奪回失落的寶藏！</div>
+  <button class="big-btn" id="btnStartAdv">⚔️ 開始冒險</button>
+</div>
+
+<!-- ══ CLASS SELECT ══ -->
+<div id="class-screen" class="screen">
+  <div class="class-title">
+    <h2>選擇職業</h2>
+    <p>你的選擇將決定冒險的風格</p>
+  </div>
+  <div class="class-grid">
+    <div class="class-card warrior" data-class="warrior">
+      <div class="ci">⚔️</div>
+      <div class="cn">戰士</div>
+      <div class="stat-row">
+        <span class="stat-pip hp">HP 120</span>
+        <span class="stat-pip atk">ATK 15</span>
+        <span class="stat-pip def">DEF 8</span>
+        <span class="stat-pip spd">SPD 5</span>
+      </div>
+      <div class="cd">穿著重甲的前線戰士，高血量與防禦讓你在持久戰中立於不敗之地。</div>
+      <div class="skill-list">
+        <div class="skill-tag">⚡ 重擊 — 2倍傷害，CD 3回合</div>
+        <div class="skill-tag">🛡️ 防禦姿態 — 本回合 DEF+12，CD 4回合</div>
+      </div>
+    </div>
+    <div class="class-card mage" data-class="mage">
+      <div class="ci">🔮</div>
+      <div class="cn">法師</div>
+      <div class="stat-row">
+        <span class="stat-pip hp">HP 80</span>
+        <span class="stat-pip atk">ATK 25</span>
+        <span class="stat-pip def">DEF 3</span>
+        <span class="stat-pip spd">SPD 7</span>
+      </div>
+      <div class="cd">掌握毀滅魔法的術士，攻擊力遠超常人，但脆弱的身體讓你不得不謹慎行事。</div>
+      <div class="skill-list">
+        <div class="skill-tag">🔥 火球術 — 1.8倍傷害+灼燒2回合，CD 3回合</div>
+        <div class="skill-tag">🔵 魔法護盾 — 抵擋下次攻擊，CD 5回合</div>
+      </div>
+    </div>
+    <div class="class-card rogue" data-class="rogue">
+      <div class="ci">🗡️</div>
+      <div class="cn">盜賊</div>
+      <div class="stat-row">
+        <span class="stat-pip hp">HP 95</span>
+        <span class="stat-pip atk">ATK 18</span>
+        <span class="stat-pip def">DEF 5</span>
+        <span class="stat-pip spd">SPD 12</span>
+      </div>
+      <div class="cd">潛行於陰影中的殺手，極高的速度讓你幾乎永遠先攻，一擊必殺是你的信條。</div>
+      <div class="skill-list">
+        <div class="skill-tag">🌑 背刺 — 必定先手2倍傷害，CD 4回合</div>
+        <div class="skill-tag">💨 煙霧彈 — 必定成功逃跑，CD 6回合</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MAIN ══ -->
+<div id="main-screen" class="screen">
+  <!-- 左欄 -->
+  <div id="left-col">
+    <!-- 事件框 -->
+    <div id="event-box">
+      <div id="event-icon">🗺️</div>
+      <div id="event-title">探索中...</div>
+      <div id="event-desc"></div>
+      <!-- 敵人血條（戰鬥時顯示）-->
+      <div id="enemy-hp-wrap">
+        <div id="enemy-hp-label"><span id="enemy-name-label">敵人</span><span id="enemy-hp-text">100/100</span></div>
+        <div id="enemy-hp-bar"><div id="enemy-hp-fill" style="width:100%"></div></div>
+      </div>
+      <!-- 商店商品（商店時顯示）-->
+      <div id="shop-items" style="display:none"></div>
+    </div>
+
+    <!-- 行動按鈕 -->
+    <div id="action-btns"></div>
+
+    <!-- 日誌 -->
+    <div id="log-wrap">
+      <div id="log-header">冒險日誌</div>
+      <div id="log"></div>
+    </div>
+  </div>
+
+  <!-- 右欄：角色面板 -->
+  <div id="status-panel">
+    <div id="sp-name">冒險者</div>
+    <div id="sp-class">職業</div>
+    <div class="sp-floor" id="sp-floor">B1F</div>
+
+    <div class="hp-wrap">
+      <div class="hp-label"><span>HP</span><span id="sp-hp-text">100/100</span></div>
+      <div class="hp-bar"><div class="hp-fill" id="sp-hp-fill" style="width:100%"></div></div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-box atk"><div class="sb-label">ATK</div><div class="sb-val" id="sp-atk">0</div></div>
+      <div class="stat-box def"><div class="sb-label">DEF</div><div class="sb-val" id="sp-def">0</div></div>
+      <div class="stat-box spd"><div class="sb-label">SPD</div><div class="sb-val" id="sp-spd">0</div></div>
+      <div class="stat-box gld"><div class="sb-label">GOLD</div><div class="sb-val" id="sp-gold">0</div></div>
+    </div>
+
+    <div id="sp-exp-wrap">
+      <div id="sp-exp-label"><span id="sp-lv-text">Lv.1</span><span id="sp-exp-text">0/50 EXP</span></div>
+      <div id="sp-exp-bar"><div id="sp-exp-fill" style="width:0%"></div></div>
+    </div>
+
+    <div class="equip-section">
+      <div class="sec-title">裝備</div>
+      <div class="equip-slot" id="eq-weapon">⚔️ 武器：無</div>
+      <div class="equip-slot" id="eq-armor">🛡️ 護甲：無</div>
+      <div class="equip-slot" id="eq-neck">📿 頸鍊：無</div>
+    </div>
+
+    <div class="potion-row">
+      🧪 藥水：<span id="sp-potions">0 / 3</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══ RESULT ══ -->
+<div id="result-screen" class="screen">
+  <div class="result-icon" id="result-icon">💀</div>
+  <div class="result-title" id="result-title">你已陣亡</div>
+  <div class="result-stats" id="result-stats"></div>
+  <button class="big-btn" id="btnRestart">↺ 重新開始</button>
+</div>
+
+<script>
+'use strict';
+
+// ════════════════════════════════════════════════════════
+// 資料定義
+// ════════════════════════════════════════════════════════
+
+const CLASSES = {
+  warrior: {
+    name:'戰士', icon:'⚔️', color:'#ef4444',
+    hp:120, atk:15, def:8, spd:5,
+    skills:[
+      { id:'heavy', name:'重擊', icon:'⚡', desc:'2倍傷害', cd:3, maxCd:3,
+        use(p,e){ const d=dealDmg(p.atk*2, e.def); e.hp-=d; addLog(`⚡ 重擊！造成 ${d} 點傷害！`,'dmg'); popDmg(d,'#fb923c'); } },
+      { id:'guard', name:'防禦姿態', icon:'🛡️', desc:'本回合DEF+12', cd:0, maxCd:4,
+        use(p){ p.guardActive=true; addLog(`🛡️ 擺出防禦姿態，本回合 DEF+12！`,'sys'); updatePanel(); } },
+    ]
+  },
+  mage: {
+    name:'法師', icon:'🔮', color:'#a855f7',
+    hp:80, atk:25, def:3, spd:7,
+    skills:[
+      { id:'fireball', name:'火球術', icon:'🔥', desc:'1.8倍+灼燒2回合', cd:0, maxCd:3,
+        use(p,e){ const d=dealDmg(Math.round(p.atk*1.8), e.def); e.hp-=d; e.burn=2; addLog(`🔥 火球術命中！造成 ${d} 點傷害，並陷入灼燒！`,'dmg'); popDmg(d,'#f97316'); } },
+      { id:'mshield', name:'魔法護盾', icon:'🔵', desc:'抵擋下次攻擊', cd:0, maxCd:5,
+        use(p){ p.shield=true; addLog(`🔵 魔法護盾展開，將抵擋下次攻擊！`,'sys'); } },
+    ]
+  },
+  rogue: {
+    name:'盜賊', icon:'🗡️', color:'#22c55e',
+    hp:95, atk:18, def:5, spd:12,
+    skills:[
+      { id:'backstab', name:'背刺', icon:'🌑', desc:'必定先手2倍傷害', cd:0, maxCd:4,
+        use(p,e){ const d=dealDmg(p.atk*2, e.def); e.hp-=d; addLog(`🌑 從陰影中背刺！造成 ${d} 點傷害！`,'dmg'); popDmg(d,'#a3e635'); battle.playerFirst=true; } },
+      { id:'smoke', name:'煙霧彈', icon:'💨', desc:'必定逃跑成功', cd:0, maxCd:6,
+        use(){ battle.forceEscape=true; addLog(`💨 煙霧四起，成功脫身！`,'good'); } },
+    ]
+  }
+};
+
+const ENEMY_POOL = [
+  { name:'哥布林',     icon:'👺', hp:28,  atk:8,  def:2,  exp:12, gold:8  },
+  { name:'骷髏兵',     icon:'💀', hp:35,  atk:11, def:3,  exp:16, gold:10 },
+  { name:'大蜘蛛',     icon:'🕷️', hp:30,  atk:10, def:1,  exp:14, gold:9  },
+  { name:'石像鬼',     icon:'🗿', hp:50,  atk:13, def:6,  exp:22, gold:15 },
+  { name:'食人魔',     icon:'👹', hp:60,  atk:16, def:5,  exp:28, gold:20 },
+  { name:'暗影狼',     icon:'🐺', hp:45,  atk:14, def:3,  exp:20, gold:14 },
+  { name:'火焰蜥蜴',   icon:'🦎', hp:55,  atk:18, def:4,  exp:26, gold:18 },
+  { name:'地下惡龍幼體',icon:'🐲', hp:70,  atk:20, def:7,  exp:35, gold:25 },
+];
+
+const BOSSES = {
+  5:  { name:'洞穴巨魔',   icon:'👾', hp:100, atk:18, def:8,  exp:60,  gold:50,  isBoss:true },
+  10: { name:'不死騎士',   icon:'🧟', hp:150, atk:24, def:12, exp:100, gold:80,  isBoss:true },
+  15: { name:'深淵蜘蛛女王',icon:'🕸️', hp:200, atk:30, def:10, exp:150, gold:120, isBoss:true },
+  20: { name:'地獄龍王',   icon:'🐉', hp:280, atk:38, def:16, exp:250, gold:200, isBoss:true },
+};
+
+const ITEMS = [
+  { id:'sword1',  name:'鐵劍',      slot:'weapon', atk:5,  price:30, icon:'⚔️' },
+  { id:'sword2',  name:'精鋼劍',    slot:'weapon', atk:10, price:60, icon:'⚔️' },
+  { id:'sword3',  name:'魔法長劍',  slot:'weapon', atk:16, price:90, icon:'⚔️' },
+  { id:'armor1',  name:'皮甲',      slot:'armor',  def:4,  price:25, icon:'🛡️' },
+  { id:'armor2',  name:'鎖子甲',    slot:'armor',  def:8,  price:55, icon:'🛡️' },
+  { id:'armor3',  name:'板甲',      slot:'armor',  def:14, price:85, icon:'🛡️' },
+  { id:'neck1',   name:'生命項鍊',  slot:'neck',   hp:20,  price:40, icon:'📿' },
+  { id:'neck2',   name:'力量項鍊',  slot:'neck',   atk:6,  price:50, icon:'📿' },
+  { id:'neck3',   name:'鑽石護符',  slot:'neck',   hp:40,  price:80, icon:'📿' },
+];
+
+// ════════════════════════════════════════════════════════
+// 狀態
+// ════════════════════════════════════════════════════════
+let player = null;
+let battle  = null;   // 戰鬥狀態
+let gameState = 'explore'; // explore | battle | shop | chest | trap | dead | win
+let floorNum  = 1;
+let kills     = 0;
+let startTime = 0;
+
+// ════════════════════════════════════════════════════════
+// 畫面切換
+// ════════════════════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo({ top:0, behavior:'smooth' });
+}
+
+document.getElementById('btnStartAdv').addEventListener('click', () => showScreen('class-screen'));
+document.getElementById('btnRestart').addEventListener('click', () => { showScreen('class-screen'); });
+
+document.querySelectorAll('.class-card').forEach(card => {
+  card.addEventListener('click', () => startGame(card.dataset.class));
+});
+
+// ════════════════════════════════════════════════════════
+// 角色建立
+// ════════════════════════════════════════════════════════
+function startGame(classId) {
+  const cls = CLASSES[classId];
+  player = {
+    classId, className: cls.name, classIcon: cls.icon, classColor: cls.color,
+    hp: cls.hp, maxHp: cls.hp,
+    atk: cls.atk, def: cls.def, spd: cls.spd,
+    gold: 20, exp: 0, lv: 1, expNext: 50,
+    potions: 1,
+    equipment: { weapon:null, armor:null, neck:null },
+    // 技能 CD（深拷貝）
+    skills: cls.skills.map(s => ({ ...s, cd: 0 })),
+    shield: false, guardActive: false,
+    statusEffects: [],
+    statBonus: { atk:0, def:0, hp:0 },
+  };
+  floorNum = 1; kills = 0; startTime = Date.now();
+  document.getElementById('sp-name').textContent = cls.icon + ' ' + cls.name;
+  document.getElementById('sp-class').textContent = cls.name;
+  showScreen('main-screen');
+  document.getElementById('log').innerHTML = '';
+  addLog(`🏰 歡迎來到深淵地下城，${cls.icon} ${cls.name}！`, 'sys');
+  addLog(`💡 目標：深入 20 層擊敗最終 Boss 地獄龍王！`, 'info');
+  updatePanel();
+  showExploreButtons();
+  setEvent('🗺️', `第 ${floorNum} 層`, '按下「繼續探索」前進……');
+}
+
+// ════════════════════════════════════════════════════════
+// 角色面板更新
+// ════════════════════════════════════════════════════════
+function updatePanel() {
+  const p = player;
+  const pct = Math.max(0, p.hp / p.maxHp * 100);
+  document.getElementById('sp-hp-text').textContent = `${Math.max(0,p.hp)}/${p.maxHp}`;
+  const fill = document.getElementById('sp-hp-fill');
+  fill.style.width = pct + '%';
+  fill.style.background = pct > 50 ? '#22c55e' : pct > 25 ? '#f97316' : '#ef4444';
+
+  document.getElementById('sp-atk').textContent  = totalAtk();
+  document.getElementById('sp-def').textContent  = totalDef();
+  document.getElementById('sp-spd').textContent  = p.spd;
+  document.getElementById('sp-gold').textContent = p.gold;
+  document.getElementById('sp-floor').textContent = `B${floorNum}F`;
+
+  // EXP
+  const expPct = p.exp / p.expNext * 100;
+  document.getElementById('sp-lv-text').textContent  = `Lv.${p.lv}`;
+  document.getElementById('sp-exp-text').textContent = `${p.exp}/${p.expNext} EXP`;
+  document.getElementById('sp-exp-fill').style.width  = expPct + '%';
+
+  // 裝備槽
+  const eq = p.equipment;
+  setSlot('eq-weapon', '⚔️ 武器', eq.weapon);
+  setSlot('eq-armor',  '🛡️ 護甲', eq.armor);
+  setSlot('eq-neck',   '📿 頸鍊', eq.neck);
+
+  // 藥水
+  document.getElementById('sp-potions').textContent = `${p.potions} / 3`;
+}
+
+function setSlot(id, label, item) {
+  const el = document.getElementById(id);
+  if (item) {
+    el.className = 'equip-slot filled';
+    el.textContent = `${item.icon} ${item.name}`;
+  } else {
+    el.className = 'equip-slot';
+    el.textContent = label + '：無';
+  }
+}
+
+function totalAtk() { return player.atk + (player.equipment.weapon?.atk||0) + (player.equipment.neck?.atk||0); }
+function totalDef() { return player.def + (player.equipment.armor?.def||0) + (player.guardActive?12:0); }
+function totalMaxHp() { return player.maxHp + (player.equipment.neck?.hp||0); }
+
+// ════════════════════════════════════════════════════════
+// 日誌
+// ════════════════════════════════════════════════════════
+function addLog(text, type='info') {
+  const line = document.createElement('div');
+  line.className = `log-line ${type}`;
+  line.textContent = text;
+  const log = document.getElementById('log');
+  log.appendChild(line);
+  log.scrollTop = log.scrollHeight;
+}
+
+// 傷害浮字
+function popDmg(val, color='#fb923c') {
+  const el = document.createElement('div');
+  el.className = 'dmg-pop';
+  el.textContent = '-' + val;
+  el.style.color = color;
+  el.style.left  = (40 + Math.random()*20) + '%';
+  el.style.top   = '35%';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 900);
+}
+function popHeal(val) {
+  const el = document.createElement('div');
+  el.className = 'dmg-pop';
+  el.textContent = '+' + val;
+  el.style.color = '#34d399';
+  el.style.left  = (40 + Math.random()*20) + '%';
+  el.style.top   = '35%';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 900);
+}
+
+// ════════════════════════════════════════════════════════
+// 探索
+// ════════════════════════════════════════════════════════
+function setEvent(icon, title, desc) {
+  document.getElementById('event-icon').textContent   = icon;
+  document.getElementById('event-title').textContent  = title;
+  document.getElementById('event-desc').textContent   = desc;
+  document.getElementById('enemy-hp-wrap').style.display = 'none';
+  document.getElementById('shop-items').style.display    = 'none';
+}
+
+function showExploreButtons() {
+  gameState = 'explore';
+  const btns = document.getElementById('action-btns');
+  btns.innerHTML = '';
+  const b = makeBtn('繼續探索 →', 'explore', () => triggerEvent());
+  btns.appendChild(b);
+}
+
+function triggerEvent() {
+  // Boss 層
+  if ([5,10,15,20].includes(floorNum)) {
+    const boss = { ...BOSSES[floorNum] };
+    addLog(``, 'info');
+    addLog(`━━━━━━━━━━━━━━━━━━━━━━━━`, 'boss');
+    addLog(`⚠️  B${floorNum}F BOSS 出現：${boss.icon} ${boss.name}！`, 'boss');
+    addLog(`━━━━━━━━━━━━━━━━━━━━━━━━`, 'boss');
+    startBattle(boss);
+    return;
+  }
+  // 隨機事件（加權）
+  const roll = Math.random();
+  if (roll < 0.50)      triggerMonster();
+  else if (roll < 0.65) triggerTrap();
+  else if (roll < 0.85) triggerChest();
+  else                  triggerShop();
+}
+
+// ════════════════════════════════════════════════════════
+// 怪物
+// ════════════════════════════════════════════════════════
+function triggerMonster() {
+  // 隨機選怪，按樓層調整強度
+  const base = ENEMY_POOL[Math.floor(Math.random() * ENEMY_POOL.length)];
+  const scale = 1 + (floorNum - 1) * 0.12;
+  const enemy = {
+    ...base,
+    hp:   Math.round(base.hp  * scale),
+    maxHp:Math.round(base.hp  * scale),
+    atk:  Math.round(base.atk * scale),
+    def:  Math.round(base.def * scale),
+    exp:  Math.round(base.exp * scale),
+    gold: Math.round(base.gold* scale),
+    burn: 0,
+  };
+  addLog(`👹 遭遇 ${enemy.icon} ${enemy.name}（HP:${enemy.hp} ATK:${enemy.atk} DEF:${enemy.def}）！`, 'bad');
+  startBattle(enemy);
+}
+
+// ════════════════════════════════════════════════════════
+// 戰鬥系統
+// ════════════════════════════════════════════════════════
+function startBattle(enemy) {
+  gameState = 'battle';
+  battle = {
+    enemy,
+    playerFirst: player.spd >= enemy.spd,
+    turn: 1,
+    forceEscape: false,
+    ended: false,
+  };
+  setEvent(enemy.icon, enemy.name, `HP: ${enemy.hp} | ATK: ${enemy.atk} | DEF: ${enemy.def}`);
+  updateEnemyHpBar(enemy);
+  document.getElementById('enemy-hp-wrap').style.display = 'flex';
+  renderBattleButtons();
+}
+
+function updateEnemyHpBar(enemy) {
+  const pct = Math.max(0, enemy.hp / enemy.maxHp * 100);
+  document.getElementById('enemy-hp-fill').style.width = pct + '%';
+  document.getElementById('enemy-hp-text').textContent = `${Math.max(0,enemy.hp)}/${enemy.maxHp}`;
+  document.getElementById('enemy-name-label').textContent = enemy.icon + ' ' + enemy.name;
+}
+
+function renderBattleButtons() {
+  const btns = document.getElementById('action-btns');
+  btns.innerHTML = '';
+  // 普攻
+  btns.appendChild(makeBtn('⚔️ 普通攻擊', 'attack', () => doPlayerAction('attack')));
+  // 技能
+  player.skills.forEach((sk, i) => {
+    const onCd = sk.cd > 0;
+    const lbl = onCd ? `${sk.icon} ${sk.name}\n(CD: ${sk.cd})` : `${sk.icon} ${sk.name}`;
+    const b = makeBtn(lbl, 'skill', () => doPlayerAction('skill', i), onCd);
+    btns.appendChild(b);
+  });
+  // 藥水
+  const noPotion = player.potions <= 0;
+  btns.appendChild(makeBtn(`🧪 使用藥水 (${player.potions})`, 'potion', () => doPlayerAction('potion'), noPotion));
+  // 逃跑（Boss 不能逃）
+  if (!battle.enemy.isBoss) {
+    btns.appendChild(makeBtn('🏃 逃跑', 'flee', () => doPlayerAction('flee')));
+  }
+}
+
+function makeBtn(text, cls, onClick, disabled=false) {
+  const b = document.createElement('button');
+  b.className = `act-btn ${cls}`;
+  b.textContent = text;
+  b.disabled = disabled;
+  b.addEventListener('click', onClick);
+  return b;
+}
+
+function doPlayerAction(type, skillIdx) {
+  if (battle.ended) return;
+  const p = player;
+  const e = battle.enemy;
+  player.guardActive = false;   // 重置防禦姿態
+
+  let acted = false;
+
+  if (type === 'attack') {
+    const d = dealDmg(totalAtk(), e.def);
+    e.hp -= d;
+    addLog(`⚔️ 你攻擊 ${e.name}，造成 ${d} 點傷害！`, 'dmg');
+    popDmg(d, '#fb923c');
+    acted = true;
+  } else if (type === 'skill') {
+    const sk = p.skills[skillIdx];
+    if (sk.cd > 0) return;
+    sk.use(p, e);
+    sk.cd = sk.maxCd;
+    acted = true;
+    if (battle.forceEscape) { doEscape(); return; }
+  } else if (type === 'potion') {
+    if (p.potions <= 0) return;
+    p.potions--;
+    const heal = Math.round(p.maxHp * 0.35);
+    p.hp = Math.min(p.maxHp, p.hp + heal);
+    addLog(`🧪 使用藥水，回復 ${heal} HP！`, 'heal');
+    popHeal(heal);
+    acted = true;
+  } else if (type === 'flee') {
+    doEscape();
+    return;
+  }
+
+  if (!acted) return;
+
+  updateEnemyHpBar(e);
+  updatePanel();
+  if (e.hp <= 0) { battleWin(); return; }
+
+  // 敵人回合
+  setTimeout(() => enemyTurn(), 400);
+}
+
+function dealDmg(atk, def) {
+  const base = Math.max(1, atk - def);
+  return base + Math.floor(Math.random() * 3) - 1; // ±1
+}
+
+function enemyTurn() {
+  if (battle.ended) return;
+  const p = player;
+  const e = battle.enemy;
+
+  // 灼燒傷害
+  if (e.burn > 0) {
+    const bd = Math.max(1, Math.round(e.atk * 0.2));
+    e.hp -= bd; e.burn--;
+    addLog(`🔥 ${e.name} 持續灼燒，損失 ${bd} 點！`, 'dmg');
+    updateEnemyHpBar(e);
+    if (e.hp <= 0) { battleWin(); return; }
+  }
+
+  // 敵人行動 AI（60%普攻、30%強攻×1.5、10%嘲諷跳過）
+  const roll = Math.random();
+  let eDmg = 0;
+  if (roll < 0.10) {
+    addLog(`😤 ${e.name} 大聲嘲諷，浪費了行動！`, 'info');
+  } else {
+    const mult = roll < 0.40 ? 1.5 : 1;
+    const raw  = dealDmg(e.atk * mult, totalDef());
+    if (p.shield) {
+      addLog(`🔵 魔法護盾抵擋了 ${e.name} 的攻擊！`, 'sys');
+      p.shield = false;
+    } else {
+      eDmg = raw;
+      p.hp -= eDmg;
+      addLog(`${e.icon} ${e.name} 攻擊你，造成 ${eDmg} 點傷害${mult>1?' (強攻！)':''}！`, 'bad');
+      popDmg(eDmg, '#ef4444');
+    }
+  }
+
+  // CD 倒數
+  p.skills.forEach(sk => { if (sk.cd > 0) sk.cd--; });
+  battle.turn++;
+  updatePanel();
+  if (p.hp <= 0) { playerDead(); return; }
+  renderBattleButtons();
+}
+
+function doEscape() {
+  const success = battle.forceEscape || Math.random() < 0.5;
+  if (success) {
+    addLog(`🏃 成功逃跑！`, 'good');
+    battle.ended = true;
+    afterBattle();
+  } else {
+    addLog(`🚫 逃跑失敗！敵人反擊！`, 'bad');
+    enemyTurn();
+  }
+}
+
+function battleWin() {
+  battle.ended = true;
+  const e = battle.enemy;
+  kills++;
+  player.gold += e.gold;
+  addLog(``, 'info');
+  addLog(`✅ 擊敗 ${e.icon} ${e.name}！獲得 ${e.gold}G + ${e.exp} EXP`, 'good');
+  gainExp(e.exp);
+  updatePanel();
+  setTimeout(afterBattle, 600);
+}
+
+function afterBattle() {
+  gameState = 'explore';
+  document.getElementById('enemy-hp-wrap').style.display = 'none';
+  // 20F Boss 擊敗 → 通關
+  if (floorNum === 20 && battle?.enemy?.isBoss) {
+    gameClear();
+    return;
+  }
+  // Boss 擊敗後升一層
+  if (battle?.enemy?.isBoss) {
+    floorNum++;
+    addLog(`🎉 Boss 擊敗！下降到 B${floorNum}F！`, 'boss');
+    updatePanel();
+    showExploreButtons();
+    setEvent('🏆', `Boss 擊敗！`, `前進到 B${floorNum}F……`);
+    return;
+  }
+  showExploreButtons();
+  setEvent('🗺️', `第 ${floorNum} 層`, '繼續前進……');
+}
+
+// ════════════════════════════════════════════════════════
+// 升級
+// ════════════════════════════════════════════════════════
+function gainExp(amount) {
+  player.exp += amount;
+  while (player.exp >= player.expNext) {
+    player.exp -= player.expNext;
+    player.lv++;
+    player.expNext = Math.round(player.expNext * 1.4);
+    player.maxHp += 8;
+    player.hp = Math.min(player.hp + 8, player.maxHp);
+    player.atk += 2;
+    player.def += 1;
+    addLog(`🌟 升級！現在是 Lv.${player.lv}！HP↑8 ATK↑2 DEF↑1`, 'sys');
+  }
+}
+
+// ════════════════════════════════════════════════════════
+// 陷阱
+// ════════════════════════════════════════════════════════
+function triggerTrap() {
+  gameState = 'trap';
+  const roll = Math.random();
+  let icon='⚠️', title='陷阱！', desc='', logText='';
+  if (roll < 0.5) {
+    const dmg = Math.round(player.maxHp * (0.1 + Math.random()*0.15));
+    player.hp = Math.max(1, player.hp - dmg);
+    icon='🕳️'; title='陷阱坑洞！';
+    desc=`你踩入隱藏坑洞，失去 ${dmg} HP！`;
+    logText=`🕳️ 踩到坑洞陷阱！損失 ${dmg} HP！`;
+    addLog(logText,'bad');
+    popDmg(dmg,'#ef4444');
+  } else {
+    const loss = Math.min(player.gold, 5 + Math.floor(Math.random()*15));
+    player.gold -= loss;
+    icon='💸'; title='偷竊陷阱！';
+    desc=`暗中的賊人偷走了你 ${loss} 枚金幣！`;
+    logText=`💸 觸發偷竊陷阱！損失 ${loss}G！`;
+    addLog(logText,'bad');
+  }
+  setEvent(icon, title, desc);
+  updatePanel();
+  if (player.hp <= 0) { playerDead(); return; }
+  showContinueBtn();
+}
+
+// ════════════════════════════════════════════════════════
+// 商店
+// ════════════════════════════════════════════════════════
+function triggerShop() {
+  gameState = 'shop';
+  addLog(`🛒 發現商店！`, 'good');
+  setEvent('🛒','神秘商店','選擇購買道具，或繼續前進。');
+
+  const shopPool = [...ITEMS];
+  shuffle(shopPool);
+  const offered = shopPool.slice(0, 3);
+  // 加入藥水
+  if (player.potions < 3) offered.push({ id:'potion', name:'回復藥水', icon:'🧪', price:15, potion:true });
+
+  const shopEl = document.getElementById('shop-items');
+  shopEl.style.display = 'flex';
+  shopEl.innerHTML = '';
+  offered.forEach(item => {
+    const cantBuy = player.gold < item.price;
+    const div = document.createElement('div');
+    div.className = 'shop-item' + (cantBuy?' cant-buy':'');
+    let bonus = '';
+    if (item.atk)   bonus = `ATK +${item.atk}`;
+    else if (item.def) bonus = `DEF +${item.def}`;
+    else if (item.hp)  bonus = `HP +${item.hp}`;
+    else if (item.potion) bonus = '回復 35% HP';
+    div.innerHTML = `<div class="si-name">${item.icon} ${item.name}</div><div class="si-bonus">${bonus}</div><div class="si-price">💰 ${item.price}G</div>`;
+    if (!cantBuy) div.addEventListener('click', () => buyItem(item, shopEl));
+    shopEl.appendChild(div);
+  });
+
+  const btns = document.getElementById('action-btns');
+  btns.innerHTML = '';
+  btns.appendChild(makeBtn('離開商店', 'skip', () => {
+    document.getElementById('shop-items').style.display = 'none';
+    floorDown();
+  }));
+}
+
+function buyItem(item, shopEl) {
+  if (player.gold < item.price) return;
+  player.gold -= item.price;
+  if (item.potion) {
+    if (player.potions >= 3) { addLog(`🧪 藥水已達上限！`,'info'); return; }
+    player.potions++;
+    addLog(`🧪 購買了回復藥水！(${player.potions}/3)`,'good');
+  } else {
+    equipItem(item);
+  }
+  updatePanel();
+  // 重刷商店（更新金幣狀態）
+  shopEl.querySelectorAll('.shop-item').forEach(el => {
+    const name = el.querySelector('.si-name')?.textContent.replace(/^\S+\s/,'');
+    // 標記無法購買的
+    const priceText = el.querySelector('.si-price')?.textContent.replace(/[^\d]/g,'');
+    if (priceText && player.gold < parseInt(priceText)) {
+      el.classList.add('cant-buy');
+    }
+  });
+}
+
+function equipItem(item) {
+  const slot = item.slot;
+  const old = player.equipment[slot];
+  if (old) addLog(`🔄 替換了 ${old.icon} ${old.name}`, 'info');
+  player.equipment[slot] = item;
+  addLog(`✅ 裝備了 ${item.icon} ${item.name}！`, 'good');
+}
+
+// ════════════════════════════════════════════════════════
+// 寶箱
+// ════════════════════════════════════════════════════════
+function triggerChest() {
+  gameState = 'chest';
+  const roll = Math.random();
+  let icon='📦', title='神秘寶箱！', desc='';
+  if (roll < 0.5) {
+    // 裝備
+    const pool = ITEMS.filter(it => !player.equipment[it.slot]);
+    const item = pool.length ? pool[Math.floor(Math.random()*pool.length)] : ITEMS[Math.floor(Math.random()*ITEMS.length)];
+    equipItem(item);
+    desc = `寶箱裡裝著 ${item.icon} ${item.name}！`;
+    addLog(`📦 寶箱！獲得裝備 ${item.icon} ${item.name}！`, 'good');
+  } else {
+    const g = 10 + Math.floor(Math.random()*40) + floorNum*2;
+    player.gold += g;
+    desc = `寶箱裡裝著 ${g} 枚金幣！`;
+    addLog(`📦 寶箱！獲得 ${g}G！`, 'good');
+  }
+  setEvent(icon, title, desc);
+  updatePanel();
+  showContinueBtn();
+}
+
+// ════════════════════════════════════════════════════════
+// 工具
+// ════════════════════════════════════════════════════════
+function showContinueBtn() {
+  const btns = document.getElementById('action-btns');
+  btns.innerHTML = '';
+  btns.appendChild(makeBtn('繼續前進 →', 'explore', () => floorDown()));
+}
+
+function floorDown() {
+  floorNum++;
+  updatePanel();
+  addLog(`⬇️ 下降到 B${floorNum}F`, 'info');
+  showExploreButtons();
+  setEvent('🗺️', `第 ${floorNum} 層`, '繼續探索……');
+  if (floorNum > 20) { gameClear(); }
+}
+
+function shuffle(arr) {
+  for (let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}
+  return arr;
+}
+
+// ════════════════════════════════════════════════════════
+// 死亡 / 通關
+// ════════════════════════════════════════════════════════
+function playerDead() {
+  gameState = 'dead';
+  addLog(`💀 你已陣亡……`, 'bad');
+  const reason = battle?.enemy ? `被 ${battle.enemy.icon} ${battle.enemy.name} 擊殺` : '陷阱致死';
+  setTimeout(() => {
+    showScreen('result-screen');
+    document.getElementById('result-icon').textContent = '💀';
+    const rt = document.getElementById('result-title');
+    rt.textContent = '你已陣亡'; rt.className = 'result-title lose';
+    showResultStats(reason, false);
+  }, 800);
+}
+
+function gameClear() {
+  gameState = 'win';
+  addLog(`🏆 你擊敗了地獄龍王！地下城的詛咒解除了！`, 'boss');
+  setTimeout(() => {
+    showScreen('result-screen');
+    document.getElementById('result-icon').textContent = '🏆';
+    const rt = document.getElementById('result-title');
+    rt.textContent = '通關！深淵征服者！'; rt.className = 'result-title win';
+    showResultStats('擊敗地獄龍王', true);
+  }, 800);
+}
+
+function showResultStats(reason, win) {
+  const elapsed = Math.round((Date.now() - startTime) / 1000);
+  const mins = Math.floor(elapsed/60), secs = elapsed%60;
+  const stats = document.getElementById('result-stats');
+  stats.innerHTML = `
+    <div class="rs-row"><span>職業</span><span>${player.classIcon} ${player.className}</span></div>
+    <div class="rs-row"><span>最終樓層</span><span>B${floorNum}F</span></div>
+    <div class="rs-row"><span>等級</span><span>Lv.${player.lv}</span></div>
+    <div class="rs-row"><span>擊殺怪物</span><span>${kills} 隻</span></div>
+    <div class="rs-row"><span>剩餘 HP</span><span>${Math.max(0,player.hp)} / ${player.maxHp}</span></div>
+    <div class="rs-row"><span>金幣</span><span>${player.gold}G</span></div>
+    <div class="rs-row"><span>${win?'勝因':'死因'}</span><span>${reason}</span></div>
+    <div class="rs-row"><span>冒險時間</span><span>${mins}m ${secs}s</span></div>
+  `;
+}
+</script>
+</body>
+</html>
