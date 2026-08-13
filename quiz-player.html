@@ -208,7 +208,7 @@ function handle(msg) {
       showQuestionScreen(msg);
       break;
 
-    case 'quiz_answer_ack':
+    case 'quiz_answer_ack': {
       // 已答題，禁用按鈕，等待揭曉
       document.querySelectorAll('.opt-btn').forEach(b=>b.disabled=true);
       const fb = document.getElementById('feedback');
@@ -220,6 +220,7 @@ function handle(msg) {
         fb.className='wrong'; fb.textContent='❌ 答錯了！';
       }
       break;
+    }
 
     case 'quiz_reveal':
       clearInterval(timerInterval);
@@ -252,7 +253,7 @@ function showQuestionScreen(msg) {
   document.getElementById('optB').textContent = msg.opts[1];
   document.getElementById('optC').textContent = msg.opts[2];
   document.getElementById('optD').textContent = msg.opts[3];
-  document.querySelectorAll('.opt-btn').forEach(b=>{b.disabled=false;b.classList.remove('reveal-correct','wrong-chosen','dimmed');b.style.opacity='';});
+  document.querySelectorAll('.opt-btn').forEach(b=>{b.disabled=false;b.classList.remove('reveal-correct','wrong-chosen','dimmed','chosen');b.style.opacity='';});
   const fb=document.getElementById('feedback'); fb.style.display='none';
   startTimer(msg.timeLimitSec);
 }
@@ -270,6 +271,9 @@ document.querySelectorAll('.opt-btn').forEach(btn=>{
   btn.addEventListener('click',()=>{
     if(answered)return; answered=true;
     clearInterval(timerInterval);
+    // 標記玩家選擇的按鈕
+    document.querySelectorAll('.opt-btn').forEach(b=>b.classList.remove('chosen'));
+    btn.classList.add('chosen');
     ws.send(JSON.stringify({type:'quiz_answer',answer:btn.dataset.opt}));
     document.querySelectorAll('.opt-btn').forEach(b=>b.disabled=true);
     // 先顯示「已提交」，等伺服器回應 quiz_answer_ack
@@ -286,12 +290,36 @@ document.addEventListener('keydown',e=>{
 
 // ── Reveal ────────────────────────────────────────────
 function showRevealScreen(msg) {
-  showScreen('reveal');
-  const ptsBig = document.getElementById('ptsBig');
-  const ptsSub = document.getElementById('ptsSub');
-  if (msg.myCorrect) { ptsBig.textContent=`+${msg.myPts}`; ptsBig.className='pts-big correct'; ptsSub.textContent=`累計 ${msg.myScore} 分`; }
-  else               { ptsBig.textContent='❌'; ptsBig.className='pts-big wrong'; ptsSub.textContent=`正確答案：${msg.correctAns} — ${msg.correctText}`; }
-  renderLbRows(document.getElementById('lbRows'), msg.leaderboard, myName);
+  // 先在題目畫面標示正確/錯誤選項（停留在 question 畫面一瞬間讓使用者看到）
+  document.querySelectorAll('.opt-btn').forEach(btn => {
+    const opt = btn.dataset.opt;
+    btn.disabled = true;
+    if (opt === msg.correctAns) {
+      btn.classList.add('reveal-correct');
+    } else if (btn.classList.contains('chosen')) {
+      btn.classList.add('wrong-chosen');
+    } else {
+      btn.classList.add('dimmed');
+    }
+  });
+
+  // 短暫延遲後切換到 reveal 畫面
+  setTimeout(() => {
+    showScreen('reveal');
+    const ptsBig = document.getElementById('ptsBig');
+    const ptsSub = document.getElementById('ptsSub');
+    if (msg.myCorrect) {
+      ptsBig.textContent = `+${msg.myPts}`;
+      ptsBig.className = 'pts-big correct';
+      ptsSub.textContent = `累計 ${msg.myScore} 分`;
+      spawnScorePop('+' + msg.myPts);
+    } else {
+      ptsBig.textContent = '❌';
+      ptsBig.className = 'pts-big wrong';
+      ptsSub.textContent = `正確答案：${msg.correctAns} — ${msg.correctText}`;
+    }
+    renderLbRows(document.getElementById('lbRows'), msg.leaderboard, myName);
+  }, 800);
 }
 
 // ── Ended ─────────────────────────────────────────────
