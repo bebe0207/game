@@ -349,22 +349,38 @@ const CLASSES = {
   }
 };
 
-const ENEMY_POOL = [
-  { name:'哥布林',     icon:'👺', hp:28,  atk:8,  def:2,  exp:12, gold:8  },
-  { name:'骷髏兵',     icon:'💀', hp:35,  atk:11, def:3,  exp:16, gold:10 },
-  { name:'大蜘蛛',     icon:'🕷️', hp:30,  atk:10, def:1,  exp:14, gold:9  },
-  { name:'石像鬼',     icon:'🗿', hp:50,  atk:13, def:6,  exp:22, gold:15 },
-  { name:'食人魔',     icon:'👹', hp:60,  atk:16, def:5,  exp:28, gold:20 },
-  { name:'暗影狼',     icon:'🐺', hp:45,  atk:14, def:3,  exp:20, gold:14 },
-  { name:'火焰蜥蜴',   icon:'🦎', hp:55,  atk:18, def:4,  exp:26, gold:18 },
-  { name:'地下惡龍幼體',icon:'🐲', hp:70,  atk:20, def:7,  exp:35, gold:25 },
-];
+// 怪物分三層池，避免後期怪物太猛
+const ENEMY_POOLS = {
+  low: [
+    { name:'哥布林',   icon:'👺', hp:28, atk:7,  def:1, exp:12, gold:8  },
+    { name:'大蜘蛛',   icon:'🕷️', hp:26, atk:8,  def:0, exp:11, gold:7  },
+    { name:'骷髏弓手', icon:'🏹', hp:22, atk:9,  def:0, exp:13, gold:9  },
+  ],
+  mid: [
+    { name:'骷髏兵',    icon:'💀', hp:45, atk:12, def:3, exp:20, gold:13 },
+    { name:'石像鬼',    icon:'🗿', hp:55, atk:13, def:5, exp:24, gold:16 },
+    { name:'暗影狼',    icon:'🐺', hp:48, atk:14, def:2, exp:22, gold:15 },
+    { name:'毒液史萊姆',icon:'🟢', hp:42, atk:11, def:2, exp:18, gold:12 },
+  ],
+  high: [
+    { name:'食人魔',      icon:'👹', hp:70, atk:17, def:5, exp:32, gold:22 },
+    { name:'火焰蜥蜴',    icon:'🦎', hp:65, atk:19, def:4, exp:30, gold:20 },
+    { name:'地下惡龍幼體',icon:'🐲', hp:80, atk:21, def:6, exp:40, gold:28 },
+    { name:'黑騎士',      icon:'⚫', hp:90, atk:18, def:9, exp:38, gold:26 },
+  ],
+};
+
+function getEnemyPool() {
+  if (floorNum <= 4)  return ENEMY_POOLS.low;
+  if (floorNum <= 12) return ENEMY_POOLS.mid;
+  return ENEMY_POOLS.high;
+}
 
 const BOSSES = {
-  5:  { name:'洞穴巨魔',   icon:'👾', hp:100, atk:18, def:8,  exp:60,  gold:50,  isBoss:true },
-  10: { name:'不死騎士',   icon:'🧟', hp:150, atk:24, def:12, exp:100, gold:80,  isBoss:true },
-  15: { name:'深淵蜘蛛女王',icon:'🕸️', hp:200, atk:30, def:10, exp:150, gold:120, isBoss:true },
-  20: { name:'地獄龍王',   icon:'🐉', hp:280, atk:38, def:16, exp:250, gold:200, isBoss:true },
+  5:  { name:'洞穴巨魔',    icon:'👾', hp:110, atk:16, def:5,  exp:70,  gold:55,  isBoss:true },
+  10: { name:'不死騎士',    icon:'🧟', hp:170, atk:21, def:9,  exp:120, gold:90,  isBoss:true },
+  15: { name:'深淵蜘蛛女王',icon:'🕸️', hp:230, atk:26, def:8,  exp:180, gold:140, isBoss:true },
+  20: { name:'地獄龍王',    icon:'🐉', hp:300, atk:32, def:12, exp:280, gold:220, isBoss:true },
 };
 
 const ITEMS = [
@@ -415,13 +431,10 @@ function startGame(classId) {
     hp: cls.hp, maxHp: cls.hp,
     atk: cls.atk, def: cls.def, spd: cls.spd,
     gold: 20, exp: 0, lv: 1, expNext: 50,
-    potions: 1,
+    potions: 1, poison: 0,
     equipment: { weapon:null, armor:null, neck:null },
-    // 技能 CD（深拷貝）
     skills: cls.skills.map(s => ({ ...s, cd: 0 })),
     shield: false, guardActive: false,
-    statusEffects: [],
-    statBonus: { atk:0, def:0, hp:0 },
   };
   floorNum = 1; kills = 0; startTime = Date.now();
   document.getElementById('sp-name').textContent = cls.icon + ' ' + cls.name;
@@ -537,7 +550,6 @@ function showExploreButtons() {
 }
 
 function triggerEvent() {
-  // Boss 層
   if ([5,10,15,20].includes(floorNum)) {
     const boss = { ...BOSSES[floorNum] };
     addLog(``, 'info');
@@ -547,21 +559,26 @@ function triggerEvent() {
     startBattle(boss);
     return;
   }
-  // 隨機事件（加權）
-  const roll = Math.random();
-  if (roll < 0.50)      triggerMonster();
-  else if (roll < 0.65) triggerTrap();
-  else if (roll < 0.85) triggerChest();
-  else                  triggerShop();
+  // 事件加權表（總100）：怪物45 商店12 寶箱15 陷阱10 泉水8 祭壇5 旅人3 詛咒箱2
+  const r = Math.random() * 100;
+  if      (r < 45) triggerMonster();
+  else if (r < 57) triggerShop();
+  else if (r < 72) triggerChest();
+  else if (r < 82) triggerTrap();
+  else if (r < 90) triggerSpring();
+  else if (r < 95) triggerAltar();
+  else if (r < 98) triggerTraveler();
+  else             triggerCursedChest();
 }
 
 // ════════════════════════════════════════════════════════
 // 怪物
 // ════════════════════════════════════════════════════════
 function triggerMonster() {
-  // 隨機選怪，按樓層調整強度
-  const base = ENEMY_POOL[Math.floor(Math.random() * ENEMY_POOL.length)];
-  const scale = 1 + (floorNum - 1) * 0.12;
+  const pool = getEnemyPool();
+  const base = pool[Math.floor(Math.random() * pool.length)];
+  // 每層 +5%（溫和縮放）
+  const scale = 1 + (floorNum - 1) * 0.05;
   const enemy = {
     ...base,
     hp:   Math.round(base.hp  * scale),
@@ -570,7 +587,7 @@ function triggerMonster() {
     def:  Math.round(base.def * scale),
     exp:  Math.round(base.exp * scale),
     gold: Math.round(base.gold* scale),
-    burn: 0,
+    burn: 0, poison: 0,
   };
   addLog(`👹 遭遇 ${enemy.icon} ${enemy.name}（HP:${enemy.hp} ATK:${enemy.atk} DEF:${enemy.def}）！`, 'bad');
   startBattle(enemy);
@@ -675,9 +692,13 @@ function doPlayerAction(type, skillIdx) {
   setTimeout(() => enemyTurn(), 400);
 }
 
-function dealDmg(atk, def) {
+function dealDmg(atk, def, critChance=0.10) {
   const base = Math.max(1, atk - def);
-  return base + Math.floor(Math.random() * 3) - 1; // ±1
+  const isCrit = Math.random() < critChance;
+  const variance = 0.85 + Math.random() * 0.30; // ±15%
+  const dmg = Math.max(1, Math.round(base * (isCrit ? 1.8 : 1) * variance));
+  if (isCrit) addLog(`💥 暴擊！`, 'sys');
+  return dmg;
 }
 
 function enemyTurn() {
@@ -685,35 +706,57 @@ function enemyTurn() {
   const p = player;
   const e = battle.enemy;
 
-  // 灼燒傷害
+  // 灼燒（以敵人最大HP%計算，不受DEF影響）
   if (e.burn > 0) {
-    const bd = Math.max(1, Math.round(e.atk * 0.2));
+    const bd = Math.max(1, Math.round(e.maxHp * 0.06));
     e.hp -= bd; e.burn--;
     addLog(`🔥 ${e.name} 持續灼燒，損失 ${bd} 點！`, 'dmg');
     updateEnemyHpBar(e);
     if (e.hp <= 0) { battleWin(); return; }
   }
 
-  // 敵人行動 AI（60%普攻、30%強攻×1.5、10%嘲諷跳過）
-  const roll = Math.random();
-  let eDmg = 0;
-  if (roll < 0.10) {
-    addLog(`😤 ${e.name} 大聲嘲諷，浪費了行動！`, 'info');
-  } else {
-    const mult = roll < 0.40 ? 1.5 : 1;
-    const raw  = dealDmg(e.atk * mult, totalDef());
-    if (p.shield) {
-      addLog(`🔵 魔法護盾抵擋了 ${e.name} 的攻擊！`, 'sys');
-      p.shield = false;
-    } else {
-      eDmg = raw;
-      p.hp -= eDmg;
-      addLog(`${e.icon} ${e.name} 攻擊你，造成 ${eDmg} 點傷害${mult>1?' (強攻！)':''}！`, 'bad');
-      popDmg(eDmg, '#ef4444');
-    }
+  // 玩家中毒
+  if (p.poison > 0) {
+    const pd = Math.max(1, Math.round(p.maxHp * 0.05));
+    p.hp -= pd; p.poison--;
+    addLog(`☠️ 你受到毒素侵蝕，損失 ${pd} HP！`, 'bad');
+    popDmg(pd, '#a855f7');
+    if (p.hp <= 0) { updatePanel(); playerDead(); return; }
   }
 
-  // CD 倒數
+  // 敵人 AI：55%普攻 | 25%強攻×1.5 | 10%特殊技 | 10%嘲諷
+  const roll = Math.random();
+  if (roll < 0.10) {
+    addLog(`😤 ${e.name} 大聲嘲諷，浪費了行動！`, 'info');
+  } else if (roll < 0.20 && e.isBoss) {
+    // Boss 吸血
+    const raw = dealDmg(e.atk * 1.2, totalDef());
+    if (p.shield) { addLog(`🔵 魔法護盾抵擋了吸血攻擊！`,'sys'); p.shield=false; }
+    else {
+      p.hp -= raw;
+      const drain = Math.round(raw * 0.3);
+      e.hp = Math.min(e.maxHp, e.hp + drain);
+      addLog(`🩸 ${e.name} 吸血攻擊！造成 ${raw} 傷害，回復 ${drain} HP！`, 'bad');
+      popDmg(raw,'#ef4444'); updateEnemyHpBar(e);
+    }
+  } else if (roll < 0.30) {
+    // 特殊技：普通怪物使玩家中毒，Boss強攻×1.6
+    if (e.isBoss) {
+      const raw = dealDmg(e.atk * 1.6, totalDef());
+      if (p.shield) { addLog(`🔵 魔法護盾抵擋猛攻！`,'sys'); p.shield=false; }
+      else { p.hp -= raw; addLog(`💢 ${e.name} 猛攻！造成 ${raw} 傷害！`,'bad'); popDmg(raw,'#ef4444'); }
+    } else {
+      const raw = dealDmg(e.atk, totalDef());
+      if (p.shield) { addLog(`🔵 魔法護盾抵擋毒攻！`,'sys'); p.shield=false; }
+      else { p.hp -= raw; p.poison = Math.min(3, (p.poison||0)+2); addLog(`☠️ ${e.name} 毒攻！造成 ${raw} 傷害，中毒 2 回合！`,'bad'); popDmg(raw,'#ef4444'); }
+    }
+  } else {
+    const mult = roll < 0.55 ? 1.0 : 1.45;
+    const raw  = dealDmg(e.atk * mult, totalDef());
+    if (p.shield) { addLog(`🔵 魔法護盾抵擋了攻擊！`,'sys'); p.shield=false; }
+    else { p.hp -= raw; addLog(`${e.icon} ${e.name} 攻擊你，造成 ${raw} 傷害${mult>1?' (強攻！)':''}！`,'bad'); popDmg(raw,'#ef4444'); }
+  }
+
   p.skills.forEach(sk => { if (sk.cd > 0) sk.cd--; });
   battle.turn++;
   updatePanel();
@@ -784,32 +827,140 @@ function gainExp(amount) {
 }
 
 // ════════════════════════════════════════════════════════
-// 陷阱
+// 陷阱（4種）
 // ════════════════════════════════════════════════════════
 function triggerTrap() {
   gameState = 'trap';
   const roll = Math.random();
-  let icon='⚠️', title='陷阱！', desc='', logText='';
-  if (roll < 0.5) {
-    const dmg = Math.round(player.maxHp * (0.1 + Math.random()*0.15));
+  let icon='⚠️', title='陷阱！', desc='';
+  if (roll < 0.30) {
+    const dmg = Math.round(player.maxHp * (0.10 + Math.random()*0.12));
     player.hp = Math.max(1, player.hp - dmg);
     icon='🕳️'; title='陷阱坑洞！';
     desc=`你踩入隱藏坑洞，失去 ${dmg} HP！`;
-    logText=`🕳️ 踩到坑洞陷阱！損失 ${dmg} HP！`;
-    addLog(logText,'bad');
+    addLog(`🕳️ 坑洞陷阱！損失 ${dmg} HP！`,'bad');
     popDmg(dmg,'#ef4444');
-  } else {
-    const loss = Math.min(player.gold, 5 + Math.floor(Math.random()*15));
+  } else if (roll < 0.55) {
+    const loss = Math.min(player.gold, 8 + Math.floor(Math.random()*floorNum*2));
     player.gold -= loss;
     icon='💸'; title='偷竊陷阱！';
     desc=`暗中的賊人偷走了你 ${loss} 枚金幣！`;
-    logText=`💸 觸發偷竊陷阱！損失 ${loss}G！`;
-    addLog(logText,'bad');
+    addLog(`💸 偷竊陷阱！損失 ${loss}G！`,'bad');
+  } else if (roll < 0.78) {
+    player.poison = (player.poison||0) + 3;
+    icon='☠️'; title='毒霧陷阱！';
+    desc='毒霧從地縫中湧出！你中毒了（3 回合持續掉血）！';
+    addLog(`☠️ 毒霧陷阱！中毒 3 回合！`,'bad');
+  } else {
+    const lossAtk = Math.max(1, Math.round(player.atk * 0.15));
+    player.atk = Math.max(1, player.atk - lossAtk);
+    icon='🔻'; title='詛咒陷阱！';
+    desc=`邪惡詛咒削弱了你的力量！ATK -${lossAtk}！`;
+    addLog(`🔻 詛咒陷阱！ATK -${lossAtk}！`,'bad');
   }
   setEvent(icon, title, desc);
   updatePanel();
   if (player.hp <= 0) { playerDead(); return; }
   showContinueBtn();
+}
+
+// ════════════════════════════════════════════════════════
+// 新隨機事件
+// ════════════════════════════════════════════════════════
+
+// 神聖泉水：回復 HP + 解毒
+function triggerSpring() {
+  gameState = 'spring';
+  const heal = Math.round(player.maxHp * (0.25 + Math.random() * 0.20));
+  const actual = Math.min(heal, player.maxHp - player.hp);
+  player.hp = Math.min(player.maxHp, player.hp + heal);
+  const wasPoisoned = (player.poison||0) > 0;
+  player.poison = 0;
+  setEvent('⛲', '神聖泉水', `清澈的泉水散發著柔和光芒，回復了 ${actual} HP${wasPoisoned ? '，並解除了中毒狀態' : ''}！`);
+  addLog(`⛲ 神聖泉水！回復 ${actual} HP${wasPoisoned ? '，中毒解除' : ''}！`, 'heal');
+  popHeal(actual);
+  updatePanel();
+  showContinueBtn();
+}
+
+// 古老祭壇：獻 HP 換永久強化
+function triggerAltar() {
+  gameState = 'altar';
+  const cost = Math.round(player.maxHp * 0.20);
+  const altarRoll = Math.random();
+  let boon, boonDesc;
+  if (altarRoll < 0.33) { boon='atk'; boonDesc='ATK +3'; }
+  else if (altarRoll < 0.66) { boon='def'; boonDesc='DEF +2'; }
+  else { boon='maxhp'; boonDesc='最大HP +15'; }
+  setEvent('🗽', '古老祭壇', `一座散發神秘能量的祭壇。獻血 ${cost} HP 可獲得永久強化：${boonDesc}。`);
+  addLog(`🗽 發現古老祭壇！獻血可獲得 ${boonDesc}。`, 'sys');
+  const btns = document.getElementById('action-btns');
+  btns.innerHTML = '';
+  btns.appendChild(makeBtn(`🩸 獻血（-${cost} HP）→ ${boonDesc}`, 'attack', () => {
+    player.hp -= cost;
+    if (boon==='atk') { player.atk+=3; addLog(`🗽 ATK +3！`,'good'); }
+    else if (boon==='def') { player.def+=2; addLog(`🗽 DEF +2！`,'good'); }
+    else { player.maxHp+=15; addLog(`🗽 最大HP +15！`,'good'); }
+    updatePanel();
+    if (player.hp <= 0) { playerDead(); return; }
+    showContinueBtn(); setEvent('🗽','強化完成',`${boonDesc} 已獲得！`);
+  }, player.hp <= cost + 10));
+  btns.appendChild(makeBtn('⬅️ 無視離開', 'skip', () => { addLog(`🗽 你選擇無視祭壇。`,'info'); floorDown(); }));
+}
+
+// 受傷旅人：花金幣換治療 + 解毒
+function triggerTraveler() {
+  gameState = 'traveler';
+  const heal = Math.round(player.maxHp * (0.30 + Math.random() * 0.15));
+  const cost = 12 + Math.floor(floorNum * 1.5);
+  const actual = Math.min(heal, player.maxHp - player.hp);
+  setEvent('🧙', '受傷旅人', `一位旅人攔住你：「我有治療藥草，${cost}G 換？」`);
+  addLog(`🧙 受傷旅人提供治療 ${heal} HP，要價 ${cost}G。`, 'info');
+  const btns = document.getElementById('action-btns');
+  btns.innerHTML = '';
+  btns.appendChild(makeBtn(`💊 付錢（-${cost}G）回復 ${actual} HP`, 'potion', () => {
+    player.gold -= cost;
+    player.hp    = Math.min(player.maxHp, player.hp + heal);
+    player.poison= 0;
+    addLog(`💊 治療成功！回復 ${actual} HP！`,'heal');
+    popHeal(actual); updatePanel();
+    showContinueBtn(); setEvent('🧙','治療完成',`旅人離去，你回復了 ${actual} HP！`);
+  }, player.gold < cost));
+  btns.appendChild(makeBtn('⬅️ 拒絕', 'skip', () => { addLog(`🧙 拒絕旅人，繼續前進。`,'info'); floorDown(); }));
+}
+
+// 詛咒寶箱：高風險高回報
+function triggerCursedChest() {
+  gameState = 'cursed';
+  setEvent('📫', '詛咒寶箱', '一個散發不祥黑氣的寶箱……高風險、高回報，敢開嗎？');
+  addLog(`📫 發現詛咒寶箱！`, 'boss');
+  const btns = document.getElementById('action-btns');
+  btns.innerHTML = '';
+  btns.appendChild(makeBtn('🖐️ 強行打開', 'attack', () => {
+    const luck = Math.random();
+    if (luck < 0.45) {
+      const g = 40 + Math.floor(Math.random()*60) + floorNum*3;
+      player.gold += g;
+      addLog(`✨ 詛咒解除！獲得 ${g}G！`,'good');
+      setEvent('✨','財寶！',`寶箱中藏著 ${g} 枚金幣！`);
+    } else if (luck < 0.70) {
+      const item = ITEMS[Math.floor(Math.random()*ITEMS.length)];
+      equipItem(item);
+      addLog(`✨ 詛咒消散！獲得 ${item.icon} ${item.name}！`,'good');
+      setEvent('✨','稀有裝備！',`${item.icon} ${item.name} 到手！`);
+    } else {
+      const dmg = Math.round(player.maxHp * (0.20 + Math.random()*0.15));
+      player.hp  = Math.max(1, player.hp - dmg);
+      player.poison = 2;
+      addLog(`💀 詛咒爆發！損失 ${dmg} HP + 中毒 2 回合！`,'bad');
+      popDmg(dmg,'#a855f7');
+      setEvent('💀','詛咒爆發！',`受到詛咒衝擊！${dmg} HP 損失且中毒！`);
+    }
+    updatePanel();
+    if (player.hp <= 0) { playerDead(); return; }
+    showContinueBtn();
+  }));
+  btns.appendChild(makeBtn('⬅️ 不敢碰', 'skip', () => { addLog(`📫 謹慎地繞過詛咒寶箱。`,'info'); floorDown(); }));
 }
 
 // ════════════════════════════════════════════════════════
