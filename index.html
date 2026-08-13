@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>小遊戲合輯</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -30,14 +29,6 @@
       font-weight: 800;
       letter-spacing: 2px;
       color: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-    }
-
-    header h1 i {
-      font-size: 36px;
     }
 
     header p {
@@ -71,9 +62,6 @@
       header h1 {
         font-size: 28px;
       }
-      header h1 i {
-        font-size: 26px;
-      }
     }
 
     .card {
@@ -105,12 +93,13 @@
       align-items: center;
       justify-content: center;
       opacity: 0.92;
+      flex-shrink: 0;
     }
 
-    .card-icon i {
-      font-size: 32px;
-      color: #fff;
-      line-height: 1;
+    .card-icon svg {
+      width: 48px;
+      height: 48px;
+      image-rendering: pixelated;
     }
 
     .card h2 {
@@ -150,70 +139,265 @@
 <body>
 
 <header>
-  <h1><i class="bi bi-joystick"></i> 小遊戲合輯</h1>
+  <h1>小遊戲合輯</h1>
   <p>選擇一個遊戲開始挑戰</p>
 </header>
 
 <div class="grid">
 
+  <!-- 俄羅斯方塊 -->
   <a class="card" href="games/tetris.html" style="--accent:#00cfcf;">
-    <div class="card-icon"><i class="bi bi-grid-3x3-gap-fill"></i></div>
+    <div class="card-icon">
+      <!-- pixel: tetromino L+S piece on 8x8 grid -->
+      <svg viewBox="0 0 8 8" xmlns="http://www.w3.org/2000/svg">
+        <!-- I-piece row -->
+        <rect x="0" y="1" width="1" height="1" fill="#fff"/>
+        <rect x="1" y="1" width="1" height="1" fill="#fff"/>
+        <rect x="2" y="1" width="1" height="1" fill="#fff"/>
+        <rect x="3" y="1" width="1" height="1" fill="#fff"/>
+        <!-- L-piece -->
+        <rect x="1" y="3" width="1" height="1" fill="#fff"/>
+        <rect x="1" y="4" width="1" height="1" fill="#fff"/>
+        <rect x="1" y="5" width="1" height="1" fill="#fff"/>
+        <rect x="2" y="5" width="1" height="1" fill="#fff"/>
+        <!-- S-piece -->
+        <rect x="4" y="4" width="1" height="1" fill="#ffffffcc"/>
+        <rect x="5" y="4" width="1" height="1" fill="#ffffffcc"/>
+        <rect x="3" y="5" width="1" height="1" fill="#ffffffcc"/>
+        <rect x="4" y="5" width="1" height="1" fill="#ffffffcc"/>
+        <!-- T-piece -->
+        <rect x="5" y="2" width="1" height="1" fill="#ffffffaa"/>
+        <rect x="6" y="2" width="1" height="1" fill="#ffffffaa"/>
+        <rect x="7" y="2" width="1" height="1" fill="#ffffffaa"/>
+        <rect x="6" y="3" width="1" height="1" fill="#ffffffaa"/>
+        <!-- floor line -->
+        <rect x="0" y="7" width="8" height="1" fill="#ffffff55"/>
+      </svg>
+    </div>
     <h2>俄羅斯方塊</h2>
     <p>經典俄羅斯方塊，嘗試得到最高分吧</p>
     <span class="badge">Tetris</span>
   </a>
 
+  <!-- 貪吃蛇 -->
   <a class="card" href="games/snake.html" style="--accent:#22c55e;">
-    <div class="card-icon"><i class="bi bi-cursor-fill"></i></div>
+    <div class="card-icon">
+      <!-- pixel: snake body winding + apple -->
+      <svg viewBox="0 0 8 8" xmlns="http://www.w3.org/2000/svg">
+        <!-- snake body (bright) -->
+        <rect x="1" y="1" width="1" height="1" fill="#fff"/>
+        <rect x="2" y="1" width="1" height="1" fill="#fff"/>
+        <rect x="3" y="1" width="1" height="1" fill="#fff"/>
+        <rect x="3" y="2" width="1" height="1" fill="#fff"/>
+        <rect x="3" y="3" width="1" height="1" fill="#fff"/>
+        <rect x="2" y="3" width="1" height="1" fill="#fff"/>
+        <rect x="1" y="3" width="1" height="1" fill="#fff"/>
+        <rect x="1" y="4" width="1" height="1" fill="#fff"/>
+        <rect x="1" y="5" width="1" height="1" fill="#fff"/>
+        <!-- snake head (eye) -->
+        <rect x="2" y="5" width="1" height="1" fill="#fff"/>
+        <rect x="3" y="5" width="1" height="1" fill="#fff"/>
+        <rect x="3" y="4" width="1" height="1" fill="#000" opacity="0.5"/>
+        <!-- apple -->
+        <rect x="5" y="2" width="2" height="2" fill="#fff"/>
+        <rect x="6" y="1" width="1" height="1" fill="#ffffffaa"/>
+      </svg>
+    </div>
     <h2>貪吃蛇</h2>
     <p>想辦法吃更多東西，小心不要撞到自己的身體</p>
     <span class="badge">Snake</span>
   </a>
 
+  <!-- 打磚塊 -->
   <a class="card" href="games/breakout.html" style="--accent:#f97316;">
-    <div class="card-icon"><i class="bi bi-layers-fill"></i></div>
+    <div class="card-icon">
+      <!-- pixel: bricks top, ball + paddle bottom -->
+      <svg viewBox="0 0 8 8" xmlns="http://www.w3.org/2000/svg">
+        <!-- bricks row 1 -->
+        <rect x="0" y="0" width="3" height="1" fill="#fff"/>
+        <rect x="4" y="0" width="4" height="1" fill="#ffffffcc"/>
+        <!-- bricks row 2 -->
+        <rect x="0" y="2" width="4" height="1" fill="#ffffffcc"/>
+        <rect x="5" y="2" width="3" height="1" fill="#fff"/>
+        <!-- bricks row 3 (partial — ball hit) -->
+        <rect x="0" y="4" width="2" height="1" fill="#ffffff66"/>
+        <rect x="3" y="4" width="2" height="1" fill="#ffffff66"/>
+        <rect x="6" y="4" width="2" height="1" fill="#ffffff66"/>
+        <!-- ball -->
+        <rect x="4" y="3" width="1" height="1" fill="#fff"/>
+        <!-- paddle -->
+        <rect x="2" y="7" width="4" height="1" fill="#fff"/>
+      </svg>
+    </div>
     <h2>打磚塊</h2>
     <p>童年遊戲，試著把全部磚塊都打掉吧</p>
     <span class="badge">Breakout</span>
   </a>
 
+  <!-- 塔羅占卜 -->
   <a class="card" href="games/tarot.html" style="--accent:#a855f7;">
-    <div class="card-icon"><i class="bi bi-stars"></i></div>
+    <div class="card-icon">
+      <!-- pixel: tarot card with star symbol -->
+      <svg viewBox="0 0 8 8" xmlns="http://www.w3.org/2000/svg">
+        <!-- card outline -->
+        <rect x="1" y="0" width="6" height="8" fill="none" stroke="#fff" stroke-width="0.3"/>
+        <!-- star center -->
+        <rect x="3" y="2" width="2" height="1" fill="#fff"/>
+        <rect x="4" y="1" width="1" height="1" fill="#fff"/>
+        <rect x="4" y="3" width="1" height="1" fill="#fff"/>
+        <rect x="2" y="2" width="1" height="1" fill="#ffffffaa"/>
+        <rect x="5" y="2" width="1" height="1" fill="#ffffffaa"/>
+        <!-- sparkles small -->
+        <rect x="2" y="5" width="1" height="1" fill="#ffffffaa"/>
+        <rect x="5" y="5" width="1" height="1" fill="#ffffffaa"/>
+        <rect x="4" y="6" width="1" height="1" fill="#ffffff66"/>
+      </svg>
+    </div>
     <h2>塔羅占卜</h2>
     <p>有迷惘的事情嗎?想知道他/她在想什麼嗎?來試試塔羅牌吧</p>
     <span class="badge">Tarot</span>
   </a>
 
+  <!-- 俄羅斯方塊對戰 -->
   <a class="card" href="games/tetris-battle.html" style="--accent:#ef4444;">
-    <div class="card-icon"><i class="bi bi-people-fill"></i></div>
+    <div class="card-icon">
+      <!-- pixel: two mini grids side by side with VS in middle -->
+      <svg viewBox="0 0 8 8" xmlns="http://www.w3.org/2000/svg">
+        <!-- left mini board -->
+        <rect x="0" y="2" width="1" height="1" fill="#fff"/>
+        <rect x="0" y="3" width="1" height="1" fill="#fff"/>
+        <rect x="1" y="3" width="1" height="1" fill="#fff"/>
+        <rect x="0" y="4" width="1" height="1" fill="#fff"/>
+        <rect x="0" y="5" width="2" height="1" fill="#fff"/>
+        <!-- right mini board -->
+        <rect x="7" y="2" width="1" height="1" fill="#ffffffcc"/>
+        <rect x="6" y="3" width="2" height="1" fill="#ffffffcc"/>
+        <rect x="7" y="4" width="1" height="1" fill="#ffffffcc"/>
+        <rect x="6" y="5" width="2" height="1" fill="#ffffffcc"/>
+        <!-- VS divider -->
+        <rect x="3" y="3" width="1" height="1" fill="#fff"/>
+        <rect x="4" y="4" width="1" height="1" fill="#fff"/>
+        <rect x="3" y="5" width="1" height="1" fill="#fff"/>
+        <rect x="4" y="3" width="1" height="1" fill="#fff"/>
+        <rect x="3" y="4" width="1" height="1" fill="#fff"/>
+        <rect x="4" y="5" width="1" height="1" fill="#fff"/>
+      </svg>
+    </div>
     <h2>俄羅斯方塊對戰</h2>
     <p>俄羅斯方塊，與你的朋友一起對戰吧!</p>
     <span class="badge">Battle</span>
   </a>
 
+  <!-- 貪吃蛇對戰 -->
   <a class="card" href="games/snake-battle.html" style="--accent:#22c55e;">
-    <div class="card-icon"><i class="bi bi-controller"></i></div>
+    <div class="card-icon">
+      <!-- pixel: two snakes facing each other -->
+      <svg viewBox="0 0 8 8" xmlns="http://www.w3.org/2000/svg">
+        <!-- snake 1 (top-left, moving right) -->
+        <rect x="0" y="1" width="1" height="1" fill="#fff"/>
+        <rect x="1" y="1" width="1" height="1" fill="#fff"/>
+        <rect x="2" y="1" width="1" height="1" fill="#fff"/>
+        <rect x="2" y="2" width="1" height="1" fill="#fff"/>
+        <rect x="3" y="2" width="1" height="1" fill="#fff"/>
+        <!-- snake 1 head dot eye -->
+        <rect x="3" y="1" width="1" height="1" fill="#fff"/>
+        <!-- snake 2 (bottom-right, moving left) -->
+        <rect x="7" y="6" width="1" height="1" fill="#ffffffcc"/>
+        <rect x="6" y="6" width="1" height="1" fill="#ffffffcc"/>
+        <rect x="5" y="6" width="1" height="1" fill="#ffffffcc"/>
+        <rect x="5" y="5" width="1" height="1" fill="#ffffffcc"/>
+        <rect x="4" y="5" width="1" height="1" fill="#ffffffcc"/>
+        <!-- snake 2 head -->
+        <rect x="4" y="6" width="1" height="1" fill="#ffffffcc"/>
+        <!-- center collision spark -->
+        <rect x="3" y="3" width="1" height="1" fill="#ffffff66"/>
+        <rect x="4" y="4" width="1" height="1" fill="#ffffff66"/>
+      </svg>
+    </div>
     <h2>貪吃蛇對戰</h2>
     <p>想辦法活下去，殺死你的對手</p>
     <span class="badge">Snake Battle</span>
   </a>
 
+  <!-- 問答遊戲 -->
   <a class="card" href="games/quiz.html" style="--accent:#a855f7;">
-    <div class="card-icon"><i class="bi bi-patch-question-fill"></i></div>
+    <div class="card-icon">
+      <!-- pixel: question mark -->
+      <svg viewBox="0 0 8 8" xmlns="http://www.w3.org/2000/svg">
+        <!-- ? top arc -->
+        <rect x="2" y="0" width="4" height="1" fill="#fff"/>
+        <rect x="5" y="1" width="1" height="1" fill="#fff"/>
+        <rect x="5" y="2" width="1" height="1" fill="#fff"/>
+        <rect x="4" y="3" width="1" height="1" fill="#fff"/>
+        <rect x="3" y="3" width="1" height="1" fill="#fff"/>
+        <!-- ? stem -->
+        <rect x="3" y="4" width="1" height="1" fill="#fff"/>
+        <!-- ? dot -->
+        <rect x="3" y="6" width="1" height="1" fill="#fff"/>
+        <!-- left side arc -->
+        <rect x="2" y="1" width="1" height="1" fill="#fff"/>
+      </svg>
+    </div>
     <h2>問答遊戲</h2>
     <p>問與答，想辦法得到最高分吧</p>
     <span class="badge">Quiz</span>
   </a>
 
+  <!-- 深淵地下城 -->
   <a class="card" href="games/dungeon.html" style="--accent:#ef4444;">
-    <div class="card-icon"><i class="bi bi-shield-fill-exclamation"></i></div>
+    <div class="card-icon">
+      <!-- pixel: sword + shield -->
+      <svg viewBox="0 0 8 8" xmlns="http://www.w3.org/2000/svg">
+        <!-- sword blade (diagonal top-right) -->
+        <rect x="5" y="0" width="1" height="1" fill="#fff"/>
+        <rect x="4" y="1" width="1" height="1" fill="#fff"/>
+        <rect x="3" y="2" width="1" height="1" fill="#fff"/>
+        <rect x="2" y="3" width="1" height="1" fill="#fff"/>
+        <!-- crossguard -->
+        <rect x="1" y="3" width="1" height="1" fill="#ffffffcc"/>
+        <rect x="3" y="3" width="1" height="1" fill="#ffffffcc"/>
+        <!-- handle -->
+        <rect x="1" y="4" width="1" height="1" fill="#fff"/>
+        <rect x="0" y="5" width="1" height="1" fill="#fff"/>
+        <!-- shield (bottom-right) -->
+        <rect x="5" y="3" width="3" height="1" fill="#ffffffcc"/>
+        <rect x="5" y="4" width="3" height="1" fill="#ffffffcc"/>
+        <rect x="5" y="5" width="3" height="1" fill="#ffffffcc"/>
+        <rect x="6" y="6" width="1" height="1" fill="#ffffffcc"/>
+      </svg>
+    </div>
     <h2>深淵地下城</h2>
     <p>文字 RPG！三種職業、20 層地下城、回合制戰鬥、商店裝備、Boss 結局！</p>
     <span class="badge">Dungeon RPG</span>
   </a>
 
+  <!-- 問答聯線對戰 -->
   <a class="card" href="games/quiz-lobby.html" style="--accent:#f5c518;">
-    <div class="card-icon"><i class="bi bi-wifi"></i></div>
+    <div class="card-icon">
+      <!-- pixel: wifi / broadcast waves -->
+      <svg viewBox="0 0 8 8" xmlns="http://www.w3.org/2000/svg">
+        <!-- outermost arc -->
+        <rect x="0" y="3" width="1" height="1" fill="#ffffff55"/>
+        <rect x="1" y="2" width="1" height="1" fill="#ffffff55"/>
+        <rect x="2" y="1" width="1" height="1" fill="#ffffff55"/>
+        <rect x="3" y="0" width="2" height="1" fill="#ffffff55"/>
+        <rect x="5" y="1" width="1" height="1" fill="#ffffff55"/>
+        <rect x="6" y="2" width="1" height="1" fill="#ffffff55"/>
+        <rect x="7" y="3" width="1" height="1" fill="#ffffff55"/>
+        <!-- mid arc -->
+        <rect x="1" y="4" width="1" height="1" fill="#ffffffaa"/>
+        <rect x="2" y="3" width="1" height="1" fill="#ffffffaa"/>
+        <rect x="3" y="2" width="2" height="1" fill="#ffffffaa"/>
+        <rect x="5" y="3" width="1" height="1" fill="#ffffffaa"/>
+        <rect x="6" y="4" width="1" height="1" fill="#ffffffaa"/>
+        <!-- inner arc -->
+        <rect x="2" y="5" width="1" height="1" fill="#fff"/>
+        <rect x="3" y="4" width="2" height="1" fill="#fff"/>
+        <rect x="5" y="5" width="1" height="1" fill="#fff"/>
+        <!-- dot center -->
+        <rect x="3" y="6" width="2" height="1" fill="#fff"/>
+      </svg>
+    </div>
     <h2>問答聯線對戰</h2>
     <p>主持人出題、玩家搶答，多人即時排行！</p>
     <span class="badge">Live Quiz</span>
