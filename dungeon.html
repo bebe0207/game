@@ -86,7 +86,22 @@
     .act-btn.flee     { background: rgba(255,255,255,.06); border: 1px solid var(--border); color: var(--muted); }
     .act-btn.buy      { background: linear-gradient(135deg,#f5c518,#d97706); color:#111; }
     .act-btn.skip     { background: rgba(255,255,255,.06); border: 1px solid var(--border); color: var(--muted); }
+    .act-btn.block    { background: linear-gradient(135deg,#3b82f6,#1d4ed8); color:#fff; }
+    .act-btn.dodge    { background: linear-gradient(135deg,#22c55e,#15803d); color:#fff; }
+    .act-btn.counter  { background: linear-gradient(135deg,#f59e0b,#b45309); color:#fff; }
+    .act-btn.charge   { background: linear-gradient(135deg,#ec4899,#be185d); color:#fff; }
     .cd-badge { font-size: 10px; display: block; margin-top: 2px; color: rgba(255,255,255,.55); }
+
+    /* 敵人攻擊預告橫幅 */
+    #enemy-warning {
+      display: none; width: 100%;
+      background: rgba(239,68,68,.12); border: 1px solid rgba(239,68,68,.45);
+      border-radius: 10px; padding: 10px 16px;
+      font-size: 13px; font-weight: 700; color: #fca5a5;
+      animation: warnPulse .5s ease infinite alternate;
+      text-align: center;
+    }
+    @keyframes warnPulse { from{border-color:rgba(239,68,68,.3)} to{border-color:rgba(239,68,68,.9)} }
 
     /* 日誌 */
     #log-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
@@ -178,7 +193,7 @@
 <div id="title-screen" class="screen active">
   <div class="title-logo">🏰</div>
   <div class="title-name">深淵地下城</div>
-  <div class="title-sub">選擇你的職業，深入 20 層地下城，擊敗最終 Boss，奪回失落的寶藏！</div>
+  <div class="title-sub">選擇你的職業，深入地下城，擊敗最終 Boss，奪回失落的寶藏！</div>
   <button class="big-btn" id="btnStartAdv">⚔️ 開始冒險</button>
 </div>
 
@@ -256,6 +271,7 @@
     </div>
 
     <!-- 行動按鈕 -->
+    <div id="enemy-warning"></div>
     <div id="action-btns"></div>
 
     <!-- 日誌 -->
@@ -456,8 +472,9 @@ function sellPrice(item) { return Math.max(1, Math.floor(item.price * 0.4)); }
 // 狀態
 // ════════════════════════════════════════════════════════
 let player = null;
-let battle  = null;   // 戰鬥狀態
-let gameState = 'explore'; // explore | battle | shop | chest | trap | dead | win
+let battle  = null;
+let gameState = 'explore';
+// battle.pendingAttack = { type, mult, label } — 敵人已宣告攻擊，等玩家反應
 let floorNum  = 1;
 let kills     = 0;
 let startTime = 0;
@@ -679,6 +696,8 @@ function startBattle(enemy) {
     turn: 1,
     forceEscape: false,
     ended: false,
+    charging: false,
+    pendingAttack: null,
   };
   setEvent(enemy.icon, enemy.name, `HP: ${enemy.hp} | ATK: ${enemy.atk} | DEF: ${enemy.def}`);
   updateEnemyHpBar(enemy);
@@ -693,25 +712,73 @@ function updateEnemyHpBar(enemy) {
   document.getElementById('enemy-name-label').textContent = enemy.icon + ' ' + enemy.name;
 }
 
+// ── 顯示/隱藏敵人攻擊預告橫幅 ────────────────────────
+function showWarning(text) {
+  const w = document.getElementById('enemy-warning');
+  w.textContent = text; w.style.display = 'block';
+}
+function hideWarning() {
+  document.getElementById('enemy-warning').style.display = 'none';
+}
+
 function renderBattleButtons() {
   const btns = document.getElementById('action-btns');
   btns.innerHTML = '';
+
+  // 若有待處理的敵人攻擊 → 顯示反應選項
+  if (battle.pendingAttack) {
+    renderReactionButtons(btns);
+    return;
+  }
+
+  hideWarning();
+
+  // ── 玩家行動階段 ──
+  // 蓄力（下回合傷害翻倍，本回合不攻擊）
+  const charging = battle.charging;
+  btns.appendChild(makeBtn(charging ? '⚡ 蓄力中（下回合爆發！）' : '💪 蓄力', 'charge',
+    () => doPlayerAction('charge'), charging));
+
   // 普攻
   btns.appendChild(makeBtn('⚔️ 普通攻擊', 'attack', () => doPlayerAction('attack')));
+
   // 技能
   player.skills.forEach((sk, i) => {
     const onCd = sk.cd > 0;
-    const lbl = onCd ? `${sk.icon} ${sk.name}\n(CD: ${sk.cd})` : `${sk.icon} ${sk.name}`;
-    const b = makeBtn(lbl, 'skill', () => doPlayerAction('skill', i), onCd);
-    btns.appendChild(b);
+    const lbl = onCd ? `${sk.icon} ${sk.name} (CD:${sk.cd})` : `${sk.icon} ${sk.name}`;
+    btns.appendChild(makeBtn(lbl, 'skill', () => doPlayerAction('skill', i), onCd));
   });
+
   // 藥水
-  const noPotion = player.potions <= 0;
-  btns.appendChild(makeBtn(`🧪 使用藥水 (${player.potions})`, 'potion', () => doPlayerAction('potion'), noPotion));
+  btns.appendChild(makeBtn(`🧪 藥水 (${player.potions})`, 'potion',
+    () => doPlayerAction('potion'), player.potions <= 0));
+
   // 逃跑（Boss 不能逃）
   if (!battle.enemy.isBoss) {
     btns.appendChild(makeBtn('🏃 逃跑', 'flee', () => doPlayerAction('flee')));
   }
+}
+
+// ── 反應按鈕（敵人已宣告攻擊時）────────────────────────
+function renderReactionButtons(btns) {
+  const pa = battle.pendingAttack;
+  const p  = player;
+  const cls = p.classId;
+
+  // 格擋：減少 50%~70% 傷害（戰士更強 +10%）
+  const blockBonus = cls === 'warrior' ? 0.10 : 0;
+  btns.appendChild(makeBtn(`🛡️ 格擋（減 ${Math.round((0.60+blockBonus)*100)}% 傷害）`, 'block',
+    () => doReaction('block')));
+
+  // 閃避：50% 完全無傷（盜賊 +20%）
+  const dodgeChance = cls === 'rogue' ? 70 : 50;
+  btns.appendChild(makeBtn(`💨 閃避（${dodgeChance}% 完全無傷）`, 'dodge',
+    () => doReaction('dodge')));
+
+  // 反擊：承受 80% 傷害，同時還擊（法師：同時觸發灼燒）
+  const counterLabel = cls === 'mage' ? '🔥 反擊（受80%傷害+附加灼燒）' : '⚡ 反擊（受80%傷害+立即還擊）';
+  btns.appendChild(makeBtn(counterLabel, 'counter',
+    () => doReaction('counter')));
 }
 
 function makeBtn(text, cls, onClick, disabled=false) {
@@ -727,27 +794,46 @@ function doPlayerAction(type, skillIdx) {
   if (battle.ended) return;
   const p = player;
   const e = battle.enemy;
-  player.guardActive = false;   // 重置防禦姿態
+  player.guardActive = false;
 
-  let acted = false;
+  if (type === 'charge') {
+    // 蓄力：不攻擊，下回合普攻/技能傷害×2
+    battle.charging = true;
+    addLog(`💪 蓄力！下回合攻擊威力翻倍！`, 'sys');
+    updatePanel();
+    setTimeout(() => announceEnemyAttack(), 400);
+    return;
+  }
 
   if (type === 'attack') {
+    const mult = battle.charging ? 2 : 1;
+    battle.charging = false;
     if (!calcHit(totalSpd(), e.spd || 5)) {
       addLog(`🌀 攻擊未命中！${e.name} 躲開了！`, 'info');
-      acted = true;
     } else {
-      const d = dealDmg(totalAtk(), e.def);
+      const d = dealDmg(totalAtk() * mult, e.def);
       e.hp -= d;
-      addLog(`⚔️ 你攻擊 ${e.name}，造成 ${d} 點傷害！`, 'dmg');
-      popDmg(d, '#fb923c');
+      const chargeTag = mult > 1 ? ' 【蓄力爆發！】' : '';
+      addLog(`⚔️ 你攻擊 ${e.name}，造成 ${d} 點傷害！${chargeTag}`, 'dmg');
+      popDmg(d, mult > 1 ? '#fde047' : '#fb923c');
     }
-    acted = true;
   } else if (type === 'skill') {
     const sk = p.skills[skillIdx];
     if (sk.cd > 0) return;
-    sk.use(p, e);
+    const mult = battle.charging ? 2 : 1;
+    battle.charging = false;
+    if (mult > 1) {
+      // 蓄力技能：傷害倍率加乘
+      const origUse = sk.use;
+      const origAtk = p.atk;
+      p.atk = Math.round(p.atk * 1.8);
+      sk.use(p, e);
+      p.atk = origAtk;
+      addLog(`⚡ 蓄力技能爆發！`, 'sys');
+    } else {
+      sk.use(p, e);
+    }
     sk.cd = sk.maxCd;
-    acted = true;
     if (battle.forceEscape) { doEscape(); return; }
   } else if (type === 'potion') {
     if (p.potions <= 0) return;
@@ -756,20 +842,152 @@ function doPlayerAction(type, skillIdx) {
     p.hp = Math.min(p.maxHp, p.hp + heal);
     addLog(`🧪 使用藥水，回復 ${heal} HP！`, 'heal');
     popHeal(heal);
-    acted = true;
   } else if (type === 'flee') {
-    doEscape();
-    return;
+    doEscape(); return;
   }
-
-  if (!acted) return;
 
   updateEnemyHpBar(e);
   updatePanel();
   if (e.hp <= 0) { battleWin(); return; }
 
-  // 敵人回合
-  setTimeout(() => enemyTurn(), 400);
+  // 玩家行動後 → 敵人宣告下一次攻擊（進入反應階段）
+  setTimeout(() => announceEnemyAttack(), 350);
+}
+
+// ── 敵人宣告攻擊（玩家有機會反應）────────────────────
+function announceEnemyAttack() {
+  if (battle.ended) return;
+  const e = battle.enemy;
+
+  // 先結算灼燒 / 中毒（不在反應前，在結算時）
+  // 決定這回合敵人要用什麼攻擊
+  const roll = Math.random();
+  let attackType, mult, label;
+
+  // 先判斷 miss
+  if (!calcHit(e.spd || 5, totalSpd())) {
+    addLog(`💨 ${e.name} 的攻擊未命中！`, 'info');
+    resolveEndOfTurn(); return;
+  }
+
+  if (roll < 0.10) {
+    // 嘲諷，不攻擊
+    addLog(`😤 ${e.name} 大聲嘲諷，浪費了行動！`, 'info');
+    resolveEndOfTurn(); return;
+  } else if (roll < 0.20 && e.isBoss) {
+    attackType = 'drain'; mult = 1.2; label = `🩸 ${e.name} 準備發動吸血攻擊！`;
+  } else if (roll < 0.30) {
+    if (e.isBoss) {
+      attackType = 'heavy'; mult = 1.6; label = `💢 ${e.name} 蓄力猛攻！`;
+    } else {
+      attackType = 'poison'; mult = 1.0; label = `☠️ ${e.name} 準備毒攻！`;
+    }
+  } else if (roll < 0.55) {
+    attackType = 'normal'; mult = 1.0; label = `⚔️ ${e.name} 發起普通攻擊！`;
+  } else {
+    attackType = 'strong'; mult = 1.45; label = `💥 ${e.name} 發動強攻！`;
+  }
+
+  // 儲存待處理攻擊，顯示預告，讓玩家反應
+  battle.pendingAttack = { attackType, mult, label };
+  showWarning(`⚠️ ${label} — 請選擇反應方式！`);
+  renderBattleButtons();
+}
+
+// ── 玩家反應處理 ──────────────────────────────────────
+function doReaction(reactionType) {
+  if (battle.ended || !battle.pendingAttack) return;
+  const p = player;
+  const e = battle.enemy;
+  const pa = battle.pendingAttack;
+  const cls = p.classId;
+  battle.pendingAttack = null;
+  hideWarning();
+
+  // 計算原始傷害
+  const rawDmg = dealDmg(e.atk * pa.mult, totalDef(), 0.05);
+
+  if (reactionType === 'block') {
+    // 格擋：減少 60%~70% 傷害（戰士額外+10%）
+    const reduction = cls === 'warrior' ? 0.70 : 0.60;
+    const taken = Math.max(1, Math.round(rawDmg * (1 - reduction)));
+    p.hp -= taken;
+    addLog(`🛡️ 成功格擋！只受到 ${taken} 點傷害！`, 'sys');
+    popDmg(taken, '#60a5fa');
+
+  } else if (reactionType === 'dodge') {
+    // 閃避：盜賊70% / 其他50% 完全無傷，失敗吃全傷
+    const dodgeChance = cls === 'rogue' ? 0.70 : 0.50;
+    if (Math.random() < dodgeChance) {
+      addLog(`💨 完美閃避！完全躲開了 ${e.name} 的攻擊！`, 'good');
+    } else {
+      p.hp -= rawDmg;
+      addLog(`💨 閃避失敗！受到 ${rawDmg} 點傷害！`, 'bad');
+      popDmg(rawDmg, '#ef4444');
+    }
+
+  } else if (reactionType === 'counter') {
+    // 反擊：受 80% 傷害 + 立即還擊
+    const taken = Math.max(1, Math.round(rawDmg * 0.80));
+    p.hp -= taken;
+    addLog(`⚡ 反擊！受到 ${taken} 點傷害…`, 'bad');
+    popDmg(taken, '#ef4444');
+
+    if (p.hp > 0) {
+      if (cls === 'mage') {
+        // 法師反擊 = 附加灼燒
+        const cd = dealDmg(totalAtk() * 0.8, e.def);
+        e.hp -= cd;
+        e.burn = Math.min(3, (e.burn||0) + 2);
+        addLog(`🔥 法師反擊！造成 ${cd} 傷害並附加灼燒！`, 'dmg');
+        popDmg(cd, '#f97316');
+      } else {
+        const cd = dealDmg(totalAtk() * (cls === 'rogue' ? 1.2 : 1.0), e.def);
+        e.hp -= cd;
+        addLog(`⚡ 反擊成功！還擊 ${e.name} 造成 ${cd} 傷害！`, 'dmg');
+        popDmg(cd, '#fb923c');
+      }
+      updateEnemyHpBar(e);
+      if (e.hp <= 0) { updatePanel(); battleWin(); return; }
+    }
+  }
+
+  updateEnemyHpBar(e);
+  updatePanel();
+  if (p.hp <= 0) { playerDead(); return; }
+  resolveEndOfTurn();
+}
+
+// ── 回合結束結算（灼燒、中毒、CD）────────────────────
+function resolveEndOfTurn() {
+  if (battle.ended) return;
+  const p = player;
+  const e = battle.enemy;
+
+  // 灼燒
+  if (e.burn > 0) {
+    const bd = Math.max(1, Math.round(e.maxHp * 0.06));
+    e.hp -= bd; e.burn--;
+    addLog(`🔥 ${e.name} 持續灼燒，損失 ${bd} 點！`, 'dmg');
+    updateEnemyHpBar(e);
+    if (e.hp <= 0) { battleWin(); return; }
+  }
+
+  // 中毒
+  if (p.poison > 0) {
+    const pd = Math.max(1, Math.round(p.maxHp * 0.05));
+    p.hp -= pd; p.poison--;
+    addLog(`☠️ 你受到毒素侵蝕，損失 ${pd} HP！`, 'bad');
+    popDmg(pd, '#a855f7');
+    if (p.hp <= 0) { updatePanel(); playerDead(); return; }
+  }
+
+  // CD 倒數
+  p.skills.forEach(sk => { if (sk.cd > 0) sk.cd--; });
+  battle.turn++;
+  updatePanel();
+  if (p.hp <= 0) { playerDead(); return; }
+  renderBattleButtons();
 }
 
 // attackerSpd: 攻擊方速度，defenderSpd: 防守方速度（影響命中率）
@@ -791,85 +1009,16 @@ function dealDmg(atk, def, critChance=null) {
   return dmg;
 }
 
-function enemyTurn() {
-  if (battle.ended) return;
-  const p = player;
-  const e = battle.enemy;
-
-  // 灼燒（以敵人最大HP%計算，不受DEF影響）
-  if (e.burn > 0) {
-    const bd = Math.max(1, Math.round(e.maxHp * 0.06));
-    e.hp -= bd; e.burn--;
-    addLog(`🔥 ${e.name} 持續灼燒，損失 ${bd} 點！`, 'dmg');
-    updateEnemyHpBar(e);
-    if (e.hp <= 0) { battleWin(); return; }
-  }
-
-  // 玩家中毒
-  if (p.poison > 0) {
-    const pd = Math.max(1, Math.round(p.maxHp * 0.05));
-    p.hp -= pd; p.poison--;
-    addLog(`☠️ 你受到毒素侵蝕，損失 ${pd} HP！`, 'bad');
-    popDmg(pd, '#a855f7');
-    if (p.hp <= 0) { updatePanel(); playerDead(); return; }
-  }
-
-  // 敵人 AI：55%普攻 | 25%強攻×1.5 | 10%特殊技 | 10%嘲諷
-  const roll = Math.random();
-  // 敵人也可能 miss（依玩家速度）
-  const eMiss = !calcHit(e.spd || 5, totalSpd());
-  if (eMiss && roll >= 0.10) {
-    addLog(`💨 ${e.name} 的攻擊未命中！`, 'info');
-    p.skills.forEach(sk => { if (sk.cd > 0) sk.cd--; });
-    battle.turn++; updatePanel(); renderBattleButtons(); return;
-  }
-  if (roll < 0.10) {
-    addLog(`😤 ${e.name} 大聲嘲諷，浪費了行動！`, 'info');
-  } else if (roll < 0.20 && e.isBoss) {
-    // Boss 吸血
-    const raw = dealDmg(e.atk * 1.2, totalDef(), 0.05);
-    if (p.shield) { addLog(`🔵 魔法護盾抵擋了吸血攻擊！`,'sys'); p.shield=false; }
-    else {
-      p.hp -= raw;
-      const drain = Math.round(raw * 0.3);
-      e.hp = Math.min(e.maxHp, e.hp + drain);
-      addLog(`🩸 ${e.name} 吸血攻擊！造成 ${raw} 傷害，回復 ${drain} HP！`, 'bad');
-      popDmg(raw,'#ef4444'); updateEnemyHpBar(e);
-    }
-  } else if (roll < 0.30) {
-    // 特殊技：普通怪物使玩家中毒，Boss強攻×1.6
-    if (e.isBoss) {
-      const raw = dealDmg(e.atk * 1.6, totalDef());
-      if (p.shield) { addLog(`🔵 魔法護盾抵擋猛攻！`,'sys'); p.shield=false; }
-      else { p.hp -= raw; addLog(`💢 ${e.name} 猛攻！造成 ${raw} 傷害！`,'bad'); popDmg(raw,'#ef4444'); }
-    } else {
-      const raw = dealDmg(e.atk, totalDef());
-      if (p.shield) { addLog(`🔵 魔法護盾抵擋毒攻！`,'sys'); p.shield=false; }
-      else { p.hp -= raw; p.poison = Math.min(3, (p.poison||0)+2); addLog(`☠️ ${e.name} 毒攻！造成 ${raw} 傷害，中毒 2 回合！`,'bad'); popDmg(raw,'#ef4444'); }
-    }
-  } else {
-    const mult = roll < 0.55 ? 1.0 : 1.45;
-    const raw  = dealDmg(e.atk * mult, totalDef());
-    if (p.shield) { addLog(`🔵 魔法護盾抵擋了攻擊！`,'sys'); p.shield=false; }
-    else { p.hp -= raw; addLog(`${e.icon} ${e.name} 攻擊你，造成 ${raw} 傷害${mult>1?' (強攻！)':''}！`,'bad'); popDmg(raw,'#ef4444'); }
-  }
-
-  p.skills.forEach(sk => { if (sk.cd > 0) sk.cd--; });
-  battle.turn++;
-  updatePanel();
-  if (p.hp <= 0) { playerDead(); return; }
-  renderBattleButtons();
-}
-
 function doEscape() {
   const success = battle.forceEscape || Math.random() < 0.5;
   if (success) {
     addLog(`🏃 成功逃跑！`, 'good');
     battle.ended = true;
+    hideWarning();
     afterBattle();
   } else {
     addLog(`🚫 逃跑失敗！敵人反擊！`, 'bad');
-    enemyTurn();
+    announceEnemyAttack();
   }
 }
 
@@ -887,6 +1036,7 @@ function battleWin() {
 
 function afterBattle() {
   gameState = 'explore';
+  hideWarning();
   document.getElementById('enemy-hp-wrap').style.display = 'none';
   // 20F Boss 擊敗 → 通關
   if (floorNum === 20 && battle?.enemy?.isBoss) {
