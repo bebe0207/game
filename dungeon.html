@@ -293,6 +293,7 @@
       <div class="equip-slot" id="eq-weapon">⚔️ 武器：無</div>
       <div class="equip-slot" id="eq-armor">🛡️ 護甲：無</div>
       <div class="equip-slot" id="eq-neck">📿 頸鍊：無</div>
+      <div class="equip-slot" id="eq-ring">💍 戒指：無</div>
     </div>
 
     <div class="potion-row">
@@ -383,17 +384,73 @@ const BOSSES = {
   20: { name:'地獄龍王',    icon:'🐉', hp:300, atk:32, def:12, exp:280, gold:220, isBoss:true },
 };
 
+// for: 職業限定（warrior/mage/rogue），null=通用；tier: 1=低層 2=中層 3=高層
 const ITEMS = [
-  { id:'sword1',  name:'鐵劍',      slot:'weapon', atk:5,  price:30, icon:'⚔️' },
-  { id:'sword2',  name:'精鋼劍',    slot:'weapon', atk:10, price:60, icon:'⚔️' },
-  { id:'sword3',  name:'魔法長劍',  slot:'weapon', atk:16, price:90, icon:'⚔️' },
-  { id:'armor1',  name:'皮甲',      slot:'armor',  def:4,  price:25, icon:'🛡️' },
-  { id:'armor2',  name:'鎖子甲',    slot:'armor',  def:8,  price:55, icon:'🛡️' },
-  { id:'armor3',  name:'板甲',      slot:'armor',  def:14, price:85, icon:'🛡️' },
-  { id:'neck1',   name:'生命項鍊',  slot:'neck',   hp:20,  price:40, icon:'📿' },
-  { id:'neck2',   name:'力量項鍊',  slot:'neck',   atk:6,  price:50, icon:'📿' },
-  { id:'neck3',   name:'鑽石護符',  slot:'neck',   hp:40,  price:80, icon:'📿' },
+  // ── 通用武器 ──
+  { id:'w_iron',    name:'鐵劍',       slot:'weapon', atk:5,  price:28,  icon:'⚔️', tier:1, for:null },
+  { id:'w_steel',   name:'精鋼劍',     slot:'weapon', atk:10, price:55,  icon:'⚔️', tier:2, for:null },
+  // ── 戰士專屬武器 ──
+  { id:'w_axe1',    name:'戰斧',       slot:'weapon', atk:8,  price:35,  icon:'🪓', tier:1, for:'warrior' },
+  { id:'w_axe2',    name:'巨型戰斧',   slot:'weapon', atk:15, price:70,  icon:'🪓', tier:2, for:'warrior' },
+  { id:'w_axe3',    name:'神聖巨斧',   slot:'weapon', atk:22, price:110, icon:'🪓', tier:3, for:'warrior' },
+  { id:'w_ham1',    name:'鐵錘',       slot:'weapon', atk:7,  price:32,  icon:'🔨', tier:1, for:'warrior' },
+  { id:'w_ham2',    name:'重型戰錘',   slot:'weapon', atk:14, price:68,  icon:'🔨', tier:2, for:'warrior' },
+  { id:'w_ham3',    name:'破城鎚',     slot:'weapon', atk:21, price:108, icon:'🔨', tier:3, for:'warrior' },
+  // ── 法師專屬武器 ──
+  { id:'w_stf1',    name:'木法杖',     slot:'weapon', atk:7,  price:30,  icon:'🪄', tier:1, for:'mage' },
+  { id:'w_stf2',    name:'精靈法杖',   slot:'weapon', atk:14, price:65,  icon:'🪄', tier:2, for:'mage' },
+  { id:'w_stf3',    name:'龍晶法杖',   slot:'weapon', atk:22, price:102, icon:'🪄', tier:3, for:'mage' },
+  { id:'w_tome1',   name:'古老魔典',   slot:'weapon', atk:9,  price:40,  icon:'📖', tier:1, for:'mage' },
+  { id:'w_tome2',   name:'禁忌魔典',   slot:'weapon', atk:17, price:78,  icon:'📖', tier:2, for:'mage' },
+  { id:'w_orb1',    name:'暗月水晶球', slot:'weapon', atk:12, price:55,  icon:'🔮', tier:2, for:'mage' },
+  { id:'w_orb2',    name:'星空水晶球', slot:'weapon', atk:20, price:95,  icon:'🔮', tier:3, for:'mage' },
+  // ── 盜賊專屬武器 ──
+  { id:'w_dagger1', name:'短匕首',     slot:'weapon', atk:6,  price:25,  icon:'🗡️', tier:1, for:'rogue' },
+  { id:'w_dagger2', name:'暗影匕首',   slot:'weapon', atk:12, price:52,  icon:'🗡️', tier:2, for:'rogue' },
+  { id:'w_dagger3', name:'致命毒刃',   slot:'weapon', atk:19, price:92,  icon:'🗡️', tier:3, for:'rogue' },
+  { id:'w_claw1',   name:'鐵爪',       slot:'weapon', atk:8,  price:33,  icon:'🦾', tier:1, for:'rogue' },
+  { id:'w_claw2',   name:'暗夜鋼爪',   slot:'weapon', atk:15, price:70,  icon:'🦾', tier:2, for:'rogue' },
+  { id:'w_bow1',    name:'獵人短弓',   slot:'weapon', atk:10, price:45,  icon:'🏹', tier:2, for:'rogue', spd:2 },
+  { id:'w_bow2',    name:'影蛇長弓',   slot:'weapon', atk:17, price:85,  icon:'🏹', tier:3, for:'rogue', spd:3 },
+  // ── 護甲（通用）──
+  { id:'a_leather', name:'皮甲',       slot:'armor',  def:4,  price:22,  icon:'🥋', tier:1, for:null },
+  { id:'a_chain',   name:'鎖子甲',     slot:'armor',  def:8,  price:50,  icon:'🛡️', tier:2, for:null },
+  { id:'a_plate',   name:'板甲',       slot:'armor',  def:14, price:82,  icon:'🛡️', tier:3, for:null },
+  // ── 護甲（職業）──
+  { id:'a_robe1',   name:'魔法長袍',   slot:'armor',  def:3,  hp:15, price:35, icon:'👘', tier:1, for:'mage' },
+  { id:'a_robe2',   name:'星空長袍',   slot:'armor',  def:6,  hp:28, price:68, icon:'👘', tier:2, for:'mage' },
+  { id:'a_robe3',   name:'龍鱗長袍',   slot:'armor',  def:10, hp:40, price:95, icon:'👘', tier:3, for:'mage' },
+  { id:'a_cloak1',  name:'暗影披風',   slot:'armor',  def:5,  spd:3, price:40, icon:'🧥', tier:1, for:'rogue' },
+  { id:'a_cloak2',  name:'幽靈戰衣',   slot:'armor',  def:9,  spd:5, price:75, icon:'🧥', tier:2, for:'rogue' },
+  { id:'a_cloak3',  name:'虛無斗篷',   slot:'armor',  def:13, spd:7, price:98, icon:'🧥', tier:3, for:'rogue' },
+  // ── 頸鍊 ──
+  { id:'n_life1',   name:'生命項鍊',   slot:'neck',   hp:20,  price:38,  icon:'📿', tier:1, for:null },
+  { id:'n_life2',   name:'珊瑚項鍊',   slot:'neck',   hp:38,  price:68,  icon:'📿', tier:2, for:null },
+  { id:'n_life3',   name:'鑽石護符',   slot:'neck',   hp:58,  price:98,  icon:'📿', tier:3, for:null },
+  { id:'n_atk1',    name:'力量項鍊',   slot:'neck',   atk:5,  price:44,  icon:'💎', tier:1, for:null },
+  { id:'n_atk2',    name:'龍牙項鍊',   slot:'neck',   atk:9,  price:80,  icon:'💎', tier:2, for:null },
+  { id:'n_def1',    name:'護盾吊墜',   slot:'neck',   def:4,  price:40,  icon:'🏅', tier:1, for:null },
+  { id:'n_def2',    name:'黑鐵護符',   slot:'neck',   def:7,  price:72,  icon:'🏅', tier:2, for:null },
+  // ── 戒指（新槽位）──
+  { id:'r_spd1',    name:'疾風戒指',   slot:'ring',   spd:3,  price:42,  icon:'💍', tier:1, for:null },
+  { id:'r_spd2',    name:'暴風戒指',   slot:'ring',   spd:6,  price:78,  icon:'💍', tier:2, for:null },
+  { id:'r_crit1',   name:'鷹眼戒指',   slot:'ring',   crit:0.05, price:50, icon:'💍', tier:1, for:null },
+  { id:'r_crit2',   name:'死神戒指',   slot:'ring',   crit:0.10, price:88, icon:'💍', tier:2, for:null },
+  { id:'r_atk1',    name:'力量戒指',   slot:'ring',   atk:4,  price:46,  icon:'💍', tier:1, for:null },
+  { id:'r_atk2',    name:'魔王指環',   slot:'ring',   atk:8,  price:82,  icon:'💍', tier:3, for:null },
+  { id:'r_def1',    name:'護甲戒指',   slot:'ring',   def:3,  price:38,  icon:'💍', tier:1, for:null },
 ];
+
+// 依職業 + 樓層 tier 篩選商品池
+function getShopPool() {
+  const tier = floorNum <= 5 ? 1 : floorNum <= 12 ? 2 : 3;
+  return ITEMS.filter(it =>
+    (it.for === null || it.for === player.classId) && it.tier <= tier
+  );
+}
+
+// 賣出金額 = 購買價 40%
+function sellPrice(item) { return Math.max(1, Math.floor(item.price * 0.4)); }
 
 // ════════════════════════════════════════════════════════
 // 狀態
@@ -432,7 +489,7 @@ function startGame(classId) {
     atk: cls.atk, def: cls.def, spd: cls.spd,
     gold: 20, exp: 0, lv: 1, expNext: 50,
     potions: 1, poison: 0,
-    equipment: { weapon:null, armor:null, neck:null },
+    equipment: { weapon:null, armor:null, neck:null, ring:null },
     skills: cls.skills.map(s => ({ ...s, cd: 0 })),
     shield: false, guardActive: false,
   };
@@ -461,7 +518,7 @@ function updatePanel() {
 
   document.getElementById('sp-atk').textContent  = totalAtk();
   document.getElementById('sp-def').textContent  = totalDef();
-  document.getElementById('sp-spd').textContent  = p.spd;
+  document.getElementById('sp-spd').textContent  = totalSpd();
   document.getElementById('sp-gold').textContent = p.gold;
   document.getElementById('sp-floor').textContent = `B${floorNum}F`;
 
@@ -476,6 +533,7 @@ function updatePanel() {
   setSlot('eq-weapon', '⚔️ 武器', eq.weapon);
   setSlot('eq-armor',  '🛡️ 護甲', eq.armor);
   setSlot('eq-neck',   '📿 頸鍊', eq.neck);
+  setSlot('eq-ring',   '💍 戒指', eq.ring);
 
   // 藥水
   document.getElementById('sp-potions').textContent = `${p.potions} / 3`;
@@ -492,9 +550,25 @@ function setSlot(id, label, item) {
   }
 }
 
-function totalAtk() { return player.atk + (player.equipment.weapon?.atk||0) + (player.equipment.neck?.atk||0); }
-function totalDef() { return player.def + (player.equipment.armor?.def||0) + (player.guardActive?12:0); }
-function totalMaxHp() { return player.maxHp + (player.equipment.neck?.hp||0); }
+function totalAtk() {
+  const eq = player.equipment;
+  return player.atk + (eq.weapon?.atk||0) + (eq.neck?.atk||0) + (eq.ring?.atk||0);
+}
+function totalDef() {
+  const eq = player.equipment;
+  return player.def + (eq.armor?.def||0) + (eq.neck?.def||0) + (eq.ring?.def||0) + (player.guardActive?12:0);
+}
+function totalSpd() {
+  const eq = player.equipment;
+  return player.spd + (eq.weapon?.spd||0) + (eq.armor?.spd||0) + (eq.ring?.spd||0);
+}
+function totalCrit() {
+  return 0.10 + (player.equipment.ring?.crit||0);
+}
+function totalMaxHp() {
+  const eq = player.equipment;
+  return player.maxHp + (eq.neck?.hp||0) + (eq.armor?.hp||0);
+}
 
 // ════════════════════════════════════════════════════════
 // 日誌
@@ -658,10 +732,15 @@ function doPlayerAction(type, skillIdx) {
   let acted = false;
 
   if (type === 'attack') {
-    const d = dealDmg(totalAtk(), e.def);
-    e.hp -= d;
-    addLog(`⚔️ 你攻擊 ${e.name}，造成 ${d} 點傷害！`, 'dmg');
-    popDmg(d, '#fb923c');
+    if (!calcHit(totalSpd(), e.spd || 5)) {
+      addLog(`🌀 攻擊未命中！${e.name} 躲開了！`, 'info');
+      acted = true;
+    } else {
+      const d = dealDmg(totalAtk(), e.def);
+      e.hp -= d;
+      addLog(`⚔️ 你攻擊 ${e.name}，造成 ${d} 點傷害！`, 'dmg');
+      popDmg(d, '#fb923c');
+    }
     acted = true;
   } else if (type === 'skill') {
     const sk = p.skills[skillIdx];
@@ -693,10 +772,20 @@ function doPlayerAction(type, skillIdx) {
   setTimeout(() => enemyTurn(), 400);
 }
 
-function dealDmg(atk, def, critChance=0.10) {
+// attackerSpd: 攻擊方速度，defenderSpd: 防守方速度（影響命中率）
+// returns { hit:bool, dmg:number, crit:bool }
+function calcHit(attackerSpd, defenderSpd) {
+  // 命中率：75% ~ 97%，速度差每差1點 ±2%
+  const spdDiff = attackerSpd - defenderSpd;
+  const hitRate = Math.min(0.97, Math.max(0.40, 0.78 + spdDiff * 0.02));
+  return Math.random() < hitRate;
+}
+
+function dealDmg(atk, def, critChance=null) {
+  const crit = critChance !== null ? critChance : totalCrit();
   const base = Math.max(1, atk - def);
-  const isCrit = Math.random() < critChance;
-  const variance = 0.85 + Math.random() * 0.30; // ±15%
+  const isCrit = Math.random() < crit;
+  const variance = 0.85 + Math.random() * 0.30;
   const dmg = Math.max(1, Math.round(base * (isCrit ? 1.8 : 1) * variance));
   if (isCrit) addLog(`💥 暴擊！`, 'sys');
   return dmg;
@@ -727,11 +816,18 @@ function enemyTurn() {
 
   // 敵人 AI：55%普攻 | 25%強攻×1.5 | 10%特殊技 | 10%嘲諷
   const roll = Math.random();
+  // 敵人也可能 miss（依玩家速度）
+  const eMiss = !calcHit(e.spd || 5, totalSpd());
+  if (eMiss && roll >= 0.10) {
+    addLog(`💨 ${e.name} 的攻擊未命中！`, 'info');
+    p.skills.forEach(sk => { if (sk.cd > 0) sk.cd--; });
+    battle.turn++; updatePanel(); renderBattleButtons(); return;
+  }
   if (roll < 0.10) {
     addLog(`😤 ${e.name} 大聲嘲諷，浪費了行動！`, 'info');
   } else if (roll < 0.20 && e.isBoss) {
     // Boss 吸血
-    const raw = dealDmg(e.atk * 1.2, totalDef());
+    const raw = dealDmg(e.atk * 1.2, totalDef(), 0.05);
     if (p.shield) { addLog(`🔵 魔法護盾抵擋了吸血攻擊！`,'sys'); p.shield=false; }
     else {
       p.hp -= raw;
@@ -820,9 +916,9 @@ function gainExp(amount) {
     player.lv++;
     player.expNext = Math.round(player.expNext * 1.4);
     player.maxHp += 8;
-    player.hp = Math.min(player.hp + 8, player.maxHp);
-    player.atk += 2;
-    player.def += 1;
+    player.hp    = Math.min(player.hp + 8, totalMaxHp());
+    player.atk  += 2;
+    player.def  += 1;
     addLog(`🌟 升級！現在是 Lv.${player.lv}！生命↑8 攻擊↑2 防禦↑1`, 'sys');
   }
 }
@@ -890,17 +986,17 @@ function triggerAltar() {
   const cost = Math.round(player.maxHp * 0.20);
   const altarRoll = Math.random();
   let boon, boonDesc;
-  if (altarRoll < 0.33) { boon='atk'; boonDesc='ATK +3'; }
-  else if (altarRoll < 0.66) { boon='def'; boonDesc='DEF +2'; }
-  else { boon='maxhp'; boonDesc='最大HP +15'; }
+  if (altarRoll < 0.33) { boon='atk'; boonDesc='攻擊 +3'; }
+  else if (altarRoll < 0.66) { boon='def'; boonDesc='防禦 +2'; }
+  else { boon='maxhp'; boonDesc='最大生命 +15'; }
   setEvent('🗽', '古老祭壇', `一座散發神秘能量的祭壇。獻血 ${cost} HP 可獲得永久強化：${boonDesc}。`);
   addLog(`🗽 發現古老祭壇！獻血可獲得 ${boonDesc}。`, 'sys');
   const btns = document.getElementById('action-btns');
   btns.innerHTML = '';
   btns.appendChild(makeBtn(`🩸 獻血（-${cost} HP）→ ${boonDesc}`, 'attack', () => {
     player.hp -= cost;
-    if (boon==='atk') { player.atk+=3; addLog(`🗽 ATK +3！`,'good'); }
-    else if (boon==='def') { player.def+=2; addLog(`🗽 DEF +2！`,'good'); }
+    if (boon==='atk') { player.atk+=3; addLog(`🗽 攻擊 +3！`,'good'); }
+    else if (boon==='def') { player.def+=2; addLog(`🗽 防禦 +2！`,'good'); }
     else { player.maxHp+=15; addLog(`🗽 最大HP +15！`,'good'); }
     updatePanel();
     if (player.hp <= 0) { playerDead(); return; }
@@ -965,45 +1061,86 @@ function triggerCursedChest() {
 }
 
 // ════════════════════════════════════════════════════════
-// 商店
+// 商店（含賣出功能）
 // ════════════════════════════════════════════════════════
-function triggerShop() {
-  gameState = 'shop';
-  addLog(`🛒 發現商店！`, 'good');
-  setEvent('🛒','神秘商店','選擇購買道具，或繼續前進。');
+function itemBonusText(item) {
+  const parts = [];
+  if (item.atk)  parts.push(`攻擊 +${item.atk}`);
+  if (item.def)  parts.push(`防禦 +${item.def}`);
+  if (item.hp)   parts.push(`生命 +${item.hp}`);
+  if (item.spd)  parts.push(`速度 +${item.spd}`);
+  if (item.crit) parts.push(`暴擊 +${Math.round(item.crit*100)}%`);
+  if (item.potion) parts.push('回復 35% HP');
+  return parts.join('・') || '—';
+}
 
-  const shopPool = [...ITEMS];
-  shuffle(shopPool);
-  const offered = shopPool.slice(0, 3);
-  // 加入藥水
-  if (player.potions < 3) offered.push({ id:'potion', name:'回復藥水', icon:'🧪', price:15, potion:true });
-
+function renderShop() {
   const shopEl = document.getElementById('shop-items');
   shopEl.style.display = 'flex';
   shopEl.innerHTML = '';
-  offered.forEach(item => {
+
+  // ── 購買區 ──
+  const pool = shuffle([...getShopPool()]).slice(0, 4);
+  if (player.potions < 3) pool.push({ id:'potion', name:'回復藥水', icon:'🧪', price:15, potion:true, tier:1, for:null });
+
+  const buySection = document.createElement('div');
+  buySection.style.cssText = 'width:100%;display:flex;flex-direction:column;gap:6px;';
+  const buyLabel = document.createElement('div');
+  buyLabel.style.cssText = 'font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;';
+  buyLabel.textContent = '🛒 購買';
+  buySection.appendChild(buyLabel);
+  const buyGrid = document.createElement('div');
+  buyGrid.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px;';
+  pool.forEach(item => {
     const cantBuy = player.gold < item.price;
     const div = document.createElement('div');
     div.className = 'shop-item' + (cantBuy?' cant-buy':'');
-    let bonus = '';
-    if (item.atk)   bonus = `ATK +${item.atk}`;
-    else if (item.def) bonus = `DEF +${item.def}`;
-    else if (item.hp)  bonus = `HP +${item.hp}`;
-    else if (item.potion) bonus = '回復 35% HP';
-    div.innerHTML = `<div class="si-name">${item.icon} ${item.name}</div><div class="si-bonus">${bonus}</div><div class="si-price">💰 ${item.price}G</div>`;
-    if (!cantBuy) div.addEventListener('click', () => buyItem(item, shopEl));
-    shopEl.appendChild(div);
+    div.innerHTML = `<div class="si-name">${item.icon} ${item.name}</div><div class="si-bonus">${itemBonusText(item)}</div><div class="si-price">💰 ${item.price}G</div>`;
+    if (!cantBuy) div.addEventListener('click', () => { buyItem(item); renderShop(); });
+    buyGrid.appendChild(div);
   });
+  buySection.appendChild(buyGrid);
+  shopEl.appendChild(buySection);
 
+  // ── 賣出區（已裝備的物品）──
+  const equippedItems = Object.values(player.equipment).filter(Boolean);
+  if (equippedItems.length > 0) {
+    const sellSection = document.createElement('div');
+    sellSection.style.cssText = 'width:100%;display:flex;flex-direction:column;gap:6px;margin-top:10px;';
+    const sellLabel = document.createElement('div');
+    sellLabel.style.cssText = 'font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;';
+    sellLabel.textContent = '💰 賣出裝備';
+    sellSection.appendChild(sellLabel);
+    const sellGrid = document.createElement('div');
+    sellGrid.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px;';
+    equippedItems.forEach(item => {
+      const sp = sellPrice(item);
+      const div = document.createElement('div');
+      div.className = 'shop-item';
+      div.style.borderColor = '#3a3a60';
+      div.innerHTML = `<div class="si-name">${item.icon} ${item.name}</div><div class="si-bonus" style="color:#f87171">${itemBonusText(item)}</div><div class="si-price" style="color:#4ade80">賣出 +${sp}G</div>`;
+      div.addEventListener('click', () => { sellItem(item); renderShop(); });
+      sellGrid.appendChild(div);
+    });
+    sellSection.appendChild(sellGrid);
+    shopEl.appendChild(sellSection);
+  }
+}
+
+function triggerShop() {
+  gameState = 'shop';
+  addLog(`🛒 發現商店！`, 'good');
+  setEvent('🛒', '神秘商店', '選擇購買或賣出裝備，或繼續前進。');
+  renderShop();
   const btns = document.getElementById('action-btns');
   btns.innerHTML = '';
-  btns.appendChild(makeBtn('離開商店', 'skip', () => {
+  btns.appendChild(makeBtn('離開商店 →', 'skip', () => {
     document.getElementById('shop-items').style.display = 'none';
     floorDown();
   }));
 }
 
-function buyItem(item, shopEl) {
+function buyItem(item) {
   if (player.gold < item.price) return;
   player.gold -= item.price;
   if (item.potion) {
@@ -1014,15 +1151,16 @@ function buyItem(item, shopEl) {
     equipItem(item);
   }
   updatePanel();
-  // 重刷商店（更新金幣狀態）
-  shopEl.querySelectorAll('.shop-item').forEach(el => {
-    const name = el.querySelector('.si-name')?.textContent.replace(/^\S+\s/,'');
-    // 標記無法購買的
-    const priceText = el.querySelector('.si-price')?.textContent.replace(/[^\d]/g,'');
-    if (priceText && player.gold < parseInt(priceText)) {
-      el.classList.add('cant-buy');
-    }
-  });
+}
+
+function sellItem(item) {
+  const slot = item.slot;
+  if (player.equipment[slot] !== item) return;
+  const sp = sellPrice(item);
+  player.equipment[slot] = null;
+  player.gold += sp;
+  addLog(`💰 賣出 ${item.icon} ${item.name}，獲得 ${sp}G！`, 'good');
+  updatePanel();
 }
 
 function equipItem(item) {
