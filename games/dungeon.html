@@ -7,7 +7,7 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg: #0d0d1a; --surface: #12121f; --panel: #1a1a2e;
+      --bg: #07070e; --surface: #12121f; --panel: #1a1a2e;
       --border: #2a2a45; --text: #e2e8f0; --muted: #57606a;
       --accent: #f97316; --purple: #a855f7; --green: #22c55e;
       --red: #ef4444; --blue: #3b82f6; --gold: #f5c518;
@@ -15,9 +15,9 @@
     body { background: var(--bg); min-height: 100vh; font-family: 'Segoe UI', system-ui, sans-serif; color: var(--text); }
 
     /* ── Topbar ── */
-    #topbar { display: flex; align-items: center; justify-content: space-between; padding: 11px 20px; border-bottom: 1px solid var(--border); background: rgba(13,13,26,.96); position: sticky; top: 0; z-index: 40; }
-    #topbar a { color: var(--muted); font-size: 13px; text-decoration: none; border: 1px solid var(--border); padding: 5px 13px; border-radius: 6px; transition: all .2s; }
-    #topbar a:hover { color: var(--text); border-color: var(--accent); }
+    #topbar { display: flex; align-items: center; justify-content: space-between; padding: 13px 24px; border-bottom: 1px solid rgba(255,255,255,0.07); background: rgba(7,7,14,0.85); backdrop-filter: blur(20px); position: sticky; top: 0; z-index: 40; }
+    #topbar a { color: rgba(255,255,255,0.45); font-size: 13px; text-decoration: none; border: 1px solid rgba(255,255,255,0.12); padding: 5px 13px; border-radius: 8px; transition: all .2s; }
+    #topbar a:hover { color: var(--text); border-color: rgba(255,255,255,0.3); }
     #topbar h1 { font-size: 17px; font-weight: 800; color: var(--accent); letter-spacing: 1px; }
 
     /* ── Screen ── */
@@ -215,7 +215,7 @@
 <body>
 
 <div id="topbar">
-  <a href="index.html">← 返回目錄</a>
+  <a href="../index.html">← 返回目錄</a>
   <h1>⚔️ 深淵地下城</h1>
   <div style="width:80px"></div>
 </div>

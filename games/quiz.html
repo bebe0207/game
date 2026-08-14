@@ -3,194 +3,173 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="ws-url" content="wss://game-ws-server-5xjh.onrender.com">
   <title>爆爆問答</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg: #0e0b1e;
-      --surface: #17143a;
-      --border: #2d2860;
-      --text: #e2e8f0;
-      --muted: #6b7280;
+      --bg: #07070e; --surface: rgba(255,255,255,0.042);
+      --border: rgba(255,255,255,0.085);
+      --text: #e2e8f0; --muted: rgba(255,255,255,0.4);
+      --accent: #a855f7;
     }
 
     body {
-      background: var(--bg);
-      min-height: 100vh;
-      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg); min-height: 100vh;
+      font-family: -apple-system, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
       color: var(--text);
       display: flex; flex-direction: column; align-items: center;
-      overflow-x: hidden;
     }
 
-    /* ── 頂部 ── */
+    /* ── Topbar ── */
     #topbar {
       width: 100%; display: flex; align-items: center; justify-content: space-between;
       padding: 13px 24px;
-      border-bottom: 1px solid var(--border);
-      background: rgba(14,11,30,0.95);
-      position: sticky; top: 0; z-index: 30;
+      background: rgba(7,7,14,0.85); backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      position: sticky; top: 0; z-index: 40;
     }
     #topbar a {
       color: var(--muted); font-size: 13px; text-decoration: none;
-      border: 1px solid var(--border); padding: 5px 14px; border-radius: 6px;
-      transition: all .2s;
+      border: 1px solid rgba(255,255,255,0.12); padding: 5px 13px;
+      border-radius: 8px; transition: all .2s;
     }
-    #topbar a:hover { color: var(--text); border-color: #a855f7; }
-    #topbar h1 { font-size: 18px; font-weight: 800; }
-    #topbar h1 em { font-style: normal; color: #a855f7; }
+    #topbar a:hover { color: var(--text); border-color: rgba(255,255,255,0.3); }
+    #topbar h1 { font-size: 18px; font-weight: 800; flex: 1; text-align: center; }
+    #topbar h1 em { font-style: normal; color: var(--accent); }
+    #topbar-right { width: 90px; }
 
-    /* ── 畫面切換 ── */
+    /* ── Screens ── */
     .screen { display: none; }
     .screen.active {
       display: flex; flex-direction: column; align-items: center;
-      width: 100%; padding: 32px 16px 60px; gap: 24px;
+      width: 100%; padding: 32px 16px 60px; gap: 20px;
     }
 
-    /* ══ SCREEN 1：選題庫 ══ */
-    .page-title { text-align: center; }
-    .page-title h2 {
-      font-size: 34px; font-weight: 900;
+    /* ── Mode Select ── */
+    .mode-title { text-align: center; }
+    .mode-title h2 {
+      font-size: 32px; font-weight: 900;
       background: linear-gradient(135deg, #c084fc, #a855f7, #7c3aed);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     }
-    .page-title p { color: var(--muted); font-size: 14px; margin-top: 6px; }
+    .mode-title p { color: var(--muted); font-size: 14px; margin-top: 8px; }
+    .mode-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 100%; max-width: 560px; }
+    .mode-card {
+      background: var(--surface); border: 2px solid var(--border);
+      border-radius: 20px; padding: 36px 24px;
+      display: flex; flex-direction: column; align-items: center; gap: 14px;
+      cursor: pointer; transition: border-color .2s, transform .2s; text-align: center;
+    }
+    .mode-card:hover { transform: translateY(-4px); }
+    .mode-card.solo:hover   { border-color: var(--accent); }
+    .mode-card.online:hover { border-color: #f5c518; }
+    .mode-card .mc-icon { font-size: 52px; line-height: 1; }
+    .mode-card .mc-name { font-size: 18px; font-weight: 800; }
+    .mode-card.solo .mc-name   { color: var(--accent); }
+    .mode-card.online .mc-name { color: #f5c518; }
+    .mode-card .mc-desc { font-size: 13px; color: var(--muted); line-height: 1.5; }
+    @media(max-width:440px) { .mode-grid { grid-template-columns: 1fr; } }
 
-    .pack-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
-      gap: 14px; width: 100%; max-width: 820px;
+    .back-to-mode {
+      background: none; border: 1px solid rgba(255,255,255,0.12);
+      color: var(--muted); font-size: 13px;
+      padding: 8px 18px; border-radius: 8px; cursor: pointer;
+      transition: all .2s; font-family: inherit;
     }
-    .pack-card {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: 14px; padding: 20px 18px;
-      cursor: pointer; transition: border-color .18s, transform .15s;
-      display: flex; flex-direction: column; gap: 8px;
-    }
-    .pack-card:hover { border-color: #a855f7; transform: translateY(-3px); }
-    .pack-card.selected { border-color: #a855f7; background: rgba(168,85,247,.12); }
-    .pack-icon { font-size: 32px; line-height: 1; }
-    .pack-name { font-size: 16px; font-weight: 700; }
-    .pack-count { font-size: 12px; color: var(--muted); }
-    .pack-card.custom-card {
-      border-style: dashed; align-items: center; justify-content: center;
-      min-height: 110px; text-align: center;
-    }
-    .pack-card.custom-card .pack-name { color: #a855f7; }
+    .back-to-mode:hover { color: var(--text); border-color: rgba(255,255,255,0.3); }
 
-    .start-section {
-      width: 100%; max-width: 820px;
-      display: flex; flex-direction: column; gap: 14px;
-    }
-    .settings-row { display: flex; gap: 12px; flex-wrap: wrap; }
-    .setting-group {
-      flex: 1; min-width: 140px;
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: 10px; padding: 12px 14px;
-      display: flex; flex-direction: column; gap: 6px;
-    }
-    .setting-group label { font-size: 11px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
-    .setting-group select, .setting-group input[type=number] {
-      background: rgba(255,255,255,0.06); border: 1px solid var(--border);
-      border-radius: 6px; color: var(--text); font-size: 15px; font-weight: 600;
-      padding: 6px 10px; outline: none; cursor: pointer; width: 100%;
-      transition: border-color .2s;
-    }
-    .setting-group select:focus, .setting-group input[type=number]:focus { border-color: #a855f7; }
+    /* ── Shared UI components ── */
+    .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 24px 28px; width: 100%; max-width: 760px; }
+    .panel h3 { font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
 
     .big-btn {
-      width: 100%; padding: 16px;
+      width: 100%; padding: 15px;
       background: linear-gradient(135deg, #a855f7, #7c3aed);
-      border: none; border-radius: 12px;
-      color: #fff; font-size: 17px; font-weight: 800;
-      cursor: pointer; letter-spacing: 1px;
-      transition: opacity .15s, transform .1s;
+      border: none; border-radius: 12px; color: #fff;
+      font-size: 16px; font-weight: 800; cursor: pointer;
+      transition: opacity .15s, transform .1s; font-family: inherit;
     }
     .big-btn:hover { opacity: .88; transform: translateY(-1px); }
     .big-btn:disabled { opacity: .4; cursor: not-allowed; transform: none; }
 
-    /* ══ SCREEN 1.5：自訂編輯器 ══ */
-    .editor-header {
-      width: 100%; max-width: 720px;
-      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;
+    .sec-btn { padding: 11px 22px; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; transition: all .15s; border: none; font-family: inherit; }
+    .sec-btn.outline { background: var(--surface); border: 1px solid var(--border); color: var(--text); }
+    .sec-btn.outline:hover { border-color: var(--accent); }
+    .sec-btn.purple { background: linear-gradient(135deg, #a855f7, #7c3aed); color: #fff; }
+
+    .err { font-size: 13px; color: #f87171; text-align: center; min-height: 18px; }
+
+    select, input[type=number] {
+      background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text); font-size: 14px;
+      padding: 8px 12px; outline: none; cursor: pointer; transition: border-color .2s;
     }
+    select:focus, input[type=number]:focus { border-color: var(--accent); }
+
+    /* ── Pack grid ── */
+    .pack-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+    .pack-card {
+      background: rgba(255,255,255,.04); border: 1px solid var(--border);
+      border-radius: 10px; padding: 14px; cursor: pointer;
+      transition: border-color .18s, transform .15s;
+    }
+    .pack-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+    .pack-card.selected { border-color: var(--accent); background: rgba(168,85,247,.12); }
+    .pack-card .pack-icon { font-size: 28px; margin-bottom: 6px; }
+    .pack-card .pack-name { font-size: 14px; font-weight: 700; }
+    .pack-card .pack-count { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .pack-card.custom-card { border-style: dashed; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 86px; }
+    .pack-card.custom-card .pack-name { color: var(--accent); }
+
+    /* ── Settings row ── */
+    .settings-row { display: flex; gap: 12px; flex-wrap: wrap; }
+    .setting-group { flex: 1; min-width: 120px; display: flex; flex-direction: column; gap: 6px; }
+    .setting-group label { font-size: 11px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+
+    /* ── Editor ── */
+    .editor-header { width: 100%; max-width: 720px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
     .editor-header h3 { font-size: 18px; font-weight: 700; }
     #questionList { width: 100%; max-width: 720px; display: flex; flex-direction: column; gap: 12px; }
-    .q-card {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: 12px; padding: 16px 18px;
-      display: flex; flex-direction: column; gap: 10px; position: relative;
-    }
-    .q-card input[type=text] {
-      background: rgba(255,255,255,0.05); border: 1px solid var(--border);
-      border-radius: 8px; color: var(--text); font-size: 14px;
-      padding: 9px 12px; outline: none; width: 100%; transition: border-color .2s;
-    }
-    .q-card input[type=text]:focus { border-color: #a855f7; }
+    .q-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; display: flex; flex-direction: column; gap: 10px; position: relative; }
+    .q-card input[type=text] { background: rgba(255,255,255,.05); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 14px; padding: 9px 12px; outline: none; width: 100%; transition: border-color .2s; }
+    .q-card input[type=text]:focus { border-color: var(--accent); }
     .q-card input[type=text]::placeholder { color: #3a3a6a; }
     .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
     .opt-row { display: flex; align-items: center; gap: 8px; }
-    .opt-badge {
-      width: 26px; height: 26px; border-radius: 6px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 12px; font-weight: 900; flex-shrink: 0;
-    }
+    .opt-badge { width: 26px; height: 26px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 900; flex-shrink: 0; }
     .opt-badge.A { background: rgba(239,68,68,.25); color: #f87171; }
     .opt-badge.B { background: rgba(59,130,246,.25); color: #60a5fa; }
     .opt-badge.C { background: rgba(245,197,24,.25); color: #fcd34d; }
     .opt-badge.D { background: rgba(34,197,94,.25); color: #4ade80; }
     .correct-select { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
-    .correct-select select {
-      background: rgba(255,255,255,0.06); border: 1px solid var(--border);
-      border-radius: 6px; color: var(--text); font-size: 13px;
-      padding: 4px 8px; outline: none; cursor: pointer;
-    }
-    .del-btn {
-      position: absolute; top: 10px; right: 12px;
-      background: none; border: none; color: #4a4a7a;
-      cursor: pointer; font-size: 18px; line-height: 1; transition: color .15s;
-    }
+    .correct-select select { font-size: 12px; padding: 4px 8px; }
+    .del-btn { position: absolute; top: 10px; right: 12px; background: none; border: none; color: #4a4a7a; cursor: pointer; font-size: 18px; line-height: 1; transition: color .15s; }
     .del-btn:hover { color: #f87171; }
     .editor-actions { width: 100%; max-width: 720px; display: flex; gap: 10px; flex-wrap: wrap; }
-    .sec-btn { flex: 1; padding: 12px; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; transition: all .15s; }
-    .sec-btn.outline { background: var(--surface); border: 1px solid var(--border); color: var(--text); }
-    .sec-btn.outline:hover { border-color: #a855f7; }
-    .sec-btn.purple { background: linear-gradient(135deg,#a855f7,#7c3aed); border: none; color: #fff; }
+    .editor-actions .sec-btn { flex: 1; padding: 12px; }
 
-    /* ══ SCREEN 2：遊戲中 ══ */
-    #progress-bar-wrap {
-      width: 100%; max-width: 720px;
-      display: flex; align-items: center; gap: 12px;
-    }
+    /* ── Solo game ── */
+    #progress-bar-wrap { display: flex; align-items: center; gap: 12px; width: 100%; max-width: 720px; }
     #progress-bar-bg { flex: 1; height: 8px; background: rgba(255,255,255,0.08); border-radius: 4px; overflow: hidden; }
     #progress-bar-fill { height: 100%; background: linear-gradient(90deg,#a855f7,#7c3aed); border-radius: 4px; transition: width .4s; }
     #q-counter { font-size: 13px; color: var(--muted); white-space: nowrap; }
     #score-display { font-size: 13px; color: var(--muted); }
-    #score-display strong { font-size: 22px; color: #a855f7; font-weight: 900; }
-
+    #score-display strong { font-size: 22px; color: var(--accent); font-weight: 900; }
     #timer-ring-wrap { position: relative; width: 80px; height: 80px; }
     #timer-svg { transform: rotate(-90deg); }
     #timer-track { fill: none; stroke: rgba(255,255,255,0.08); stroke-width: 6; }
-    #timer-arc   { fill: none; stroke: #a855f7; stroke-width: 6; stroke-linecap: round;
-                   transition: stroke-dashoffset .9s linear, stroke .3s; }
+    #timer-arc { fill: none; stroke: var(--accent); stroke-width: 6; stroke-linecap: round; transition: stroke-dashoffset .9s linear, stroke .3s; }
     #timer-num { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 900; }
-
-    #question-card {
-      width: 100%; max-width: 720px;
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: 16px; padding: 28px 28px 24px; text-align: center;
-    }
+    #question-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 28px 24px; width: 100%; max-width: 720px; }
     #question-text { font-size: 22px; font-weight: 700; line-height: 1.5; }
-
     #options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; max-width: 720px; }
     .opt-btn {
       border: none; border-radius: 14px; padding: 18px 16px;
-      display: flex; align-items: center; gap: 14px;
-      cursor: pointer; font-family: inherit;
-      font-size: 16px; font-weight: 700; color: #fff; text-align: left;
-      transition: transform .12s, opacity .15s, filter .2s;
-      position: relative; overflow: hidden;
+      display: flex; align-items: center; gap: 12px;
+      cursor: pointer; font-family: inherit; font-size: 16px; font-weight: 700;
+      color: #fff; text-align: left; transition: transform .12s, opacity .2s, filter .2s;
     }
     .opt-btn:hover:not(:disabled) { transform: scale(1.03); }
     .opt-btn:active:not(:disabled) { transform: scale(0.97); }
@@ -198,59 +177,31 @@
     .opt-btn.B { background: linear-gradient(135deg,#3b82f6,#1d4ed8); }
     .opt-btn.C { background: linear-gradient(135deg,#d97706,#92400e); color: #fef9c3; }
     .opt-btn.D { background: linear-gradient(135deg,#22c55e,#15803d); }
-    .opt-btn .opt-letter {
-      width: 34px; height: 34px; border-radius: 8px;
-      background: rgba(0,0,0,0.25);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 14px; font-weight: 900; flex-shrink: 0;
-    }
+    .opt-btn .opt-letter { width: 36px; height: 36px; border-radius: 8px; background: rgba(0,0,0,.25); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 900; flex-shrink: 0; }
     .opt-btn .opt-text { flex: 1; line-height: 1.3; }
     .opt-btn.reveal-correct { animation: correctPop .5s ease; filter: brightness(1.25); }
     .opt-btn.wrong-chosen   { opacity: .35; filter: grayscale(.6); }
     .opt-btn.dimmed         { opacity: .3; }
-    @keyframes correctPop {
-      0%{transform:scale(1)} 40%{transform:scale(1.06)} 100%{transform:scale(1)}
-    }
-
+    @keyframes correctPop { 0%{transform:scale(1)} 40%{transform:scale(1.06)} 100%{transform:scale(1)} }
     #feedback-bar {
-      width: 100%; max-width: 720px;
-      border-radius: 12px; padding: 14px 20px;
-      text-align: center; font-size: 16px; font-weight: 700;
-      display: none; animation: fadeSlide .35s ease;
+      display: none; width: 100%; max-width: 720px;
+      border-radius: 12px; padding: 14px 18px;
+      font-size: 15px; font-weight: 700; animation: fadeSlide .3s ease;
     }
     @keyframes fadeSlide { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
     #feedback-bar.correct { background: rgba(34,197,94,.2); border: 1px solid #22c55e; color: #4ade80; }
     #feedback-bar.wrong   { background: rgba(239,68,68,.15); border: 1px solid #ef4444; color: #f87171; }
     #feedback-bar.timeout { background: rgba(168,85,247,.15); border: 1px solid #a855f7; color: #c084fc; }
-
-    .score-pop {
-      position: fixed; font-size: 28px; font-weight: 900; color: #fde047;
-      text-shadow: 0 0 12px rgba(253,224,71,.6);
-      pointer-events: none; animation: scoreFly 1s ease forwards; z-index: 100;
-    }
+    .score-pop { position: fixed; font-size: 28px; font-weight: 900; color: #fde047; text-shadow: 0 0 12px rgba(253,224,71,.6); pointer-events: none; animation: scoreFly 1s ease forwards; z-index: 100; }
     @keyframes scoreFly { 0%{opacity:1;transform:translateY(0) scale(1)} 100%{opacity:0;transform:translateY(-80px) scale(1.5)} }
-
-    /* ══ SCREEN 3：結果 ══ */
     #result-screen { gap: 20px; }
     .result-header { text-align: center; }
-    .result-header h2 {
-      font-size: 36px; font-weight: 900;
-      background: linear-gradient(135deg, #fde047, #f5c518, #d97706);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    }
+    .result-header h2 { font-size: 40px; font-weight: 900; }
     .result-header p { color: var(--muted); font-size: 14px; margin-top: 6px; }
-    .score-big {
-      font-size: 72px; font-weight: 900; line-height: 1;
-      background: linear-gradient(135deg, #a855f7, #c084fc);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-align: center;
-    }
+    .score-big { font-size: 72px; font-weight: 900; background: linear-gradient(135deg,#c084fc,#a855f7); -webkit-background-clip:text; -webkit-text-fill-color:transparent; line-height: 1; }
     .score-label { font-size: 14px; color: var(--muted); text-align: center; margin-top: 4px; }
     .review-list { width: 100%; max-width: 640px; display: flex; flex-direction: column; gap: 10px; }
-    .review-item {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: 12px; padding: 14px 18px;
-      display: flex; flex-direction: column; gap: 6px;
-    }
+    .review-item { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; }
     .review-item .r-q { font-size: 14px; font-weight: 600; }
     .review-item .r-row { display: flex; align-items: center; gap: 10px; font-size: 13px; flex-wrap: wrap; }
     .r-badge { padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; }
@@ -258,37 +209,172 @@
     .r-badge.wrong   { background: rgba(239,68,68,.15); color: #f87171; }
     .r-badge.skip    { background: rgba(168,85,247,.1); color: #a855f7; }
     .result-btns { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; width: 100%; max-width: 640px; }
-    .r-btn { flex: 1; min-width: 160px; padding: 14px; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; border: none; transition: opacity .15s; }
+    .r-btn { flex: 1; min-width: 160px; padding: 14px; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; border: none; transition: opacity .15s; font-family: inherit; }
     .r-btn:hover { opacity: .85; }
     .r-btn.purple { background: linear-gradient(135deg,#a855f7,#7c3aed); color: #fff; }
     .r-btn.ghost  { background: var(--surface); border: 1px solid var(--border); color: var(--text); }
-
     .confetti { position: fixed; pointer-events: none; z-index: 200; font-size: 20px; animation: confettiFall linear forwards; }
     @keyframes confettiFall { 0%{opacity:1;transform:translateY(0) rotate(0)} 100%{opacity:0;transform:translateY(300px) rotate(720deg)} }
-
     @media (max-width: 500px) {
       #options-grid { grid-template-columns: 1fr; }
       .opt-btn { font-size: 15px; }
       #question-text { font-size: 18px; }
     }
+
+    /* ── Online lobby ── */
+    .role-title { text-align: center; }
+    .role-title h2 { font-size: 32px; font-weight: 900; background: linear-gradient(135deg,#c084fc,#a855f7,#7c3aed); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .role-title p { color: var(--muted); font-size: 14px; margin-top: 6px; }
+    .role-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 100%; max-width: 600px; }
+    .role-card {
+      background: var(--surface); border: 2px solid var(--border);
+      border-radius: 20px; padding: 36px 24px;
+      display: flex; flex-direction: column; align-items: center; gap: 14px;
+      cursor: pointer; transition: border-color .2s, transform .2s; text-align: center;
+    }
+    .role-card:hover { transform: translateY(-4px); }
+    .role-card .ri { font-size: 52px; line-height: 1; }
+    .role-card .rn { font-size: 18px; font-weight: 800; }
+    .role-card .rd { font-size: 13px; color: var(--muted); line-height: 1.5; }
+    .role-card.host:hover { border-color: #f5c518; }
+    .role-card.host .rn { color: #f5c518; }
+    .role-card.player:hover { border-color: var(--accent); }
+    .role-card.player .rn { color: var(--accent); }
+    @media(max-width:440px) { .role-grid { grid-template-columns: 1fr; } }
+
+    /* host pack grid uses smaller cards */
+    #hostPackGrid .pack-card .pi { font-size: 24px; margin-bottom: 6px; }
+    #hostPackGrid .pack-card .pn { font-size: 14px; font-weight: 700; }
+    #hostPackGrid .pack-card .pc { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    #hostPackGrid .pack-card.custom-new { border-style: dashed; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 86px; }
+    #hostPackGrid .pack-card.custom-new .pn { color: var(--accent); }
+    .sg { flex: 1; min-width: 120px; display: flex; flex-direction: column; gap: 6px; }
+    .sg label { font-size: 11px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+    #hostQuestionList { width: 100%; max-width: 760px; display: flex; flex-direction: column; gap: 12px; }
+    .host-editor-header { width: 100%; max-width: 760px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+    .host-editor-header h3 { font-size: 18px; font-weight: 700; }
+    .host-editor-actions { width: 100%; max-width: 760px; display: flex; gap: 10px; flex-wrap: wrap; }
+    .host-editor-actions .sec-btn { flex: 1; padding: 12px; }
+    .room-code-big { font-size: 64px; font-weight: 900; color: #f5c518; letter-spacing: 14px; text-align: center; text-shadow: 0 0 24px rgba(245,197,24,.4); }
+    .room-hint { font-size: 14px; color: var(--muted); text-align: center; }
+    .player-chips { display: flex; flex-wrap: wrap; gap: 8px; min-height: 44px; }
+    .chip { padding: 6px 14px; background: rgba(168,85,247,.15); border: 1px solid rgba(168,85,247,.35); border-radius: 99px; font-size: 13px; font-weight: 600; color: #c084fc; animation: chipIn .3s ease; }
+    @keyframes chipIn { from{opacity:0;transform:scale(.7)} to{opacity:1;transform:scale(1)} }
+    .player-count { font-size: 13px; color: var(--muted); }
+
+    /* host question screen */
+    .q-header { width: 100%; max-width: 900px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+    .q-prog { font-size: 13px; color: var(--muted); }
+    .answer-bar { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+    .answer-bar strong { font-size: 22px; color: var(--accent); font-weight: 900; }
+    .q-card-big { width: 100%; max-width: 900px; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 36px 32px; text-align: center; }
+    .q-text-big { font-size: 26px; font-weight: 800; line-height: 1.4; }
+    .opts-grid-big { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; max-width: 900px; }
+    .opt-disp { border-radius: 14px; padding: 20px 18px; display: flex; align-items: center; gap: 14px; font-size: 17px; font-weight: 700; color: #fff; }
+    .opt-disp .ol { width: 38px; height: 38px; border-radius: 8px; background: rgba(0,0,0,.25); display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 900; flex-shrink: 0; }
+    .opt-disp.A { background: linear-gradient(135deg,#ef4444,#b91c1c); }
+    .opt-disp.B { background: linear-gradient(135deg,#3b82f6,#1d4ed8); }
+    .opt-disp.C { background: linear-gradient(135deg,#d97706,#92400e); color:#fef9c3; }
+    .opt-disp.D { background: linear-gradient(135deg,#22c55e,#15803d); }
+    #timer-big-wrap { display: flex; align-items: center; justify-content: center; }
+    #timer-big { font-size: 80px; font-weight: 900; color: var(--accent); line-height: 1; text-shadow: 0 0 30px rgba(168,85,247,.5); transition: color .3s; }
+    .reveal-correct-label { font-size: 15px; color: #4ade80; font-weight: 700; text-align: center; }
+    .lb-table { width: 100%; max-width: 680px; border-collapse: collapse; }
+    .lb-table th { font-size: 11px; color: var(--muted); letter-spacing: 1px; text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--border); }
+    .lb-table td { padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,.04); font-size: 14px; }
+    .lb-table tr.top1 td { color: #f5c518; font-weight: 800; font-size: 16px; }
+    .lb-table tr.top2 td { color: #e2e8f0; font-weight: 700; }
+    .lb-table tr.top3 td { color: #f97316; }
+    .rank-icon { width: 28px; text-align: center; }
+    .trophy { font-size: 80px; text-align: center; }
+    .winner-name { font-size: 36px; font-weight: 900; text-align: center; background: linear-gradient(135deg,#f5c518,#fde047); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+
+    /* player join */
+    .box { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 24px; width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: 14px; }
+    .box h3 { font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); }
+    .big-inp { background: rgba(255,255,255,.06); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 26px; font-weight: 800; padding: 12px 16px; letter-spacing: 8px; text-align: center; outline: none; width: 100%; transition: border-color .2s; }
+    .big-inp:focus { border-color: var(--accent); }
+    .big-inp::placeholder { letter-spacing: 1px; font-size: 15px; font-weight: 400; }
+    .name-inp { background: rgba(255,255,255,.06); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 18px; font-weight: 600; padding: 12px 16px; text-align: center; outline: none; width: 100%; transition: border-color .2s; }
+    .name-inp:focus { border-color: var(--accent); }
+    .spinner { width: 44px; height: 44px; border: 3px solid rgba(168,85,247,.2); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; margin: 0 auto; }
+    @keyframes spin { to{transform:rotate(360deg)} }
+    .wait-text { font-size: 15px; color: var(--muted); text-align: center; }
+    .player-name-badge { font-size: 28px; font-weight: 900; color: var(--accent); text-align: center; }
+    .room-badge-sm { font-size: 13px; color: var(--muted); text-align: center; }
+    .room-badge-sm span { color: #f5c518; font-weight: 700; letter-spacing: 3px; }
+
+    /* player question */
+    #pq-num { font-size: 12px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; text-align: center; }
+    #pq-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 28px 20px; text-align: center; width: 100%; max-width: 560px; }
+    #pq-text { font-size: 20px; font-weight: 700; line-height: 1.5; }
+    #opts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; max-width: 560px; }
+    #ptimer-wrap { position: relative; width: 72px; height: 72px; margin: 0 auto; }
+    #ptsv { transform: rotate(-90deg); }
+    #pttrack { fill: none; stroke: rgba(255,255,255,.08); stroke-width: 5; }
+    #ptarc { fill: none; stroke: var(--accent); stroke-width: 5; stroke-linecap: round; transition: stroke-dashoffset .9s linear, stroke .3s; }
+    #ptnum { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 900; }
+    #p-feedback { width: 100%; max-width: 560px; border-radius: 12px; padding: 14px 18px; text-align: center; font-size: 16px; font-weight: 700; display: none; animation: fslide .3s ease; }
+    @keyframes fslide { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+    #p-feedback.correct { background: rgba(34,197,94,.2); border: 1px solid #22c55e; color: #4ade80; }
+    #p-feedback.wrong   { background: rgba(239,68,68,.15); border: 1px solid #ef4444; color: #f87171; }
+    #p-feedback.timeout { background: rgba(168,85,247,.15); border: 1px solid #a855f7; color: #c084fc; }
+    .pts-big { font-size: 56px; font-weight: 900; text-align: center; line-height: 1; }
+    .pts-big.correct { background: linear-gradient(135deg,#4ade80,#22c55e); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .pts-big.wrong { color: #f87171; }
+    .pts-sub { font-size: 14px; color: var(--muted); text-align: center; }
+    .lb-box { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px; width: 100%; max-width: 560px; }
+    .lb-title { font-size: 14px; font-weight: 700; margin-bottom: 12px; color: #c084fc; }
+    .lb-row { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,.04); font-size: 14px; }
+    .lb-rank { width: 28px; text-align: center; font-size: 16px; }
+    .lb-name { flex: 1; font-weight: 600; }
+    .lb-score { font-weight: 800; color: var(--accent); }
+    .lb-row.me .lb-name::after { content: ' 👈'; font-size: 12px; }
+    .lb-row.me .lb-score { color: #f5c518; }
+    .my-rank-big { font-size: 48px; font-weight: 900; text-align: center; }
+    .my-score-big { font-size: 28px; font-weight: 700; color: var(--accent); text-align: center; }
+    @media(max-width:480px) { #opts-grid{grid-template-columns:1fr;} .opts-grid-big{grid-template-columns:1fr;} .q-text-big{font-size:20px;} }
   </style>
 </head>
 <body>
 
 <div id="topbar">
-  <a href="index.html">← 返回目錄</a>
+  <a href="../index.html">← 返回目錄</a>
   <h1>🎯 爆爆<em>問答</em></h1>
-  <div style="width:90px"></div>
+  <div id="topbar-right"></div>
 </div>
 
-<!-- SCREEN 1：選題庫 -->
-<div id="home-screen" class="screen active">
-  <div class="page-title">
-    <h2>選擇題庫</h2>
-    <p>選一個內建題庫，或自訂你的問題</p>
+<!-- ══ 模式選擇 ══════════════════════════════════════════ -->
+<div id="mode-screen" class="screen active">
+  <div class="mode-title">
+    <h2>🎯 爆爆問答</h2>
+    <p>選擇遊戲模式</p>
   </div>
-  <div class="pack-grid" id="packGrid"></div>
-  <div class="start-section">
+  <div class="mode-grid">
+    <div class="mode-card solo" id="btnModeSolo">
+      <div class="mc-icon">🧠</div>
+      <div class="mc-name">單人模式</div>
+      <div class="mc-desc">選題庫、設定題數，挑戰自己！</div>
+    </div>
+    <div class="mode-card online" id="btnModeOnline">
+      <div class="mc-icon">📡</div>
+      <div class="mc-name">聯線對戰</div>
+      <div class="mc-desc">主持人出題，多人即時搶答！</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- 單人模式 screens                                       -->
+<!-- ══════════════════════════════════════════════════════ -->
+
+<div id="home-screen" class="screen">
+  <div class="panel" style="text-align:center">
+    <h3>選擇題庫</h3>
+    <div class="pack-grid" id="packGrid"></div>
+  </div>
+  <div class="panel">
+    <h3>遊戲設定</h3>
     <div class="settings-row">
       <div class="setting-group">
         <label>題數</label>
@@ -305,15 +391,15 @@
         </select>
       </div>
     </div>
-    <button class="big-btn" id="btnStartGame" disabled>🚀 開始遊戲</button>
+    <button class="big-btn" id="btnStartGame" disabled style="margin-top:12px">🚀 開始遊戲</button>
   </div>
+  <button class="back-to-mode" id="btnSoloBack">← 返回模式選擇</button>
 </div>
 
-<!-- SCREEN 1.5：自訂編輯器 -->
 <div id="editor-screen" class="screen">
   <div class="editor-header">
     <h3>✏️ 自訂題庫</h3>
-    <button class="sec-btn outline" id="btnEditorBack" style="width:auto;padding:8px 16px;font-size:13px">← 返回</button>
+    <button class="sec-btn outline" id="btnEditorBack" style="padding:8px 16px;font-size:13px">← 返回</button>
   </div>
   <div id="questionList"></div>
   <div class="editor-actions">
@@ -322,7 +408,6 @@
   </div>
 </div>
 
-<!-- SCREEN 2：遊戲中 -->
 <div id="game-screen" class="screen">
   <div id="progress-bar-wrap">
     <div id="progress-bar-bg"><div id="progress-bar-fill" style="width:0%"></div></div>
@@ -333,14 +418,12 @@
     <div id="timer-ring-wrap">
       <svg id="timer-svg" width="80" height="80" viewBox="0 0 80 80">
         <circle id="timer-track" cx="40" cy="40" r="34"/>
-        <circle id="timer-arc"   cx="40" cy="40" r="34" stroke-dasharray="213.6" stroke-dashoffset="0"/>
+        <circle id="timer-arc" cx="40" cy="40" r="34" stroke-dasharray="213.6" stroke-dashoffset="0"/>
       </svg>
       <div id="timer-num">20</div>
     </div>
   </div>
-  <div id="question-card">
-    <div id="question-text">題目文字</div>
-  </div>
+  <div id="question-card"><div id="question-text">題目文字</div></div>
   <div id="options-grid">
     <button class="opt-btn A" data-opt="A"><span class="opt-letter">A</span><span class="opt-text" id="optA"></span></button>
     <button class="opt-btn B" data-opt="B"><span class="opt-letter">B</span><span class="opt-text" id="optB"></span></button>
@@ -350,7 +433,6 @@
   <div id="feedback-bar"></div>
 </div>
 
-<!-- SCREEN 3：結果 -->
 <div id="result-screen" class="screen">
   <div class="result-header">
     <h2 id="resultEmoji">🏆 完美！</h2>
@@ -365,12 +447,203 @@
   </div>
 </div>
 
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- 聯線模式 screens                                       -->
+<!-- ══════════════════════════════════════════════════════ -->
+
+<!-- 角色選擇 -->
+<div id="role" class="screen">
+  <div class="role-title">
+    <h2>聯線問答</h2>
+    <p>選擇你的身份來開始</p>
+  </div>
+  <div class="role-grid">
+    <div class="role-card host" id="btnRoleHost">
+      <div class="ri">🎙️</div>
+      <div class="rn">我是主持人</div>
+      <div class="rd">選題庫、建立自訂題目、開房間控制遊戲</div>
+    </div>
+    <div class="role-card player" id="btnRolePlayer">
+      <div class="ri">🎮</div>
+      <div class="rn">我是玩家</div>
+      <div class="rd">輸入房間碼和暱稱即可加入搶答</div>
+    </div>
+  </div>
+  <button class="back-to-mode" id="btnRoleBack">← 返回模式選擇</button>
+</div>
+
+<!-- 主持人設定 -->
+<div id="host-setup" class="screen">
+  <div class="panel">
+    <h3>選擇題庫</h3>
+    <div class="pack-grid" id="hostPackGrid"></div>
+  </div>
+  <div class="panel">
+    <h3>遊戲設定</h3>
+    <div class="settings-row">
+      <div class="sg"><label>題數</label><input type="number" id="hqCount" min="1" max="50" value="10"/></div>
+      <div class="sg"><label>每題秒數</label>
+        <select id="hTimeLimit">
+          <option value="10">10 秒</option>
+          <option value="15">15 秒</option>
+          <option value="20" selected>20 秒</option>
+          <option value="30">30 秒</option>
+        </select>
+      </div>
+    </div>
+  </div>
+  <div class="err" id="setupErr"></div>
+  <button class="big-btn" id="btnCreate" disabled>🚀 建立房間</button>
+  <button class="sec-btn outline" id="btnSetupBack" style="max-width:760px">← 返回選擇角色</button>
+</div>
+
+<!-- 主持人自訂題庫編輯 -->
+<div id="host-editor" class="screen">
+  <div class="host-editor-header">
+    <h3>✏️ 自訂題庫</h3>
+    <button class="sec-btn outline" id="hBtnEditorBack" style="padding:8px 16px;font-size:13px">← 返回</button>
+  </div>
+  <div id="hostQuestionList"></div>
+  <div class="host-editor-actions">
+    <button class="sec-btn outline" id="hBtnAddQ">＋ 新增題目</button>
+    <button class="sec-btn purple"  id="hBtnSaveCustom">儲存並使用</button>
+  </div>
+</div>
+
+<!-- 主持人候客室 -->
+<div id="host-lobby" class="screen">
+  <div class="panel" style="text-align:center;display:flex;flex-direction:column;align-items:center;gap:12px">
+    <h3>房間碼（讓玩家開啟此頁面，選「聯線對戰」→「我是玩家」後輸入）</h3>
+    <div class="room-code-big" id="roomCodeBig">------</div>
+    <div class="room-hint">玩家加入後點「開始遊戲」</div>
+  </div>
+  <div class="panel">
+    <h3>已加入玩家 <span class="player-count" id="playerCount">（0 人）</span></h3>
+    <div class="player-chips" id="playerChips"><span style="color:var(--muted);font-size:13px">等待玩家加入...</span></div>
+  </div>
+  <div class="err" id="lobbyErr"></div>
+  <button class="big-btn" id="btnStart" disabled>▶ 開始遊戲</button>
+</div>
+
+<!-- 主持人出題畫面 -->
+<div id="host-question" class="screen">
+  <div class="q-header">
+    <span class="q-prog" id="hqProg">第 1 / 10 題</span>
+    <div class="answer-bar">已答題：<strong id="ansCount">0</strong> / <span id="ansTotal">0</span></div>
+  </div>
+  <div id="timer-big-wrap"><div id="timer-big">20</div></div>
+  <div class="q-card-big"><div class="q-text-big" id="hqText">題目</div></div>
+  <div class="opts-grid-big" id="hOptsDisp"></div>
+</div>
+
+<!-- 主持人揭曉 -->
+<div id="host-reveal" class="screen">
+  <div class="reveal-correct-label" id="hRevealCorrect"></div>
+  <table class="lb-table" id="hLbTable">
+    <thead><tr><th class="rank-icon">#</th><th>玩家</th><th style="text-align:right">分數</th></tr></thead>
+    <tbody id="hLbBody"></tbody>
+  </table>
+  <button class="big-btn" id="btnNext" style="max-width:680px">下一題 →</button>
+</div>
+
+<!-- 主持人遊戲結束 -->
+<div id="host-ended" class="screen">
+  <div class="trophy">🏆</div>
+  <div class="winner-name" id="winnerName">冠軍</div>
+  <table class="lb-table" id="finalLbTable">
+    <thead><tr><th class="rank-icon">#</th><th>玩家</th><th style="text-align:right">總分</th></tr></thead>
+    <tbody id="finalLbBody"></tbody>
+  </table>
+  <button class="big-btn" style="max-width:680px" id="btnHostRestart">↺ 重新開始</button>
+</div>
+
+<!-- 玩家加入 -->
+<div id="player-join" class="screen">
+  <div class="box">
+    <h3>輸入房間碼</h3>
+    <input class="big-inp" id="codeInp" type="text" maxlength="6" placeholder="6 位數房間碼"/>
+    <h3>你的暱稱</h3>
+    <input class="name-inp" id="nameInp" type="text" maxlength="12" placeholder="輸入暱稱（最多 12 字）"/>
+    <button class="big-btn" id="btnJoin">加入遊戲</button>
+    <div class="err" id="joinErr"></div>
+  </div>
+  <button class="sec-btn outline" id="btnJoinBack">← 返回選擇角色</button>
+</div>
+
+<!-- 玩家等待 -->
+<div id="player-waiting" class="screen">
+  <div class="player-name-badge" id="myNameBadge"></div>
+  <div class="room-badge-sm">房間 <span id="waitRoomCode"></span></div>
+  <div class="spinner"></div>
+  <div class="wait-text">等待主持人開始遊戲...</div>
+</div>
+
+<!-- 玩家作答 -->
+<div id="player-question" class="screen">
+  <div id="pq-num">第 1 / 10 題</div>
+  <div id="ptimer-wrap">
+    <svg id="ptsv" width="72" height="72" viewBox="0 0 72 72">
+      <circle id="pttrack" cx="36" cy="36" r="30"/>
+      <circle id="ptarc" cx="36" cy="36" r="30" stroke-dasharray="188.5" stroke-dashoffset="0"/>
+    </svg>
+    <div id="ptnum">20</div>
+  </div>
+  <div id="pq-card"><div id="pq-text">題目</div></div>
+  <div id="opts-grid">
+    <button class="opt-btn A" data-opt="A"><span class="ol" style="width:32px;height:32px;border-radius:7px;background:rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;flex-shrink:0">A</span><span id="pOptA"></span></button>
+    <button class="opt-btn B" data-opt="B"><span class="ol" style="width:32px;height:32px;border-radius:7px;background:rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;flex-shrink:0">B</span><span id="pOptB"></span></button>
+    <button class="opt-btn C" data-opt="C"><span class="ol" style="width:32px;height:32px;border-radius:7px;background:rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;flex-shrink:0">C</span><span id="pOptC"></span></button>
+    <button class="opt-btn D" data-opt="D"><span class="ol" style="width:32px;height:32px;border-radius:7px;background:rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;flex-shrink:0">D</span><span id="pOptD"></span></button>
+  </div>
+  <div id="p-feedback"></div>
+</div>
+
+<!-- 玩家揭曉 -->
+<div id="player-reveal" class="screen">
+  <div class="pts-big" id="ptsBig">+500</div>
+  <div class="pts-sub" id="ptsSub"></div>
+  <div class="lb-box">
+    <div class="lb-title">📊 即時排行</div>
+    <div id="lbRows"></div>
+  </div>
+  <div class="wait-text">等待主持人進入下一題...</div>
+</div>
+
+<!-- 玩家結束 -->
+<div id="player-ended" class="screen">
+  <div class="trophy">🏆</div>
+  <div class="my-rank-big" id="myRankBig"></div>
+  <div class="my-score-big" id="myScoreBig"></div>
+  <div class="lb-box">
+    <div class="lb-title">🏁 最終排行榜</div>
+    <div id="finalLbRows"></div>
+  </div>
+  <button class="big-btn" style="max-width:560px" id="btnPlayerRestart">↺ 再玩一次</button>
+</div>
+
 <script src="quiz-shared.js"></script>
 <script>
 'use strict';
 
-// ══ 全域狀態 ══════════════════════════════════════════
-// （BUILTIN_PACKS、esc、shuffle、loadCustomPack、saveCustomPack、addQCard、renderEditor 來自 quiz-shared.js）
+// ══ 全域畫面切換 ══════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ══ 模式選擇 ══════════════════════════════════════════
+document.getElementById('btnModeSolo').addEventListener('click', () => {
+  showScreen('home-screen');
+  renderPackGrid();
+});
+document.getElementById('btnModeOnline').addEventListener('click', () => showScreen('role'));
+document.getElementById('btnSoloBack').addEventListener('click', () => showScreen('mode-screen'));
+document.getElementById('btnRoleBack').addEventListener('click', () => showScreen('mode-screen'));
+
+// ══════════════════════════════════════════════════════
+// 單人模式
+// ══════════════════════════════════════════════════════
 let selectedPackId = null;
 let currentPack    = null;
 let gameQuestions  = [];
@@ -382,21 +655,12 @@ let timeLimitSec   = 20;
 let answered       = false;
 let reviewLog      = [];
 
-// ══ 畫面切換 ══════════════════════════════════════════
-function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-// ══ 渲染題庫卡片 ══════════════════════════════════════
 function renderPackGrid() {
   const grid = document.getElementById('packGrid');
   grid.innerHTML = '';
   const packs = [...BUILTIN_PACKS];
   const custom = loadCustomPack();
   if (custom) packs.unshift({ id:'custom', name: custom.name || '我的題庫', icon:'✏️', questions: custom.questions });
-
   packs.forEach(pack => {
     const card = document.createElement('div');
     card.className = 'pack-card'; card.dataset.id = pack.id;
@@ -404,17 +668,16 @@ function renderPackGrid() {
     card.addEventListener('click', () => selectPack(pack.id, packs));
     grid.appendChild(card);
   });
-
   const addCard = document.createElement('div');
   addCard.className = 'pack-card custom-card';
   addCard.innerHTML = `<div style="font-size:28px">✏️</div><div class="pack-name">新增自訂題庫</div>`;
-  addCard.addEventListener('click', openEditor);
+  addCard.addEventListener('click', openSoloEditor);
   grid.appendChild(addCard);
 }
 
 function selectPack(id, packs) {
   selectedPackId = id;
-  document.querySelectorAll('.pack-card').forEach(c => c.classList.toggle('selected', c.dataset.id === id));
+  document.querySelectorAll('#packGrid .pack-card').forEach(c => c.classList.toggle('selected', c.dataset.id === id));
   const pack = packs.find(p => p.id === id);
   if (pack) {
     currentPack = pack;
@@ -435,18 +698,12 @@ document.getElementById('btnStartGame').addEventListener('click', () => {
   loadQuestion();
 });
 
-// ══ 自訂題庫編輯器 ════════════════════════════════════
-const Q_TEXT_CLASS = 'q-text'; // quiz-shared.js 中 addQCard 使用的 class
-
-function openEditor() {
-  renderEditor(Q_TEXT_CLASS); showScreen('editor-screen');
-}
-
+const Q_TEXT_CLASS = 'q-text';
+function openSoloEditor() { renderEditor(Q_TEXT_CLASS); showScreen('editor-screen'); }
 document.getElementById('btnAddQ').addEventListener('click', () => addQCard(document.getElementById('questionList'), null, Q_TEXT_CLASS));
-
 document.getElementById('btnSaveCustom').addEventListener('click', () => {
   const qs = [];
-  document.querySelectorAll('.q-card').forEach(card => {
+  document.querySelectorAll('#questionList .q-card').forEach(card => {
     const q    = card.querySelector(`.${Q_TEXT_CLASS}`).value.trim();
     const opts = ['A','B','C','D'].map(l => card.querySelector(`[data-opt="${l}"]`).value.trim());
     const ans  = card.querySelector('.ans-sel').value;
@@ -459,14 +716,11 @@ document.getElementById('btnSaveCustom').addEventListener('click', () => {
   selectPack('custom', [{ id:'custom', ...pack }, ...BUILTIN_PACKS]);
   showScreen('home-screen');
 });
-
 document.getElementById('btnEditorBack').addEventListener('click', () => showScreen('home-screen'));
 
-// ══ 遊戲核心 ══════════════════════════════════════════
 function loadQuestion() {
   answered = false;
   const q = gameQuestions[currentQIndex];
-
   document.getElementById('progress-bar-fill').style.width = (currentQIndex / gameQuestions.length * 100) + '%';
   document.getElementById('q-counter').textContent = `${currentQIndex+1} / ${gameQuestions.length}`;
   document.getElementById('question-text').textContent = q.q;
@@ -475,15 +729,13 @@ function loadQuestion() {
   document.getElementById('optC').textContent = q.opts[2];
   document.getElementById('optD').textContent = q.opts[3];
   document.getElementById('scoreVal').textContent = playerScore.toLocaleString();
-
-  document.querySelectorAll('.opt-btn').forEach(b => {
+  document.querySelectorAll('#options-grid .opt-btn').forEach(b => {
     b.disabled = false;
     b.classList.remove('reveal-correct','wrong-chosen','dimmed');
     b.style.opacity = '';
   });
   const fb = document.getElementById('feedback-bar');
-  fb.style.display = 'none'; fb.className = 'feedback-bar';
-
+  fb.style.display = 'none'; fb.className = '';
   startTimer();
 }
 
@@ -491,14 +743,14 @@ function startTimer() {
   clearInterval(timerInterval);
   timeLeft = timeLimitSec;
   const circ = 213.6;
-  const arc  = document.getElementById('timer-arc');
-  const num  = document.getElementById('timer-num');
+  const arc = document.getElementById('timer-arc');
+  const num = document.getElementById('timer-num');
   function tick() {
     const p = timeLeft / timeLimitSec;
     arc.style.strokeDashoffset = circ * (1 - p);
     arc.style.stroke = p > .5 ? '#a855f7' : p > .25 ? '#f97316' : '#ef4444';
-    num.textContent  = timeLeft;
-    num.style.color  = p > .25 ? 'var(--text)' : '#ef4444';
+    num.textContent = timeLeft;
+    num.style.color = p > .25 ? 'var(--text)' : '#ef4444';
   }
   tick();
   timerInterval = setInterval(() => { timeLeft--; tick(); if (timeLeft <= 0) { clearInterval(timerInterval); handleAnswer(null); } }, 1000);
@@ -508,51 +760,32 @@ function handleAnswer(chosen) {
   if (answered) return;
   answered = true;
   clearInterval(timerInterval);
-
   const q = gameQuestions[currentQIndex];
   const correct = q.ans;
   const isRight = chosen === correct;
   let pts = 0;
-
-  if (isRight) {
-    pts = Math.max(100, Math.round(1000 * timeLeft / timeLimitSec));
-    playerScore += pts;
-    spawnScorePop('+' + pts);
-  }
+  if (isRight) { pts = Math.max(100, Math.round(1000 * timeLeft / timeLimitSec)); playerScore += pts; spawnScorePop('+' + pts); }
   reviewLog.push({ q: q.q, correct, chosen, pts, opts: q.opts });
-
-  // 選項回饋
-  document.querySelectorAll('.opt-btn').forEach(btn => {
+  document.querySelectorAll('#options-grid .opt-btn').forEach(btn => {
     btn.disabled = true;
     const o = btn.dataset.opt;
-    if (o === correct)                        btn.classList.add('reveal-correct');
-    else if (o === chosen && !isRight)        btn.classList.add('wrong-chosen');
-    else                                      btn.classList.add('dimmed');
+    if (o === correct) btn.classList.add('reveal-correct');
+    else if (o === chosen && !isRight) btn.classList.add('wrong-chosen');
+    else btn.classList.add('dimmed');
   });
-
-  // 回饋列
   const fb = document.getElementById('feedback-bar');
   fb.style.display = 'block';
   if (!chosen) {
-    fb.className = 'feedback-bar timeout';
-    fb.textContent = `⏰ 時間到！正確答案是 ${correct} — ${q.opts['ABCD'.indexOf(correct)]}`;
+    fb.className = 'timeout'; fb.textContent = `⏰ 時間到！正確答案是 ${correct} — ${q.opts['ABCD'.indexOf(correct)]}`;
   } else if (isRight) {
-    fb.className = 'feedback-bar correct';
-    fb.textContent = `✅ 正確！+${pts} 分`;
+    fb.className = 'correct'; fb.textContent = `✅ 正確！+${pts} 分`;
   } else {
-    fb.className = 'feedback-bar wrong';
-    fb.textContent = `❌ 答錯！正確答案是 ${correct} — ${q.opts['ABCD'.indexOf(correct)]}`;
+    fb.className = 'wrong'; fb.textContent = `❌ 答錯！正確答案是 ${correct} — ${q.opts['ABCD'.indexOf(correct)]}`;
   }
-
-  setTimeout(() => {
-    currentQIndex++;
-    if (currentQIndex < gameQuestions.length) loadQuestion();
-    else showResults();
-  }, 1800);
+  setTimeout(() => { currentQIndex++; if (currentQIndex < gameQuestions.length) loadQuestion(); else showResults(); }, 1800);
 }
 
-document.querySelectorAll('.opt-btn').forEach(btn => btn.addEventListener('click', () => handleAnswer(btn.dataset.opt)));
-
+document.querySelectorAll('#options-grid .opt-btn').forEach(btn => btn.addEventListener('click', () => handleAnswer(btn.dataset.opt)));
 document.addEventListener('keydown', e => {
   if (!document.getElementById('game-screen').classList.contains('active')) return;
   const map = { a:'A',b:'B',c:'C',d:'D','1':'A','2':'B','3':'C','4':'D' };
@@ -560,52 +793,37 @@ document.addEventListener('keydown', e => {
   if (opt) handleAnswer(opt);
 });
 
-// ══ 分數飛出 ══════════════════════════════════════════
 function spawnScorePop(text) {
   const el = document.createElement('div');
-  el.className = 'score-pop';
-  el.textContent = text;
-  el.style.left = (35 + Math.random() * 30) + '%';
-  el.style.top  = '45%';
+  el.className = 'score-pop'; el.textContent = text;
+  el.style.left = (35 + Math.random() * 30) + '%'; el.style.top = '45%';
   document.body.appendChild(el);
   setTimeout(() => el.remove(), 1000);
 }
 
-// ══ 結果畫面 ══════════════════════════════════════════
 function showResults() {
   showScreen('result-screen');
   const maxScore = gameQuestions.length * 1000;
   const pct = playerScore / maxScore;
   const correct = reviewLog.filter(r => r.chosen === r.correct).length;
-
   document.getElementById('finalScore').textContent = playerScore.toLocaleString();
   document.getElementById('finalLabel').textContent = `${correct} / ${gameQuestions.length} 題正確`;
-
   const [emoji, sub] =
     pct >= .9 ? ['🏆 完美！','你是答題王！'] :
     pct >= .7 ? ['🎉 優秀！','大部分都答對了！'] :
     pct >= .5 ? ['😊 不錯！','繼續加油！'] :
-                ['💪 加油！','多練習就會進步！'];
+               ['💪 加油！','多練習就會進步！'];
   document.getElementById('resultEmoji').textContent = emoji;
   document.getElementById('resultSub').textContent   = sub;
-
-  const list = document.getElementById('reviewList');
-  list.innerHTML = '';
+  const list = document.getElementById('reviewList'); list.innerHTML = '';
   reviewLog.forEach((r, i) => {
     const status = !r.chosen ? 'skip' : r.chosen === r.correct ? 'correct' : 'wrong';
     const labels = ['A','B','C','D'];
     const item = document.createElement('div');
     item.className = 'review-item';
-    item.innerHTML = `
-      <div class="r-q">${i+1}. ${r.q}</div>
-      <div class="r-row">
-        <span class="r-badge ${status}">${{correct:'✅ 答對',wrong:'❌ 答錯',skip:'⏰ 超時'}[status]}</span>
-        <span style="color:var(--muted)">正確：${r.correct} — ${r.opts[labels.indexOf(r.correct)]}</span>
-        ${r.pts>0 ? `<span style="color:#a855f7;font-weight:700">+${r.pts}</span>` : ''}
-      </div>`;
+    item.innerHTML = `<div class="r-q">${i+1}. ${r.q}</div><div class="r-row"><span class="r-badge ${status}">${{correct:'✅ 答對',wrong:'❌ 答錯',skip:'⏰ 超時'}[status]}</span><span style="color:var(--muted)">正確：${r.correct} — ${r.opts[labels.indexOf(r.correct)]}</span>${r.pts>0?`<span style="color:#a855f7;font-weight:700">+${r.pts}</span>`:''}</div>`;
     list.appendChild(item);
   });
-
   if (pct >= .7) spawnConfetti();
 }
 
@@ -614,10 +832,8 @@ function spawnConfetti() {
   for (let i = 0; i < 20; i++) {
     setTimeout(() => {
       const el = document.createElement('div');
-      el.className = 'confetti';
-      el.textContent = s[Math.floor(Math.random()*s.length)];
-      el.style.left = Math.random()*100+'vw';
-      el.style.top  = '-30px';
+      el.className = 'confetti'; el.textContent = s[Math.floor(Math.random()*s.length)];
+      el.style.left = Math.random()*100+'vw'; el.style.top = '-30px';
       el.style.animationDuration = (1+Math.random()*1.5)+'s';
       document.body.appendChild(el);
       setTimeout(() => el.remove(), 2500);
@@ -628,20 +844,338 @@ function spawnConfetti() {
 document.getElementById('btnPlayAgain').addEventListener('click', () => {
   currentQIndex = 0; playerScore = 0; reviewLog = [];
   gameQuestions = shuffle([...currentPack.questions]).slice(0, Math.min(parseInt(document.getElementById('qCount').value), currentPack.questions.length));
-  showScreen('game-screen');
-  loadQuestion();
+  showScreen('game-screen'); loadQuestion();
 });
 document.getElementById('btnChangeSet').addEventListener('click', () => showScreen('home-screen'));
 
-// ══ 工具 ══════════════════════════════════════════════
-function shuffle(a) {
-  for (let i=a.length-1;i>0;i--) { const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
-  return a;
-}
-function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function shuffle(a) { for (let i=a.length-1;i>0;i--) { const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
 
-// ══ 初始化 ════════════════════════════════════════════
-renderPackGrid();
+// ══════════════════════════════════════════════════════
+// 聯線模式
+// ══════════════════════════════════════════════════════
+const WS_URL = (() => {
+  const m = document.querySelector('meta[name="ws-url"]');
+  return (m && m.content) ? m.content : (location.protocol === 'https:' ? 'wss' : 'ws') + '://' + location.host;
+})();
+
+// ── 角色選擇 ──────────────────────────────────────────
+document.getElementById('btnRoleHost').addEventListener('click', () => { showScreen('host-setup'); renderHostPackGrid(); });
+document.getElementById('btnRolePlayer').addEventListener('click', () => showScreen('player-join'));
+document.getElementById('btnSetupBack').addEventListener('click', () => showScreen('role'));
+document.getElementById('btnJoinBack').addEventListener('click',  () => showScreen('role'));
+
+// ══ 主持人邏輯 ════════════════════════════════════════
+let hostWs = null, hostPack = null, gameQs = [];
+let hostPlayerNames = [], hostScreen = 'host-setup', hTimerInterval = null;
+
+function hShowScreen(id) { showScreen(id); hostScreen = id; }
+function hWsSend(o) { if (hostWs && hostWs.readyState === 1) hostWs.send(JSON.stringify(o)); }
+
+function renderHostPackGrid() {
+  const grid = document.getElementById('hostPackGrid');
+  grid.innerHTML = '';
+  const allPacks = [...BUILTIN_PACKS];
+  const custom = loadCustomPack();
+  if (custom) allPacks.unshift({ id:'custom', name: custom.name||'我的題庫', icon:'✏️', questions: custom.questions });
+  allPacks.forEach(p => {
+    const c = document.createElement('div');
+    c.className = 'pack-card'; c.dataset.id = p.id;
+    c.innerHTML = `<div class="pi">${p.icon}</div><div class="pn">${p.name}</div><div class="pc">${p.questions.length} 題</div>`;
+    c.onclick = () => {
+      document.querySelectorAll('#hostPackGrid .pack-card').forEach(x => x.classList.remove('selected'));
+      c.classList.add('selected'); hostPack = p;
+      const mx = p.questions.length;
+      const inp = document.getElementById('hqCount');
+      inp.max = mx; if (parseInt(inp.value) > mx) inp.value = mx;
+      document.getElementById('btnCreate').disabled = false;
+    };
+    grid.appendChild(c);
+  });
+  const addCard = document.createElement('div');
+  addCard.className = 'pack-card custom-new';
+  addCard.innerHTML = `<div style="font-size:24px">✏️</div><div class="pn">新增自訂題庫</div>`;
+  addCard.onclick = openHostEditor;
+  grid.appendChild(addCard);
+}
+
+const H_Q_TEXT_CLASS = 'q-text-inp';
+function openHostEditor() { renderHostEditor(); showScreen('host-editor'); }
+
+function renderHostEditor() {
+  const list = document.getElementById('hostQuestionList');
+  list.innerHTML = '';
+  const custom = loadCustomPack();
+  if (custom) { custom.questions.forEach(q => addQCard(list, q, H_Q_TEXT_CLASS)); }
+  else addQCard(list, null, H_Q_TEXT_CLASS);
+}
+
+document.getElementById('hBtnAddQ').addEventListener('click', () => addQCard(document.getElementById('hostQuestionList'), null, H_Q_TEXT_CLASS));
+document.getElementById('hBtnSaveCustom').addEventListener('click', () => {
+  const qs = [];
+  document.querySelectorAll('#hostQuestionList .q-card').forEach(card => {
+    const q    = card.querySelector(`.${H_Q_TEXT_CLASS}`).value.trim();
+    const opts = ['A','B','C','D'].map(l => card.querySelector(`[data-opt="${l}"]`).value.trim());
+    const ans  = card.querySelector('.ans-sel').value;
+    if (q && opts.every(o => o)) qs.push({ q, opts, ans });
+  });
+  if (!qs.length) { alert('請至少填寫一道完整題目！'); return; }
+  const pack = { name:'我的題庫', questions: qs };
+  saveCustomPack(pack);
+  renderHostPackGrid();
+  hostPack = { id:'custom', ...pack };
+  document.getElementById('btnCreate').disabled = false;
+  showScreen('host-setup');
+  setTimeout(() => {
+    const card = document.querySelector('#hostPackGrid .pack-card[data-id="custom"]');
+    if (card) { document.querySelectorAll('#hostPackGrid .pack-card').forEach(x=>x.classList.remove('selected')); card.classList.add('selected'); }
+  }, 50);
+});
+document.getElementById('hBtnEditorBack').addEventListener('click', () => showScreen('host-setup'));
+
+document.getElementById('btnCreate').addEventListener('click', () => {
+  if (!hostPack) return;
+  const timeLimitSec = parseInt(document.getElementById('hTimeLimit').value);
+  const count = Math.min(parseInt(document.getElementById('hqCount').value), hostPack.questions.length);
+  gameQs = shuffle([...hostPack.questions]).slice(0, count);
+  hostWs = new WebSocket(WS_URL);
+  hostWs.onmessage = e => handleHostMsg(JSON.parse(e.data));
+  hostWs.onclose   = () => { if (hostScreen !== 'host-setup') alert('伺服器斷線，請重新整理'); };
+  hostWs.onopen    = () => hWsSend({ type:'quiz_create', questions: gameQs, timeLimitSec });
+});
+
+function handleHostMsg(msg) {
+  switch (msg.type) {
+    case 'quiz_room_created':
+      document.getElementById('roomCodeBig').textContent = msg.roomId;
+      hShowScreen('host-lobby'); break;
+    case 'quiz_player_joined':
+      hostPlayerNames.push(msg.name); renderChips();
+      document.getElementById('playerCount').textContent = `（${msg.count} 人）`;
+      document.getElementById('btnStart').disabled = false; break;
+    case 'quiz_player_left':
+      hostPlayerNames = hostPlayerNames.filter(n => n !== msg.name); renderChips();
+      document.getElementById('playerCount').textContent = `（${msg.count} 人）`;
+      if (msg.count === 0) document.getElementById('btnStart').disabled = true; break;
+    case 'quiz_question': hShowQuestionScreen(msg); break;
+    case 'quiz_answer_count': document.getElementById('ansCount').textContent = msg.count; break;
+    case 'quiz_reveal': hShowRevealScreen(msg); break;
+    case 'quiz_ended': hShowEndedScreen(msg); break;
+    case 'quiz_error': document.getElementById('setupErr').textContent = '❌ ' + msg.reason; break;
+  }
+}
+
+function renderChips() {
+  const c = document.getElementById('playerChips'); c.innerHTML = '';
+  if (!hostPlayerNames.length) { c.innerHTML = '<span style="color:var(--muted);font-size:13px">等待玩家加入...</span>'; return; }
+  hostPlayerNames.forEach(n => { const chip = document.createElement('div'); chip.className='chip'; chip.textContent=n; c.appendChild(chip); });
+}
+
+document.getElementById('btnStart').addEventListener('click', () => hWsSend({ type:'quiz_start' }));
+
+function hShowQuestionScreen(msg) {
+  hShowScreen('host-question');
+  document.getElementById('hqProg').textContent = `第 ${msg.index+1} / ${msg.total} 題`;
+  document.getElementById('hqText').textContent = msg.question;
+  document.getElementById('ansCount').textContent = '0';
+  document.getElementById('ansTotal').textContent = hostPlayerNames.length;
+  const grid = document.getElementById('hOptsDisp'); grid.innerHTML = '';
+  ['A','B','C','D'].forEach((l,i) => {
+    const d = document.createElement('div'); d.className = `opt-disp ${l}`;
+    d.innerHTML = `<div class="ol">${l}</div><div>${msg.opts[i]}</div>`;
+    grid.appendChild(d);
+  });
+  let t = msg.timeLimitSec;
+  const el = document.getElementById('timer-big');
+  clearInterval(hTimerInterval);
+  el.textContent = t; el.style.color = 'var(--accent)';
+  hTimerInterval = setInterval(() => {
+    t--; el.textContent = t;
+    el.style.color = t > msg.timeLimitSec * .25 ? 'var(--accent)' : '#ef4444';
+    if (t <= 0) clearInterval(hTimerInterval);
+  }, 1000);
+}
+
+function hShowRevealScreen(msg) {
+  clearInterval(hTimerInterval); hShowScreen('host-reveal');
+  document.getElementById('hRevealCorrect').textContent = `✅ 正確答案：${msg.correctAns} — ${msg.correctText}`;
+  renderLbTable(document.getElementById('hLbBody'), msg.leaderboard);
+  const btn = document.getElementById('btnNext');
+  btn.textContent = msg.isLast ? '查看最終結果 🏆' : '下一題 →';
+}
+document.getElementById('btnNext').addEventListener('click', () => hWsSend({ type:'quiz_next' }));
+
+function hShowEndedScreen(msg) {
+  hShowScreen('host-ended');
+  document.getElementById('winnerName').textContent = msg.leaderboard[0]?.name || '—';
+  renderLbTable(document.getElementById('finalLbBody'), msg.leaderboard);
+}
+
+function renderLbTable(tbody, lb) {
+  tbody.innerHTML = '';
+  const icons = ['🥇','🥈','🥉'];
+  lb.forEach((p, i) => {
+    const tr = document.createElement('tr');
+    tr.className = i===0?'top1':i===1?'top2':i===2?'top3':'';
+    tr.innerHTML = `<td class="rank-icon">${icons[i]||i+1}</td><td>${p.name}</td><td style="text-align:right;font-weight:700">${p.score.toLocaleString()}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+document.getElementById('btnHostRestart').addEventListener('click', () => location.reload());
+
+// ══ 玩家邏輯 ══════════════════════════════════════════
+let playerWs = null, myName = '', myRoomId = '', pTimeLimitSec = 20, pTimerInterval = null;
+
+document.getElementById('btnJoin').addEventListener('click', tryJoin);
+document.getElementById('codeInp').addEventListener('keydown', e => { if (e.key === 'Enter') tryJoin(); });
+document.getElementById('nameInp').addEventListener('keydown', e => { if (e.key === 'Enter') tryJoin(); });
+
+function tryJoin() {
+  const code = document.getElementById('codeInp').value.trim();
+  const name = document.getElementById('nameInp').value.trim();
+  const err  = document.getElementById('joinErr');
+  if (code.length !== 6 || isNaN(code)) { err.textContent = '請輸入 6 位數字房間碼'; return; }
+  if (!name) { err.textContent = '請輸入暱稱'; return; }
+  err.textContent = '';
+  myName = name; myRoomId = code;
+  playerWs = new WebSocket(WS_URL);
+  playerWs.onopen    = () => playerWs.send(JSON.stringify({ type:'quiz_join', roomId:code, name }));
+  playerWs.onmessage = e => handlePlayerMsg(JSON.parse(e.data));
+  playerWs.onclose   = () => { if (!document.getElementById('player-ended').classList.contains('active')) alert('連線中斷，請重新整理'); };
+}
+
+function handlePlayerMsg(msg) {
+  switch (msg.type) {
+    case 'quiz_joined':
+      document.getElementById('myNameBadge').textContent = msg.name;
+      document.getElementById('waitRoomCode').textContent = msg.roomId;
+      showScreen('player-waiting'); break;
+    case 'quiz_question':
+      pTimeLimitSec = msg.timeLimitSec; pShowQuestionScreen(msg); break;
+    case 'quiz_answer_ack': {
+      document.querySelectorAll('#opts-grid .opt-btn').forEach(b => b.disabled = true);
+      const fb = document.getElementById('p-feedback');
+      fb.style.display = 'block';
+      if (msg.correct) { fb.className = 'correct'; fb.textContent = `✅ 正確！+${msg.pts} 分`; spawnScorePop('+' + msg.pts); }
+      else { fb.className = 'wrong'; fb.textContent = '❌ 答錯了！'; }
+      break;
+    }
+    case 'quiz_reveal': clearInterval(pTimerInterval); pShowRevealScreen(msg); break;
+    case 'quiz_ended': pShowEndedScreen(msg); break;
+    case 'quiz_host_left': alert('主持人已離開，遊戲結束'); location.reload(); break;
+    case 'quiz_error': document.getElementById('joinErr').textContent = '❌ ' + msg.reason; break;
+  }
+}
+
+let pAnswered = false;
+function pShowQuestionScreen(msg) {
+  pAnswered = false;
+  showScreen('player-question');
+  document.getElementById('pq-num').textContent = `第 ${msg.index+1} / ${msg.total} 題`;
+  document.getElementById('pq-text').textContent = msg.question;
+  document.getElementById('pOptA').textContent = msg.opts[0];
+  document.getElementById('pOptB').textContent = msg.opts[1];
+  document.getElementById('pOptC').textContent = msg.opts[2];
+  document.getElementById('pOptD').textContent = msg.opts[3];
+  document.querySelectorAll('#opts-grid .opt-btn').forEach(b => {
+    b.disabled = false;
+    b.classList.remove('reveal-correct','wrong-chosen','dimmed','chosen');
+    b.style.opacity = '';
+  });
+  const fb = document.getElementById('p-feedback'); fb.style.display = 'none';
+  pStartTimer(msg.timeLimitSec);
+}
+
+function pStartTimer(sec) {
+  clearInterval(pTimerInterval);
+  let t = sec; const circ = 188.5;
+  const arc = document.getElementById('ptarc');
+  const num = document.getElementById('ptnum');
+  function tick() {
+    const p = t / sec;
+    arc.style.strokeDashoffset = circ * (1 - p);
+    arc.style.stroke = p > .5 ? 'var(--accent)' : p > .25 ? '#f97316' : '#ef4444';
+    num.textContent = t;
+    num.style.color = p > .25 ? 'var(--text)' : '#ef4444';
+  }
+  tick();
+  pTimerInterval = setInterval(() => {
+    t--; tick();
+    if (t <= 0) {
+      clearInterval(pTimerInterval);
+      if (!pAnswered) {
+        pAnswered = true;
+        const fb = document.getElementById('p-feedback');
+        fb.style.display = 'block'; fb.className = 'timeout'; fb.textContent = '⏰ 時間到！';
+      }
+    }
+  }, 1000);
+}
+
+document.querySelectorAll('#opts-grid .opt-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (pAnswered) return;
+    pAnswered = true; clearInterval(pTimerInterval);
+    document.querySelectorAll('#opts-grid .opt-btn').forEach(b => b.classList.remove('chosen'));
+    btn.classList.add('chosen');
+    playerWs.send(JSON.stringify({ type:'quiz_answer', answer: btn.dataset.opt }));
+    document.querySelectorAll('#opts-grid .opt-btn').forEach(b => b.disabled = true);
+    const fb = document.getElementById('p-feedback');
+    fb.style.display = 'block'; fb.className = 'timeout'; fb.textContent = '⌛ 已送出，等待揭曉...';
+  });
+});
+
+document.addEventListener('keydown', e => {
+  if (!document.getElementById('player-question').classList.contains('active')) return;
+  const m = { a:'A', b:'B', c:'C', d:'D', '1':'A', '2':'B', '3':'C', '4':'D' };
+  const o = m[e.key.toLowerCase()];
+  if (o) { const btn = document.querySelector(`#opts-grid .opt-btn[data-opt="${o}"]`); if (btn && !btn.disabled) btn.click(); }
+});
+
+function pShowRevealScreen(msg) {
+  document.querySelectorAll('#opts-grid .opt-btn').forEach(btn => {
+    const opt = btn.dataset.opt; btn.disabled = true;
+    if (opt === msg.correctAns) btn.classList.add('reveal-correct');
+    else if (btn.classList.contains('chosen')) btn.classList.add('wrong-chosen');
+    else btn.classList.add('dimmed');
+  });
+  setTimeout(() => {
+    showScreen('player-reveal');
+    const ptsBig = document.getElementById('ptsBig');
+    const ptsSub = document.getElementById('ptsSub');
+    if (msg.myCorrect) {
+      ptsBig.textContent = `+${msg.myPts}`; ptsBig.className = 'pts-big correct';
+      ptsSub.textContent = `累計 ${msg.myScore} 分`; spawnScorePop('+' + msg.myPts);
+    } else {
+      ptsBig.textContent = '❌'; ptsBig.className = 'pts-big wrong';
+      ptsSub.textContent = `正確答案：${msg.correctAns} — ${msg.correctText}`;
+    }
+    renderLbRows(document.getElementById('lbRows'), msg.leaderboard, myName);
+  }, 800);
+}
+
+function pShowEndedScreen(msg) {
+  showScreen('player-ended');
+  const rank = msg.leaderboard.findIndex(p => p.name === myName) + 1;
+  const rankIcons = ['🥇','🥈','🥉'];
+  document.getElementById('myRankBig').textContent = rankIcons[rank-1] || `第 ${rank} 名`;
+  const myEntry = msg.leaderboard.find(p => p.name === myName);
+  document.getElementById('myScoreBig').textContent = `${myEntry?.score?.toLocaleString()||0} 分`;
+  renderLbRows(document.getElementById('finalLbRows'), msg.leaderboard, myName);
+}
+
+function renderLbRows(container, lb, me) {
+  container.innerHTML = '';
+  const icons = ['🥇','🥈','🥉'];
+  lb.forEach((p, i) => {
+    const row = document.createElement('div');
+    row.className = 'lb-row' + (p.name === me ? ' me' : '');
+    row.innerHTML = `<div class="lb-rank">${icons[i]||i+1}</div><div class="lb-name">${p.name}</div><div class="lb-score">${p.score.toLocaleString()}</div>`;
+    container.appendChild(row);
+  });
+}
+
+document.getElementById('btnPlayerRestart').addEventListener('click', () => location.reload());
 </script>
 </body>
 </html>

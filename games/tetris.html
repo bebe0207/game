@@ -3,182 +3,422 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="ws-url" content="wss://game-ws-server-5xjh.onrender.com">
   <title>俄羅斯方塊</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      background: #111;
-      display: flex;
-      justify-content: center;
-      align-items: center;
+      background: #07070e;
       min-height: 100vh;
-      font-family: 'Segoe UI', system-ui, sans-serif;
-      color: #eee;
-    }
-
-    #wrapper {
-      display: flex;
-      gap: 24px;
-      align-items: flex-start;
-    }
-
-    canvas#board {
-      border: 2px solid #444;
-      background: #1a1a2e;
-      display: block;
-    }
-
-    #side {
-      width: 160px;
+      font-family: -apple-system, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+      color: #e2e8f0;
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      align-items: center;
     }
 
-    .panel {
-      background: #1e1e2f;
-      border: 1px solid #333;
-      border-radius: 8px;
-      padding: 14px;
-    }
-
-    .panel h3 {
-      font-size: 11px;
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      color: #888;
-      margin-bottom: 8px;
-    }
-
-    .panel .value {
-      font-size: 26px;
-      font-weight: 700;
-      color: #e2e8f0;
-    }
-
-    canvas#next, canvas#hold {
-      display: block;
-      margin: 0 auto;
-    }
-
-    #backBtn {
-      background: none;
-      border: 1px solid #333;
-      color: #888;
-      padding: 6px 14px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 13px;
-      text-decoration: none;
-      display: block;
-      text-align: center;
-    }
-    #backBtn:hover { border-color: #555; color: #ccc; }
-
-    #controls {
-      font-size: 12px;
-      color: #666;
-      line-height: 1.9;
-    }
-
-    #controls span {
-      color: #aaa;
-    }
-
-    button#btnStart {
+    /* ── Topbar ── */
+    #topbar {
       width: 100%;
-      padding: 10px;
-      background: #3b82f6;
-      border: none;
-      border-radius: 6px;
-      color: #fff;
-      font-size: 15px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.15s;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 13px 24px;
+      background: rgba(7,7,14,0.85);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      position: sticky; top: 0; z-index: 40;
     }
-    button#btnStart:hover { background: #2563eb; }
+    #topbar a {
+      color: rgba(255,255,255,0.45); font-size: 13px; text-decoration: none;
+      border: 1px solid rgba(255,255,255,0.12); padding: 5px 13px;
+      border-radius: 8px; transition: all .2s; white-space: nowrap;
+    }
+    #topbar a:hover { color: #fff; border-color: rgba(255,255,255,0.3); }
+    #topbar h1 { font-size: 18px; font-weight: 800; flex: 1; text-align: center; }
+    #topbar-right { width: 100px; }
 
+    /* ── Screens ── */
+    .screen { display: none; flex-direction: column; align-items: center; width: 100%; padding: 32px 16px 60px; gap: 20px; }
+    .screen.active { display: flex; }
+
+    /* ── Mode Select ── */
+    .mode-title { text-align: center; }
+    .mode-title h2 {
+      font-size: 32px; font-weight: 900;
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .mode-title p { color: rgba(255,255,255,0.45); font-size: 14px; margin-top: 8px; }
+    .mode-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 100%; max-width: 560px; }
+    .mode-card {
+      background: rgba(255,255,255,0.042);
+      border: 2px solid rgba(255,255,255,0.085);
+      border-radius: 20px; padding: 36px 24px;
+      display: flex; flex-direction: column; align-items: center; gap: 14px;
+      cursor: pointer; transition: border-color .2s, transform .2s; text-align: center;
+    }
+    .mode-card:hover { transform: translateY(-4px); }
+    .mode-card.solo:hover  { border-color: #3b82f6; }
+    .mode-card.battle:hover { border-color: #ef4444; }
+    .mode-card .mc-icon { font-size: 52px; line-height: 1; }
+    .mode-card .mc-name { font-size: 18px; font-weight: 800; }
+    .mode-card.solo .mc-name { color: #3b82f6; }
+    .mode-card.battle .mc-name { color: #ef4444; }
+    .mode-card .mc-desc { font-size: 13px; color: rgba(255,255,255,0.45); line-height: 1.5; }
+    @media(max-width:440px) { .mode-grid { grid-template-columns: 1fr; } }
+
+    .back-to-mode {
+      background: none; border: 1px solid rgba(255,255,255,0.12);
+      color: rgba(255,255,255,0.45); font-size: 13px;
+      padding: 8px 18px; border-radius: 8px; cursor: pointer;
+      transition: all .2s; font-family: inherit;
+    }
+    .back-to-mode:hover { color: #fff; border-color: rgba(255,255,255,0.3); }
+
+    /* ── Solo screen ── */
+    #solo-wrapper {
+      display: flex; gap: 20px; align-items: flex-start;
+    }
+    canvas#board { border: 1px solid rgba(255,255,255,0.08); background: #0d0d1a; display: block; border-radius: 8px; }
+    #board-wrap { position: relative; }
+    #side { width: 160px; display: flex; flex-direction: column; gap: 12px; }
+    .panel {
+      background: rgba(255,255,255,0.042);
+      border: 1px solid rgba(255,255,255,0.085);
+      border-radius: 16px; padding: 14px;
+    }
+    .panel h3 { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(255,255,255,0.35); margin-bottom: 6px; }
+    .panel .value { font-size: 26px; font-weight: 700; color: #e2e8f0; }
+    canvas#next, canvas#hold { display: block; margin: 0 auto; }
+    button#btnStart {
+      width: 100%; padding: 11px;
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      border: none; border-radius: 12px; color: #fff;
+      font-size: 14px; font-weight: 700; cursor: pointer;
+      transition: opacity .15s, transform .1s; font-family: inherit;
+    }
+    button#btnStart:hover { opacity: .88; transform: translateY(-1px); }
+    #controls { font-size: 11px; color: rgba(255,255,255,0.35); line-height: 2; }
+    #controls span { color: rgba(255,255,255,0.6); }
     #msg {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      text-align: center;
-      pointer-events: none;
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+      text-align: center; pointer-events: none;
     }
-    #msg h2 {
-      font-size: 32px;
-      color: #f1c40f;
-      text-shadow: 0 0 12px rgba(241,196,15,0.6);
-    }
-    #msg p {
-      font-size: 14px;
-      color: #aaa;
-      margin-top: 6px;
+    #msg h2 { font-size: 28px; color: #f1c40f; text-shadow: 0 0 12px rgba(241,196,15,0.6); }
+    #msg p { font-size: 13px; color: rgba(255,255,255,0.45); margin-top: 6px; }
+
+    /* ── Battle vars ── */
+    :root {
+      --surface: rgba(255,255,255,0.042);
+      --border: rgba(255,255,255,0.085);
+      --text: #e2e8f0; --muted: rgba(255,255,255,0.35);
+      --accent: #ef4444; --gold: #f5c518;
     }
 
-    #board-wrap {
-      position: relative;
+    /* ── Battle lobby ── */
+    .lobby-title { text-align: center; }
+    .lobby-title h2 { font-size: 28px; font-weight: 900; color: var(--accent); margin-bottom: 4px; }
+    .lobby-title p { color: var(--muted); font-size: 14px; }
+    .lobby-box {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 16px; padding: 20px 22px;
+      display: flex; flex-direction: column; gap: 12px;
+      width: 100%; max-width: 480px;
     }
+    .lobby-box h3 { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); }
+    .lobby-btn {
+      width: 100%; padding: 13px;
+      background: linear-gradient(135deg, #ef4444, #b91c1c);
+      border: none; border-radius: 12px; color: #fff;
+      font-size: 15px; font-weight: 700; cursor: pointer;
+      transition: opacity .15s, transform .1s; font-family: inherit;
+    }
+    .lobby-btn:hover { opacity: .88; transform: translateY(-1px); }
+    .lobby-btn.secondary {
+      background: var(--surface); border: 1px solid var(--border); color: var(--text);
+    }
+    .lobby-btn.secondary:hover { border-color: var(--accent); }
+    .room-input-row { display: flex; gap: 10px; }
+    .room-input-row input {
+      flex: 1; background: rgba(255,255,255,0.06);
+      border: 1px solid var(--border); border-radius: 10px;
+      color: var(--text); font-size: 16px; font-weight: 700;
+      padding: 10px 14px; outline: none; letter-spacing: 4px;
+      transition: border-color .2s;
+    }
+    .room-input-row input:focus { border-color: var(--accent); }
+    .room-input-row input::placeholder { letter-spacing: 1px; font-size: 14px; font-weight: 400; }
+    #roomCodeDisplay {
+      font-size: 40px; font-weight: 900; color: var(--gold);
+      letter-spacing: 10px; text-align: center;
+      text-shadow: 0 0 20px rgba(245,197,24,.4);
+    }
+    .status-text { font-size: 13px; color: var(--muted); text-align: center; }
+    .status-text.waiting::after { content: '...'; animation: dots 1.2s steps(4, end) infinite; }
+    @keyframes dots { 0%,100%{content:'.'} 33%{content:'..'} 66%{content:'...'} }
+    #lobbyError { font-size: 13px; color: #f87171; text-align: center; min-height: 18px; }
+
+    /* ── Battle game ── */
+    #battle-inner {
+      display: flex; gap: 20px; align-items: flex-start;
+      width: 100%; max-width: 760px;
+    }
+    #my-side { display: flex; gap: 12px; }
+    #my-board-wrap canvas { border: 1px solid var(--border); border-radius: 8px; }
+    canvas#myBoard.under-attack { animation: flashRed .2s ease; }
+    @keyframes flashRed { 0%,100%{filter:none} 50%{filter:drop-shadow(0 0 12px #ef4444)} }
+    #my-info { display: flex; flex-direction: column; gap: 8px; width: 100px; }
+    .info-panel {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 10px; text-align: center;
+    }
+    .info-panel h4 { font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+    .info-panel .val { font-size: 20px; font-weight: 800; }
+    .info-panel canvas { display: block; margin: 0 auto; }
+    #mid-col {
+      display: flex; flex-direction: column; align-items: center;
+      gap: 14px; min-width: 90px; padding-top: 12px;
+    }
+    .room-badge {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 10px 16px; text-align: center;
+    }
+    .room-badge .label { font-size: 9px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+    .room-badge .code { font-size: 20px; font-weight: 900; color: var(--gold); letter-spacing: 4px; }
+    .conn-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #22c55e; animation: pulse 2s ease infinite; display: inline-block; margin-right: 6px;
+    }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+    .conn-label { font-size: 12px; color: var(--muted); }
+    #attack-alert {
+      display: none; background: rgba(239,68,68,.12);
+      border: 1px solid #ef4444; border-radius: 8px;
+      padding: 6px 10px; font-size: 12px; font-weight: 700; color: #f87171;
+      text-align: center; animation: alertPop .2s ease;
+    }
+    @keyframes alertPop { 0%{transform:scale(.85)} 100%{transform:scale(1)} }
+    .vs-text { font-size: 22px; font-weight: 900; color: rgba(255,255,255,0.15); }
+    #lines-compare { width: 100%; }
+    #lines-compare > div:first-child { font-size: 10px; color: var(--muted); margin-bottom: 2px; }
+    #lines-compare .bar-row { display: flex; align-items: center; gap: 6px; }
+    #lines-compare .bar-label { width: 22px; text-align: right; font-size: 10px; }
+    #lines-compare .bar-bg { flex: 1; height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden; }
+    #lines-compare .bar-fill { height: 100%; border-radius: 3px; transition: width .3s; }
+    #my-bar-fill { background: #3b82f6; } #opp-bar-fill { background: #ef4444; }
+    #opp-side { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+    #opp-label { font-size: 11px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+    #opp-board-wrap canvas { border: 1px solid var(--border); border-radius: 6px; }
+    #opp-stats { font-size: 13px; color: var(--muted); }
+    #opp-stats strong { color: #f87171; }
+
+    #result-overlay {
+      position: fixed; inset: 0; background: rgba(7,7,14,0.92);
+      display: none; flex-direction: column; align-items: center; justify-content: center; gap: 16px; z-index: 60;
+    }
+    #result-overlay.show { display: flex; }
+    .result-box {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 20px; padding: 36px 40px;
+      display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center;
+    }
+    .result-box h2 { font-size: 42px; font-weight: 900; }
+    .result-box h2.win  { color: var(--gold); text-shadow: 0 0 24px rgba(245,197,24,.6); }
+    .result-box h2.lose { color: #f87171; }
+    .result-box p { font-size: 15px; color: var(--muted); }
+    .result-btns { display: flex; gap: 12px; justify-content: center; }
+    .result-btn {
+      padding: 12px 24px; border-radius: 10px; font-size: 14px; font-weight: 700;
+      cursor: pointer; border: none; transition: opacity .15s; font-family: inherit;
+    }
+    .result-btn:hover { opacity: .85; }
+    .result-btn.primary { background: #ef4444; color: #fff; }
+    .result-btn.ghost { background: var(--surface); border: 1px solid var(--border); color: var(--text); }
+
+    #waiting-overlay {
+      position: fixed; inset: 0; background: rgba(7,7,14,0.9);
+      display: none; flex-direction: column; align-items: center; justify-content: center; gap: 16px; z-index: 60;
+    }
+    #waiting-overlay.show { display: flex; }
+    #waiting-overlay p { font-size: 18px; color: var(--text); }
+    .spinner {
+      width: 44px; height: 44px;
+      border: 3px solid rgba(239,68,68,.2);
+      border-top-color: var(--accent);
+      border-radius: 50%; animation: spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
-<div id="wrapper">
-  <!-- 主畫布 -->
-  <div id="board-wrap">
-    <canvas id="board" width="300" height="600"></canvas>
-    <div id="msg">
-      <h2 id="msgTitle">俄羅斯方塊</h2>
-      <p id="msgSub">按下「開始」或 Enter 開始遊戲</p>
+
+<div id="topbar">
+  <a href="../index.html">← 返回目錄</a>
+  <h1>🟩 俄羅斯方塊</h1>
+  <div id="topbar-right"></div>
+</div>
+
+<!-- ══ 模式選擇 ══════════════════════════════════════════ -->
+<div id="mode-screen" class="screen active">
+  <div class="mode-title">
+    <h2>🟩 俄羅斯方塊</h2>
+    <p>選擇遊戲模式</p>
+  </div>
+  <div class="mode-grid">
+    <div class="mode-card solo" id="btnModeSolo">
+      <div class="mc-icon">🟩</div>
+      <div class="mc-name">單人模式</div>
+      <div class="mc-desc">經典俄羅斯方塊，挑戰最高分！</div>
+    </div>
+    <div class="mode-card battle" id="btnModeBattle">
+      <div class="mc-icon">⚔️</div>
+      <div class="mc-name">聯線對戰</div>
+      <div class="mc-desc">消行攻擊對手，先撐不住的輸！</div>
     </div>
   </div>
+</div>
 
-  <!-- 側邊面板 -->
-  <div id="side">
-    <a id="backBtn" href="index.html">← 返回目錄</a>
-    <div class="panel">
-      <h3>分數</h3>
-      <div class="value" id="scoreVal">0</div>
+<!-- ══ 單人模式 ══════════════════════════════════════════ -->
+<div id="solo-screen" class="screen">
+  <div id="solo-wrapper">
+    <div id="board-wrap">
+      <canvas id="board" width="300" height="600"></canvas>
+      <div id="msg">
+        <h2 id="msgTitle">俄羅斯方塊</h2>
+        <p id="msgSub">按下「開始」或 Enter 開始遊戲</p>
+      </div>
     </div>
-    <div class="panel">
-      <h3>等級</h3>
-      <div class="value" id="levelVal">1</div>
+    <div id="side">
+      <div class="panel"><h3>分數</h3><div class="value" id="scoreVal">0</div></div>
+      <div class="panel"><h3>等級</h3><div class="value" id="levelVal">1</div></div>
+      <div class="panel"><h3>消除行數</h3><div class="value" id="linesVal">0</div></div>
+      <div class="panel"><h3>下一個</h3><canvas id="next" width="120" height="120"></canvas></div>
+      <div class="panel"><h3>保留方塊</h3><canvas id="hold" width="120" height="120"></canvas></div>
+      <button id="btnStart">開始 / 重啟</button>
+      <div class="panel" id="controls">
+        <h3>操作說明</h3>
+        <span>←→</span> 左右移動<br>
+        <span>↑ / Z</span> 旋轉<br>
+        <span>↓</span> 加速下降<br>
+        <span>Space</span> 直接落下<br>
+        <span>C</span> 保留方塊<br>
+        <span>P</span> 暫停
+      </div>
     </div>
-    <div class="panel">
-      <h3>消除行數</h3>
-      <div class="value" id="linesVal">0</div>
+  </div>
+  <button class="back-to-mode" id="btnSoloBack">← 返回模式選擇</button>
+</div>
+
+<!-- ══ 對戰大廳 ══════════════════════════════════════════ -->
+<div id="battle-lobby-screen" class="screen">
+  <div class="lobby-title">
+    <h2>⚔️ 聯線對戰</h2>
+    <p>建立房間並把房間碼傳給對手，或輸入對方的房間碼加入</p>
+  </div>
+  <div class="lobby-box">
+    <h3>建立新房間</h3>
+    <button class="lobby-btn" id="btnCreate">建立房間</button>
+    <div id="createResult" style="display:none">
+      <h3 style="margin-bottom:8px">房間碼（傳給對手）</h3>
+      <div id="roomCodeDisplay">----</div>
+      <p class="status-text waiting" style="margin-top:10px">等待對手加入</p>
     </div>
-    <div class="panel">
-      <h3>下一個</h3>
-      <canvas id="next" width="120" height="120"></canvas>
+  </div>
+  <div class="lobby-box">
+    <h3>加入現有房間</h3>
+    <div class="room-input-row">
+      <input id="joinInput" type="text" maxlength="4" placeholder="輸入房間碼" />
+      <button class="lobby-btn secondary" id="btnJoin" style="width:auto;padding:10px 18px">加入</button>
     </div>
-    <div class="panel">
-      <h3>保留方塊</h3>
-      <canvas id="hold" width="120" height="120"></canvas>
+  </div>
+  <div id="lobbyError"></div>
+  <button class="back-to-mode" id="btnBattleLobbyBack">← 返回模式選擇</button>
+</div>
+
+<!-- ══ 對戰遊戲 ══════════════════════════════════════════ -->
+<div id="battle-game-screen" class="screen">
+  <div id="battle-inner">
+    <div id="my-side">
+      <div id="my-board-wrap"><canvas id="myBoard" width="300" height="600"></canvas></div>
+      <div id="my-info">
+        <div class="info-panel"><h4>分數</h4><div class="val" id="myScore">0</div></div>
+        <div class="info-panel"><h4>等級</h4><div class="val" id="myLevel">1</div></div>
+        <div class="info-panel"><h4>消行</h4><div class="val" id="myLines">0</div></div>
+        <div class="info-panel"><h4>下一個</h4><canvas id="myNext" width="100" height="100"></canvas></div>
+        <div class="info-panel"><h4>保留</h4><canvas id="myHold" width="100" height="100"></canvas></div>
+      </div>
     </div>
-    <button id="btnStart">開始 / 重啟</button>
-    <div class="panel" id="controls">
-      <h3>操作說明</h3>
-      <span>←→</span> 左右移動<br>
-      <span>↑ / Z</span> 旋轉<br>
-      <span>↓</span> 加速下降<br>
-      <span>Space</span> 直接落下<br>
-      <span>C</span> 保留方塊<br>
-      <span>P</span> 暫停
+    <div id="mid-col">
+      <div class="room-badge">
+        <div class="label">房間</div>
+        <div class="code" id="battleRoomCode">----</div>
+      </div>
+      <div><span class="conn-dot"></span><span class="conn-label">已連線</span></div>
+      <div class="vs-text">VS</div>
+      <div id="attack-alert"></div>
+      <div id="lines-compare">
+        <div style="font-size:10px;color:var(--muted);margin-bottom:2px">消行進度</div>
+        <div class="bar-row">
+          <span class="bar-label" style="color:#60a5fa">我</span>
+          <div class="bar-bg"><div class="bar-fill" id="my-bar-fill" style="width:0%"></div></div>
+          <span style="font-size:10px;width:24px;text-align:left" id="myLinesSmall">0</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label" style="color:#f87171">對</span>
+          <div class="bar-bg"><div class="bar-fill" id="opp-bar-fill" style="width:0%"></div></div>
+          <span style="font-size:10px;width:24px;text-align:left" id="oppLinesSmall">0</span>
+        </div>
+      </div>
+    </div>
+    <div id="opp-side">
+      <div id="opp-label">對手棋盤</div>
+      <div id="opp-board-wrap"><canvas id="oppBoard" width="150" height="300"></canvas></div>
+      <div id="opp-stats">分 <strong id="oppScore">0</strong> &nbsp; Lv <strong id="oppLevel">1</strong></div>
+    </div>
+  </div>
+</div>
+
+<!-- 等待對手 -->
+<div id="waiting-overlay">
+  <div class="spinner"></div>
+  <p>等待對手加入</p>
+</div>
+
+<!-- 遊戲結果 -->
+<div id="result-overlay">
+  <div class="result-box">
+    <h2 id="resultTitle">🏆 你贏了！</h2>
+    <p id="resultSub">精彩對決！</p>
+    <div class="result-btns">
+      <button class="result-btn primary" id="btnRematch">再來一局</button>
+      <button class="result-btn ghost"   id="btnBackLobby">返回大廳</button>
     </div>
   </div>
 </div>
 
 <script src="tetris-core.js"></script>
 <script>
-// ─── 畫布 ──────────────────────────────────────────────
-// （COLS, ROWS, CELL, SHAPES, SCORE_TABLE, DAS, ARR,
-//   makePiece, spawnPiece, levelInterval, pieceBlocks,
-//   isValid, moveLeft, moveRight, moveDown, rotate,
-//   hardDrop, holdPiece, clearLines, ghostY,
-//   drawCell, drawBoard, drawPiecePreview → tetris-core.js）
+'use strict';
+
+// ══ 畫面切換 ══════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+document.getElementById('btnModeSolo').addEventListener('click', () => {
+  showScreen('solo-screen');
+  showMsg('俄羅斯方塊', '按下「開始」或 Enter 開始遊戲');
+  drawBoard();
+});
+document.getElementById('btnModeBattle').addEventListener('click', () => showScreen('battle-lobby-screen'));
+document.getElementById('btnSoloBack').addEventListener('click', () => showScreen('mode-screen'));
+document.getElementById('btnBattleLobbyBack').addEventListener('click', () => showScreen('mode-screen'));
+
+// ══════════════════════════════════════════════════════
+// 單人模式
+// ══════════════════════════════════════════════════════
 const boardCanvas = document.getElementById('board');
 const ctx = boardCanvas.getContext('2d');
 const nextCanvas = document.getElementById('next');
@@ -186,11 +426,8 @@ const nctx = nextCanvas.getContext('2d');
 const holdCanvas = document.getElementById('hold');
 const hctx = holdCanvas.getContext('2d');
 
-// ─── 遊戲狀態 ─────────────────────────────────────────
 let board, current, next, hold, canHold, score, level, lines, gameOver, paused, animId, dropTimer, dropInterval;
-
-// ─── 按住左右加速（DAS / ARR）─────────────────────────
-const keys = {};   // 目前按住的鍵
+const keys = {};
 let dasTimer = { ArrowLeft: 0, ArrowRight: 0 };
 let arrTimer = { ArrowLeft: 0, ArrowRight: 0 };
 let dasActive = { ArrowLeft: false, ArrowRight: false };
@@ -205,25 +442,20 @@ function initGame() {
   dasTimer = { ArrowLeft: 0, ArrowRight: 0 };
   arrTimer = { ArrowLeft: 0, ArrowRight: 0 };
   dasActive = { ArrowLeft: false, ArrowRight: false };
-  current = spawnPiece();
-  next    = spawnPiece();
-  updateHUD();
-  hideMsg();
+  current = spawnPiece(); next = spawnPiece();
+  updateHUD(); hideMsg();
   cancelAnimationFrame(animId);
   lastTime = null;
   animId = requestAnimationFrame(loop);
 }
 
-// ─── 固定方塊 ─────────────────────────────────────────
 function lock() {
   for (const [c, r] of pieceBlocks(current)) {
     if (r < 0) { endGame(); return; }
     board[r][c] = current.color;
   }
-  clearLines();
-  canHold = true;
-  current = next;
-  next    = spawnPiece();
+  clearLines(); canHold = true;
+  current = next; next = spawnPiece();
   updateHUD();
   if (!isValid(current)) { endGame(); }
 }
@@ -231,86 +463,56 @@ function lock() {
 function drawNext() { drawPiecePreview(nctx, next.key, 120); }
 function drawHold() { drawPiecePreview(hctx, hold, 120); }
 
-// ─── HUD ──────────────────────────────────────────────
 function updateHUD() {
   document.getElementById('scoreVal').textContent = score.toLocaleString();
   document.getElementById('levelVal').textContent = level;
   document.getElementById('linesVal').textContent = lines;
-  drawNext();
-  drawHold();
+  drawNext(); drawHold();
 }
 
-function hideMsg() {
-  document.getElementById('msg').style.display = 'none';
-}
+function hideMsg() { document.getElementById('msg').style.display = 'none'; }
 function showMsg(title, sub) {
   document.getElementById('msg').style.display = 'block';
   document.getElementById('msgTitle').textContent = title;
   document.getElementById('msgSub').textContent   = sub;
 }
-
 function endGame() {
-  gameOver = true;
-  cancelAnimationFrame(animId);
+  gameOver = true; cancelAnimationFrame(animId);
   showMsg('遊戲結束', `分數：${score.toLocaleString()}　按 Enter 重新開始`);
 }
 
-// ─── 主迴圈 ───────────────────────────────────────────
 let lastTime = null;
-
 function loop(ts) {
   if (gameOver) return;
   if (!lastTime) lastTime = ts;
   const delta = ts - lastTime;
   lastTime = ts;
-
   if (!paused) {
-    // 自動下降
     dropTimer += delta;
-    if (dropTimer >= dropInterval) {
-      dropTimer = 0;
-      moveDown();
-    }
-
-    // DAS / ARR 左右連續移動
+    if (dropTimer >= dropInterval) { dropTimer = 0; moveDown(); }
     for (const dir of ['ArrowLeft', 'ArrowRight']) {
       if (!keys[dir]) continue;
       if (!dasActive[dir]) {
         dasTimer[dir] += delta;
-        if (dasTimer[dir] >= DAS) {
-          dasActive[dir] = true;
-          arrTimer[dir] = ARR; // 立即觸發第一次
-        }
+        if (dasTimer[dir] >= DAS) { dasActive[dir] = true; arrTimer[dir] = ARR; }
       } else {
         arrTimer[dir] += delta;
-        if (arrTimer[dir] >= ARR) {
-          arrTimer[dir] = 0;
-          dir === 'ArrowLeft' ? moveLeft() : moveRight();
-        }
+        if (arrTimer[dir] >= ARR) { arrTimer[dir] = 0; dir === 'ArrowLeft' ? moveLeft() : moveRight(); }
       }
     }
   }
-
-  drawBoard();
-  animId = requestAnimationFrame(loop);
+  drawBoard(); animId = requestAnimationFrame(loop);
 }
 
-// ─── 鍵盤 ─────────────────────────────────────────────
 document.addEventListener('keydown', e => {
+  if (!document.getElementById('solo-screen').classList.contains('active')) return;
   if (e.key === 'Enter') { initGame(); return; }
   if (gameOver) return;
-
   switch (e.key) {
     case 'ArrowLeft':
-      e.preventDefault();
-      if (!keys['ArrowLeft'] && !paused) moveLeft(); // 首次立即移動
-      keys['ArrowLeft'] = true;
-      break;
+      e.preventDefault(); if (!keys['ArrowLeft'] && !paused) moveLeft(); keys['ArrowLeft'] = true; break;
     case 'ArrowRight':
-      e.preventDefault();
-      if (!keys['ArrowRight'] && !paused) moveRight();
-      keys['ArrowRight'] = true;
-      break;
+      e.preventDefault(); if (!keys['ArrowRight'] && !paused) moveRight(); keys['ArrowRight'] = true; break;
     case 'ArrowDown':  e.preventDefault(); if (!paused) { dropTimer = 0; moveDown(); } break;
     case 'ArrowUp':
     case 'z': case 'Z': e.preventDefault(); if (!paused) rotate(); break;
@@ -318,27 +520,363 @@ document.addEventListener('keydown', e => {
     case 'c': case 'C': e.preventDefault(); if (!paused) holdPiece(); break;
     case 'p': case 'P':
       paused = !paused;
-      if (paused) showMsg('暫停', '按 P 繼續');
-      else hideMsg();
+      if (paused) showMsg('暫停', '按 P 繼續'); else hideMsg();
       break;
   }
 });
-
 document.addEventListener('keyup', e => {
   if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
-    keys[e.key] = false;
-    dasTimer[e.key] = 0;
-    arrTimer[e.key] = 0;
-    dasActive[e.key] = false;
+    keys[e.key] = false; dasTimer[e.key] = 0; arrTimer[e.key] = 0; dasActive[e.key] = false;
   }
 });
 
-// ─── 按鈕 ─────────────────────────────────────────────
 document.getElementById('btnStart').addEventListener('click', initGame);
-
-// ─── 初始畫面 ─────────────────────────────────────────
 showMsg('俄羅斯方塊', '按下「開始」或 Enter 開始遊戲');
 drawBoard();
+
+// ══════════════════════════════════════════════════════
+// 對戰模式
+// ══════════════════════════════════════════════════════
+const OPP_CELL = 15;
+const ATTACK_TABLE = [0, 0, 1, 2, 4];
+
+let bBoard, bCurrent, bNext, bHold, bCanHold;
+let bScore, bLevel, bLines;
+let bGameOver, bPaused;
+let bAnimId, bLastTime, bDropTimer, bDropInterval;
+let bDasTimer, bArrTimer, bDasActive;
+const pressedKeys = {};
+let pendingGarbage = 0;
+
+const myBoardCv  = document.getElementById('myBoard');
+const bCtx       = myBoardCv.getContext('2d');
+const myNextCv   = document.getElementById('myNext');
+const bNctx      = myNextCv.getContext('2d');
+const myHoldCv   = document.getElementById('myHold');
+const bHctx      = myHoldCv.getContext('2d');
+const oppBoardCv = document.getElementById('oppBoard');
+const bOctx      = oppBoardCv.getContext('2d');
+
+let ws = null, myRoomId = null, myPlayerIndex = -1;
+
+const WS_URL = (() => {
+  const meta = document.querySelector('meta[name="ws-url"]');
+  if (meta) return meta.content;
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  return `${proto}://${location.host}`;
+})();
+
+function connectWS(onOpen) {
+  ws = new WebSocket(WS_URL);
+  ws.onopen = onOpen;
+  ws.onmessage = e => handleMessage(JSON.parse(e.data));
+  ws.onclose   = () => { if (!bGameOver) showResult(false, '連線中斷'); };
+}
+function wsSend(obj) { if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(obj)); }
+
+function handleMessage(msg) {
+  switch (msg.type) {
+    case 'room_joined':
+      myRoomId = msg.roomId; myPlayerIndex = msg.playerIndex;
+      if (myPlayerIndex === 0) {
+        document.getElementById('roomCodeDisplay').textContent = myRoomId;
+        document.getElementById('createResult').style.display = 'block';
+      }
+      break;
+    case 'opponent_joined': startBattle(); break;
+    case 'opponent_update':
+      renderOppBoard(msg.board);
+      document.getElementById('oppScore').textContent = (msg.score || 0).toLocaleString();
+      document.getElementById('oppLevel').textContent = msg.level || 1;
+      updateLinesCompare(bLines, msg.lines || 0);
+      break;
+    case 'incoming_attack':
+      pendingGarbage += msg.lines;
+      showAttackAlert(msg.lines);
+      break;
+    case 'opponent_lost': endBattle(true); break;
+    case 'opponent_disconnected': showResult(true, '對手已離線'); break;
+    case 'room_error':
+      document.getElementById('lobbyError').textContent = '❌ ' + msg.reason;
+      break;
+  }
+}
+
+document.getElementById('btnCreate').addEventListener('click', () => {
+  document.getElementById('lobbyError').textContent = '';
+  connectWS(() => wsSend({ type: 'create_room' }));
+});
+document.getElementById('btnJoin').addEventListener('click', joinBattleRoom);
+document.getElementById('joinInput').addEventListener('keydown', e => { if (e.key === 'Enter') joinBattleRoom(); });
+
+function joinBattleRoom() {
+  const id = document.getElementById('joinInput').value.trim();
+  if (id.length !== 4 || isNaN(id)) { document.getElementById('lobbyError').textContent = '請輸入 4 位數字的房間碼'; return; }
+  document.getElementById('lobbyError').textContent = '';
+  connectWS(() => wsSend({ type: 'join_room', roomId: id }));
+}
+
+function startBattle() {
+  showScreen('battle-game-screen');
+  document.getElementById('battleRoomCode').textContent = myRoomId;
+  let count = 3;
+  const overlay = document.getElementById('waiting-overlay');
+  const p = overlay.querySelector('p');
+  overlay.classList.add('show');
+  overlay.querySelector('.spinner').style.display = 'none';
+  p.textContent = `遊戲即將開始 ${count}`;
+  const t = setInterval(() => {
+    count--;
+    if (count > 0) { p.textContent = `遊戲即將開始 ${count}`; }
+    else { clearInterval(t); overlay.classList.remove('show'); initBattle(); }
+  }, 1000);
+}
+
+function endBattle(iWon) {
+  bGameOver = true; cancelAnimationFrame(bAnimId);
+  showResult(iWon, iWon ? `對手已陣亡！分數：${bScore.toLocaleString()}` : `分數：${bScore.toLocaleString()}`);
+}
+
+function showResult(win, sub) {
+  bGameOver = true; cancelAnimationFrame(bAnimId);
+  const o = document.getElementById('result-overlay');
+  document.getElementById('resultTitle').textContent = win ? '🏆 你贏了！' : '💀 你輸了';
+  document.getElementById('resultTitle').className   = win ? 'win' : 'lose';
+  document.getElementById('resultSub').textContent   = sub;
+  o.classList.add('show');
+}
+
+document.getElementById('btnRematch').addEventListener('click', () => location.reload());
+document.getElementById('btnBackLobby').addEventListener('click', () => location.reload());
+
+function initBattle() {
+  bBoard = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
+  bScore = 0; bLevel = 1; bLines = 0;
+  bHold = null; bCanHold = true;
+  bGameOver = false; bPaused = false;
+  pendingGarbage = 0;
+  bDropInterval = levelInterval(bLevel);
+  bDropTimer = 0;
+  bDasTimer = { ArrowLeft: 0, ArrowRight: 0 };
+  bArrTimer = { ArrowLeft: 0, ArrowRight: 0 };
+  bDasActive = { ArrowLeft: false, ArrowRight: false };
+  bCurrent = spawnPieceTo(bBoard);
+  bNext    = spawnPieceTo(bBoard);
+  updateBattleHUD();
+  bLastTime = null;
+  bAnimId = requestAnimationFrame(battleLoop);
+}
+
+// 對戰模式複用 tetris-core.js 的 spawnPiece，但要操作 bBoard
+// 我們直接呼叫 spawnPiece()（它使用全域 board），
+// 所以需要臨時把 bBoard 指向全域 board
+function spawnPieceTo(targetBoard) {
+  const savedBoard = board;
+  board = targetBoard;
+  const p = spawnPiece();
+  board = savedBoard;
+  return p;
+}
+
+function bLock() {
+  for (const [c, r] of pieceBlocks(bCurrent)) {
+    if (r < 0) { endBattle(false); wsSend({ type: 'game_over' }); return; }
+    bBoard[r][c] = bCurrent.color;
+  }
+  const savedBoard = board, savedScore = score, savedLevel = level, savedLines = lines;
+  board = bBoard; score = bScore; level = bLevel; lines = bLines;
+  const cleared = clearLines();
+  bBoard = board; bScore = score; bLevel = level; bLines = lines;
+  board = savedBoard; score = savedScore; level = savedLevel; lines = savedLines;
+
+  if (cleared >= 2) {
+    const atk = ATTACK_TABLE[Math.min(cleared, 4)];
+    if (atk > 0) wsSend({ type: 'attack', lines: atk });
+  }
+  if (pendingGarbage > 0) { insertGarbageLines(pendingGarbage); pendingGarbage = 0; }
+  bCanHold = true; bCurrent = bNext; bNext = spawnPieceTo(bBoard);
+  updateBattleHUD(); sendBoardUpdate();
+  const savedBoard2 = board;
+  board = bBoard;
+  if (!isValid(bCurrent)) { board = savedBoard2; endBattle(false); wsSend({ type: 'game_over' }); return; }
+  board = savedBoard2;
+}
+
+function insertGarbageLines(n) {
+  for (let i = 0; i < n; i++) {
+    bBoard.shift();
+    const gap = Math.floor(Math.random() * COLS);
+    const row = Array(COLS).fill('#5a5a6e');
+    row[gap] = null;
+    bBoard.push(row);
+  }
+  myBoardCv.classList.remove('under-attack');
+  void myBoardCv.offsetWidth;
+  myBoardCv.classList.add('under-attack');
+  setTimeout(() => myBoardCv.classList.remove('under-attack'), 400);
+}
+
+function showAttackAlert(n) {
+  const el = document.getElementById('attack-alert');
+  el.textContent = `⚠️ 收到 ${n} 行攻擊！`;
+  el.style.display = 'block';
+  setTimeout(() => { el.style.display = 'none'; }, 2000);
+}
+
+function sendBoardUpdate() {
+  wsSend({ type: 'board_update', board: bBoard, score: bScore, lines: bLines, level: bLevel });
+}
+
+function renderOppBoard(oppBoard) {
+  bOctx.fillStyle = '#0d0d1a'; bOctx.fillRect(0, 0, 150, 300);
+  if (!oppBoard) return;
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      if (oppBoard[r][c]) {
+        bOctx.fillStyle = oppBoard[r][c];
+        bOctx.fillRect(c*OPP_CELL+1, r*OPP_CELL+1, OPP_CELL-2, OPP_CELL-2);
+        bOctx.fillStyle = 'rgba(255,255,255,0.15)';
+        bOctx.fillRect(c*OPP_CELL+1, r*OPP_CELL+1, OPP_CELL-2, 2);
+      }
+    }
+  }
+}
+
+function updateBattleHUD() {
+  document.getElementById('myScore').textContent = bScore.toLocaleString();
+  document.getElementById('myLevel').textContent = bLevel;
+  document.getElementById('myLines').textContent = bLines;
+  drawPiecePreview(bNctx, bNext?.key);
+  drawPiecePreview(bHctx, bHold);
+}
+
+function updateLinesCompare(myL, oppL) {
+  const max = Math.max(myL, oppL, 10);
+  document.getElementById('my-bar-fill').style.width   = (myL  / max * 100) + '%';
+  document.getElementById('opp-bar-fill').style.width  = (oppL / max * 100) + '%';
+  document.getElementById('myLinesSmall').textContent  = myL;
+  document.getElementById('oppLinesSmall').textContent = oppL;
+}
+
+function bMoveDown() {
+  const savedBoard = board, savedCurrent = current;
+  board = bBoard; current = bCurrent;
+  const moved = moveDown();
+  bBoard = board; bCurrent = current;
+  board = savedBoard; current = savedCurrent;
+  if (!moved) bLock();
+}
+function bMoveLeft()  { const s=board,c=current; board=bBoard;current=bCurrent; moveLeft();  bBoard=board;bCurrent=current; board=s;current=c; }
+function bMoveRight() { const s=board,c=current; board=bBoard;current=bCurrent; moveRight(); bBoard=board;bCurrent=current; board=s;current=c; }
+function bRotate()    { const s=board,c=current; board=bBoard;current=bCurrent; rotate();    bBoard=board;bCurrent=current; board=s;current=c; }
+function bHardDrop()  { const s=board,c=current; board=bBoard;current=bCurrent; hardDrop();  bBoard=board;bCurrent=current; board=s;current=c; bLock(); }
+function bHoldPiece() {
+  if (!bCanHold) return;
+  const savedBoard = board, savedCurrent = current, savedHold = hold, savedCanHold = canHold;
+  board = bBoard; current = bCurrent; hold = bHold; canHold = bCanHold;
+  holdPiece();
+  bBoard = board; bCurrent = current; bHold = hold; bCanHold = canHold;
+  board = savedBoard; current = savedCurrent; hold = savedHold; canHold = savedCanHold;
+  updateBattleHUD();
+}
+
+function battleLoop(ts) {
+  if (bGameOver) return;
+  if (!bLastTime) bLastTime = ts;
+  const delta = ts - bLastTime;
+  bLastTime = ts;
+  if (!bPaused) {
+    bDropTimer += delta;
+    if (bDropTimer >= bDropInterval) { bDropTimer = 0; bMoveDown(); }
+    for (const dir of ['ArrowLeft', 'ArrowRight']) {
+      if (!pressedKeys[dir]) continue;
+      if (!bDasActive[dir]) {
+        bDasTimer[dir] += delta;
+        if (bDasTimer[dir] >= DAS) { bDasActive[dir] = true; bArrTimer[dir] = ARR; }
+      } else {
+        bArrTimer[dir] += delta;
+        if (bArrTimer[dir] >= ARR) { bArrTimer[dir] = 0; dir === 'ArrowLeft' ? bMoveLeft() : bMoveRight(); }
+      }
+    }
+  }
+  // 使用 tetris-core drawBoard，暫換 ctx / board / current
+  const savedCtx = ctx, savedBoard = board, savedCurrent = current;
+  // drawBoard 直接使用 ctx, board, current 全域
+  // 需要替換
+  const origCtx = boardCanvas.getContext('2d');
+  // 直接呼叫自製繪製
+  drawBattleBoard();
+  bAnimId = requestAnimationFrame(battleLoop);
+}
+
+function drawBattleBoard() {
+  const BCELL = CELL; // 30px per cell
+  bCtx.fillStyle = '#0d0d1a';
+  bCtx.fillRect(0, 0, COLS * BCELL, ROWS * BCELL);
+  // 格線
+  bCtx.strokeStyle = 'rgba(255,255,255,0.03)'; bCtx.lineWidth = 1;
+  for (let c = 0; c <= COLS; c++) { bCtx.beginPath(); bCtx.moveTo(c*BCELL,0); bCtx.lineTo(c*BCELL,ROWS*BCELL); bCtx.stroke(); }
+  for (let r = 0; r <= ROWS; r++) { bCtx.beginPath(); bCtx.moveTo(0,r*BCELL); bCtx.lineTo(COLS*BCELL,r*BCELL); bCtx.stroke(); }
+  // 棋盤
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      if (bBoard[r][c]) drawBCell(bCtx, c, r, bBoard[r][c], BCELL);
+    }
+  }
+  // Ghost
+  let ghostRow = bCurrent.row;
+  const savedBoard = board, savedCurrent = current;
+  board = bBoard; current = bCurrent;
+  ghostRow = ghostY();
+  board = savedBoard; current = savedCurrent;
+  for (const [dc, dr] of bCurrent.shape) {
+    const gr = ghostRow + dr, gc = bCurrent.col + dc;
+    if (gr >= 0 && gr < ROWS) {
+      bCtx.fillStyle = bCurrent.color + '33';
+      bCtx.fillRect(gc*BCELL+1, gr*BCELL+1, BCELL-2, BCELL-2);
+    }
+  }
+  // 當前方塊
+  for (const [dc, dr] of bCurrent.shape) {
+    const r = bCurrent.row + dr, c = bCurrent.col + dc;
+    if (r >= 0) drawBCell(bCtx, c, r, bCurrent.color, BCELL);
+  }
+}
+
+function drawBCell(c, col, row, color, sz) {
+  c.fillStyle = color;
+  c.fillRect(col*sz+1, row*sz+1, sz-2, sz-2);
+  c.fillStyle = 'rgba(255,255,255,0.18)';
+  c.fillRect(col*sz+1, row*sz+1, sz-2, 3);
+}
+
+document.addEventListener('keydown', e => {
+  if (!document.getElementById('battle-game-screen').classList.contains('active')) return;
+  if (bGameOver || !myRoomId) return;
+  switch (e.key) {
+    case 'ArrowLeft':
+      e.preventDefault(); if (!pressedKeys['ArrowLeft'] && !bPaused) bMoveLeft(); pressedKeys['ArrowLeft'] = true; break;
+    case 'ArrowRight':
+      e.preventDefault(); if (!pressedKeys['ArrowRight'] && !bPaused) bMoveRight(); pressedKeys['ArrowRight'] = true; break;
+    case 'ArrowDown':  e.preventDefault(); if (!bPaused) { bDropTimer = 0; bMoveDown(); } break;
+    case 'ArrowUp':
+    case 'z': case 'Z': e.preventDefault(); if (!bPaused) bRotate(); break;
+    case ' ':  e.preventDefault(); if (!bPaused) bHardDrop(); break;
+    case 'c': case 'C': e.preventDefault(); if (!bPaused) bHoldPiece(); break;
+    case 'p': case 'P': bPaused = !bPaused; break;
+  }
+});
+document.addEventListener('keyup', e => {
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+    pressedKeys[e.key] = false;
+    bDasTimer[e.key] = 0; bArrTimer[e.key] = 0; bDasActive[e.key] = false;
+  }
+});
+
+bCtx.fillStyle = '#0d0d1a';
+bCtx.fillRect(0, 0, 300, 600);
+bOctx.fillStyle = '#0d0d1a';
+bOctx.fillRect(0, 0, 150, 300);
 </script>
 </body>
 </html>

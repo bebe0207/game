@@ -340,7 +340,7 @@
     <div class="header-divider"></div>
     <span class="header-sub">小遊戲合輯</span>
     <div class="header-spacer"></div>
-    <span class="header-count">9 款遊戲</span>
+    <span class="header-count">6 款遊戲</span>
     <a class="header-github" href="https://github.com/bebe0207/game" target="_blank">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
         <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
@@ -361,7 +361,7 @@
 
   <div class="grid">
 
-    <!-- 俄羅斯方塊 -->
+    <!-- 俄羅斯方塊（含單人＋對戰） -->
     <a class="card" href="games/tetris.html" data-game="tetris"
        style="--accent:#00cfcf; --accent-glow:rgba(0,207,207,0.4);">
       <div class="card-canvas-wrap">
@@ -371,13 +371,13 @@
       <div class="card-body">
         <div class="card-title-row">
           <h2>俄羅斯方塊</h2>
-          <span class="badge" style="color:#00cfcf;border-color:rgba(0,207,207,0.3);">Tetris</span>
+          <span class="badge" style="color:#00cfcf;border-color:rgba(0,207,207,0.3);">單人 / 對戰</span>
         </div>
-        <p>經典俄羅斯方塊，嘗試得到最高分吧</p>
+        <p>經典俄羅斯方塊，單人挑戰高分或與朋友聯線對戰</p>
       </div>
     </a>
 
-    <!-- 貪吃蛇 -->
+    <!-- 貪吃蛇（含單人＋對戰） -->
     <a class="card" href="games/snake.html" data-game="snake"
        style="--accent:#22c55e; --accent-glow:rgba(34,197,94,0.4);">
       <div class="card-canvas-wrap">
@@ -387,9 +387,9 @@
       <div class="card-body">
         <div class="card-title-row">
           <h2>貪吃蛇</h2>
-          <span class="badge" style="color:#22c55e;border-color:rgba(34,197,94,0.3);">Snake</span>
+          <span class="badge" style="color:#22c55e;border-color:rgba(34,197,94,0.3);">單人 / 對戰</span>
         </div>
-        <p>想辦法吃更多東西，小心不要撞到自己的身體</p>
+        <p>吃食物得分、不要撞到自己，或與朋友聯線廝殺</p>
       </div>
     </a>
 
@@ -409,6 +409,22 @@
       </div>
     </a>
 
+    <!-- 問答遊戲（含單人＋聯線） -->
+    <a class="card" href="games/quiz.html" data-game="quiz"
+       style="--accent:#a855f7; --accent-glow:rgba(168,85,247,0.4);">
+      <div class="card-canvas-wrap">
+        <canvas class="game-canvas"></canvas>
+        <div class="anim-hint">Preview</div>
+      </div>
+      <div class="card-body">
+        <div class="card-title-row">
+          <h2>爆爆問答</h2>
+          <span class="badge" style="color:#a855f7;border-color:rgba(168,85,247,0.3);">單人 / 聯線</span>
+        </div>
+        <p>單人挑戰高分，或主持人出題讓多人即時搶答</p>
+      </div>
+    </a>
+
     <!-- 塔羅占卜 -->
     <a class="card" href="games/tarot.html" data-game="tarot"
        style="--accent:#a855f7; --accent-glow:rgba(168,85,247,0.4);">
@@ -425,54 +441,6 @@
       </div>
     </a>
 
-    <!-- 俄羅斯方塊對戰 -->
-    <a class="card" href="games/tetris-battle.html" data-game="tetris-battle"
-       style="--accent:#ef4444; --accent-glow:rgba(239,68,68,0.4);">
-      <div class="card-canvas-wrap">
-        <canvas class="game-canvas"></canvas>
-        <div class="anim-hint">Preview</div>
-      </div>
-      <div class="card-body">
-        <div class="card-title-row">
-          <h2>俄羅斯方塊對戰</h2>
-          <span class="badge" style="color:#ef4444;border-color:rgba(239,68,68,0.3);">Battle</span>
-        </div>
-        <p>俄羅斯方塊，與你的朋友一起對戰吧！</p>
-      </div>
-    </a>
-
-    <!-- 貪吃蛇對戰 -->
-    <a class="card" href="games/snake-battle.html" data-game="snake-battle"
-       style="--accent:#86efac; --accent-glow:rgba(134,239,172,0.4);">
-      <div class="card-canvas-wrap">
-        <canvas class="game-canvas"></canvas>
-        <div class="anim-hint">Preview</div>
-      </div>
-      <div class="card-body">
-        <div class="card-title-row">
-          <h2>貪吃蛇對戰</h2>
-          <span class="badge" style="color:#86efac;border-color:rgba(134,239,172,0.3);">Snake Battle</span>
-        </div>
-        <p>想辦法活下去，殺死你的對手</p>
-      </div>
-    </a>
-
-    <!-- 問答遊戲 -->
-    <a class="card" href="games/quiz.html" data-game="quiz"
-       style="--accent:#a855f7; --accent-glow:rgba(168,85,247,0.4);">
-      <div class="card-canvas-wrap">
-        <canvas class="game-canvas"></canvas>
-        <div class="anim-hint">Preview</div>
-      </div>
-      <div class="card-body">
-        <div class="card-title-row">
-          <h2>問答遊戲</h2>
-          <span class="badge" style="color:#a855f7;border-color:rgba(168,85,247,0.3);">Quiz</span>
-        </div>
-        <p>問與答，想辦法得到最高分吧</p>
-      </div>
-    </a>
-
     <!-- 深淵地下城 -->
     <a class="card" href="games/dungeon.html" data-game="dungeon"
        style="--accent:#ef4444; --accent-glow:rgba(239,68,68,0.4);">
@@ -486,22 +454,6 @@
           <span class="badge" style="color:#ef4444;border-color:rgba(239,68,68,0.3);">Dungeon RPG</span>
         </div>
         <p>文字 RPG！三種職業、20 層地下城、回合制戰鬥！</p>
-      </div>
-    </a>
-
-    <!-- 問答聯線對戰 -->
-    <a class="card" href="games/quiz-lobby.html" data-game="quiz-live"
-       style="--accent:#f5c518; --accent-glow:rgba(245,197,24,0.4);">
-      <div class="card-canvas-wrap">
-        <canvas class="game-canvas"></canvas>
-        <div class="anim-hint">Preview</div>
-      </div>
-      <div class="card-body">
-        <div class="card-title-row">
-          <h2>問答聯線對戰</h2>
-          <span class="badge" style="color:#f5c518;border-color:rgba(245,197,24,0.3);">Live Quiz</span>
-        </div>
-        <p>主持人出題、玩家搶答，多人即時排行！</p>
       </div>
     </a>
 
