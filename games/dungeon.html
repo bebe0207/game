@@ -1047,13 +1047,39 @@ function announceEnemyAttack() {
   renderBattleButtons();
 }
 
+// ── 職業反應特性表（集中管理所有職業的數值）────────────
+const REACTION_TRAITS = {
+  warrior: {
+    blockReduction: 0.70,  // 格擋減傷比率
+    dodgeChance:    0.50,  // 閃避成功率
+    counterMult:    1.0,   // 反擊傷害倍率
+    counterFx: null        // 無特殊反擊效果
+  },
+  mage: {
+    blockReduction: 0.60,
+    dodgeChance:    0.50,
+    counterMult:    0.8,
+    // 反擊附加灼燒 2 層
+    counterFx(p, e) {
+      e.burn = Math.min(3, (e.burn||0) + 2);
+      addLog(`🔥 法師反擊！造成傷害並附加灼燒！`, 'dmg');
+    }
+  },
+  rogue: {
+    blockReduction: 0.60,
+    dodgeChance:    0.70,  // 盜賊閃避更高
+    counterMult:    1.2,   // 盜賊反擊更強
+    counterFx: null
+  }
+};
+
 // ── 玩家反應處理 ──────────────────────────────────────
 function doReaction(reactionType) {
   if (battle.ended || !battle.pendingAttack) return;
   const p = player;
   const e = battle.enemy;
   const pa = battle.pendingAttack;
-  const cls = p.classId;
+  const traits = REACTION_TRAITS[p.classId];
   battle.pendingAttack = null;
   hideWarning();
 
@@ -1061,17 +1087,13 @@ function doReaction(reactionType) {
   const rawDmg = dealDmg(e.atk * pa.mult, totalDef(), 0.05);
 
   if (reactionType === 'block') {
-    // 格擋：減少 60%~70% 傷害（戰士額外+10%）
-    const reduction = cls === 'warrior' ? 0.70 : 0.60;
-    const taken = Math.max(1, Math.round(rawDmg * (1 - reduction)));
+    const taken = Math.max(1, Math.round(rawDmg * (1 - traits.blockReduction)));
     p.hp -= taken;
     addLog(`🛡️ 成功格擋！只受到 ${taken} 點傷害！`, 'sys');
     popDmg(taken, '#60a5fa');
 
   } else if (reactionType === 'dodge') {
-    // 閃避：盜賊70% / 其他50% 完全無傷，失敗吃全傷
-    const dodgeChance = cls === 'rogue' ? 0.70 : 0.50;
-    if (Math.random() < dodgeChance) {
+    if (Math.random() < traits.dodgeChance) {
       addLog(`💨 完美閃避！完全躲開了 ${e.name} 的攻擊！`, 'good');
     } else {
       p.hp -= rawDmg;
@@ -1080,26 +1102,20 @@ function doReaction(reactionType) {
     }
 
   } else if (reactionType === 'counter') {
-    // 反擊：受 80% 傷害 + 立即還擊
     const taken = Math.max(1, Math.round(rawDmg * 0.80));
     p.hp -= taken;
     addLog(`⚡ 反擊！受到 ${taken} 點傷害…`, 'bad');
     popDmg(taken, '#ef4444');
 
     if (p.hp > 0) {
-      if (cls === 'mage') {
-        // 法師反擊 = 附加灼燒
-        const cd = dealDmg(totalAtk() * 0.8, e.def);
-        e.hp -= cd;
-        e.burn = Math.min(3, (e.burn||0) + 2);
-        addLog(`🔥 法師反擊！造成 ${cd} 傷害並附加灼燒！`, 'dmg');
-        popDmg(cd, '#f97316');
+      const counterDmg = dealDmg(totalAtk() * traits.counterMult, e.def);
+      e.hp -= counterDmg;
+      if (traits.counterFx) {
+        traits.counterFx(p, e);
       } else {
-        const cd = dealDmg(totalAtk() * (cls === 'rogue' ? 1.2 : 1.0), e.def);
-        e.hp -= cd;
-        addLog(`⚡ 反擊成功！還擊 ${e.name} 造成 ${cd} 傷害！`, 'dmg');
-        popDmg(cd, '#fb923c');
+        addLog(`⚡ 反擊成功！還擊 ${e.name} 造成 ${counterDmg} 傷害！`, 'dmg');
       }
+      popDmg(counterDmg, traits.counterFx ? '#f97316' : '#fb923c');
       updateEnemyHpBar(e);
       if (e.hp <= 0) { updatePanel(); battleWin(); return; }
     }
