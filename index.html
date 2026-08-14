@@ -5,481 +5,1281 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>小遊戲合輯</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    /* ── 星空漸層背景 ── */
+    /* ── 基礎背景 ── */
     body {
-      background: #08080f;
-      background-image:
-        radial-gradient(ellipse 80% 60% at 50% -10%, rgba(88, 50, 180, 0.35) 0%, transparent 70%),
-        radial-gradient(ellipse 50% 40% at 80% 90%, rgba(30, 80, 180, 0.2) 0%, transparent 60%);
+      background: #07070e;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
       font-family: -apple-system, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
       color: #f0f0f5;
-      padding: 64px 24px 48px;
     }
 
-    /* ── 小星星 ── */
-    body::before {
-      content: '';
+    /* 星空粒子背景 */
+    #star-canvas {
       position: fixed;
       inset: 0;
       pointer-events: none;
-      background-image:
-        radial-gradient(1px 1px at 15% 20%, rgba(255,255,255,0.6) 0%, transparent 100%),
-        radial-gradient(1px 1px at 40% 10%, rgba(255,255,255,0.4) 0%, transparent 100%),
-        radial-gradient(1px 1px at 70% 30%, rgba(255,255,255,0.5) 0%, transparent 100%),
-        radial-gradient(1px 1px at 85% 15%, rgba(255,255,255,0.3) 0%, transparent 100%),
-        radial-gradient(1px 1px at 25% 70%, rgba(255,255,255,0.3) 0%, transparent 100%),
-        radial-gradient(1px 1px at 60% 80%, rgba(255,255,255,0.4) 0%, transparent 100%),
-        radial-gradient(1px 1px at 92% 55%, rgba(255,255,255,0.3) 0%, transparent 100%),
-        radial-gradient(1.5px 1.5px at 5% 50%, rgba(255,255,255,0.5) 0%, transparent 100%);
+      z-index: 0;
     }
 
-    /* ── Header ── */
-    header {
-      text-align: center;
-      margin-bottom: 56px;
+    /* ═══════════════════════════════════
+       頁首 (全寬 Header Bar)
+    ═══════════════════════════════════ */
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      width: 100%;
+      background: rgba(7, 7, 14, 0.75);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border-bottom: 1px solid rgba(255,255,255,0.07);
     }
 
-    .header-eyebrow {
+    .header-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 28px;
+      height: 58px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    /* Logo 區塊 */
+    .header-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      flex-shrink: 0;
+    }
+    .header-logo-icon {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, #7c3aed, #3b82f6);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .header-logo-icon svg {
+      width: 18px;
+      height: 18px;
+    }
+    .header-logo-text {
+      font-size: 15px;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: -0.3px;
+    }
+
+    /* 分隔線 */
+    .header-divider {
+      width: 1px;
+      height: 20px;
+      background: rgba(255,255,255,0.12);
+      flex-shrink: 0;
+    }
+
+    /* 副標籤 */
+    .header-sub {
+      font-size: 12.5px;
+      color: rgba(255,255,255,0.35);
+      letter-spacing: 0.2px;
+    }
+
+    /* 彈性空白 */
+    .header-spacer { flex: 1; }
+
+    /* 遊戲數量 badge */
+    .header-count {
+      font-size: 11px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.4);
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 99px;
+      padding: 4px 12px;
+      letter-spacing: 0.5px;
+    }
+
+    /* GitHub 連結 */
+    .header-github {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      text-decoration: none;
+      color: rgba(255,255,255,0.4);
+      font-size: 12.5px;
+      transition: color 0.2s;
+      flex-shrink: 0;
+    }
+    .header-github:hover { color: rgba(255,255,255,0.8); }
+
+    /* ═══════════════════════════════════
+       主體
+    ═══════════════════════════════════ */
+    .main-content {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 1200px;
+      padding: 52px 28px 64px;
+    }
+
+    /* Hero 文字區 */
+    .hero {
+      margin-bottom: 52px;
+    }
+    .hero-eyebrow {
       font-size: 11px;
       font-weight: 600;
       letter-spacing: 3px;
       text-transform: uppercase;
-      color: rgba(255,255,255,0.4);
-      margin-bottom: 12px;
+      color: rgba(255,255,255,0.3);
+      margin-bottom: 14px;
     }
-
-    header h1 {
-      font-size: 42px;
-      font-weight: 700;
-      letter-spacing: -0.5px;
-      background: linear-gradient(135deg, #ffffff 0%, rgba(200,190,255,0.9) 100%);
+    .hero h1 {
+      font-size: 44px;
+      font-weight: 800;
+      letter-spacing: -1px;
+      line-height: 1.1;
+      background: linear-gradient(130deg, #ffffff 0%, rgba(180,160,255,0.9) 55%, rgba(100,160,255,0.7) 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
+      margin-bottom: 12px;
     }
-
-    header p {
-      margin-top: 10px;
+    .hero p {
       font-size: 15px;
-      color: rgba(255,255,255,0.4);
-      letter-spacing: 0.3px;
+      color: rgba(255,255,255,0.38);
+      letter-spacing: 0.2px;
+      max-width: 360px;
+      line-height: 1.6;
     }
 
-    /* ── Grid：桌機 4 欄 ── */
+    /* ═══════════════════════════════════
+       遊戲卡片 Grid
+    ═══════════════════════════════════ */
     .grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 18px;
-      width: 100%;
-      max-width: 1160px;
+      gap: 20px;
     }
-
-    /* ── 平板：2 欄 ── */
-    @media (max-width: 991px) {
+    @media (max-width: 1024px) {
+      .grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (max-width: 767px) {
       .grid { grid-template-columns: repeat(2, 1fr); }
+      .hero h1 { font-size: 32px; }
     }
-
-    /* ── 手機：1 欄 ── */
-    @media (max-width: 575px) {
+    @media (max-width: 480px) {
       .grid { grid-template-columns: 1fr; }
-      header h1 { font-size: 30px; }
+      .main-content { padding: 36px 16px 48px; }
     }
 
-    /* ── 毛玻璃卡片 ── */
+    /* ── 卡片 ── */
     .card {
-      background: rgba(255, 255, 255, 0.055);
-      backdrop-filter: blur(24px) saturate(180%);
-      -webkit-backdrop-filter: blur(24px) saturate(180%);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 22px;
-      padding: 28px 22px 24px;
+      background: rgba(255,255,255,0.042);
+      border: 1px solid rgba(255,255,255,0.085);
+      border-radius: 20px;
+      padding: 0;
       text-decoration: none;
       color: inherit;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      gap: 12px;
-      transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+      overflow: hidden;
+      transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1),
                   border-color 0.25s ease,
                   box-shadow 0.25s ease;
       cursor: pointer;
       position: relative;
-      overflow: hidden;
     }
 
-    /* 卡片頂部光澤條 */
     .card::before {
       content: '';
       position: absolute;
       top: 0; left: 10%; right: 10%;
       height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
+      z-index: 2;
     }
 
     .card:hover {
-      transform: translateY(-6px) scale(1.02);
-      border-color: rgba(255, 255, 255, 0.22);
+      transform: translateY(-7px) scale(1.015);
+      border-color: rgba(255,255,255,0.18);
       box-shadow:
-        0 20px 60px rgba(0,0,0,0.5),
-        0 0 40px -8px var(--accent-glow, rgba(120,80,255,0.4));
+        0 24px 64px rgba(0,0,0,0.55),
+        0 0 48px -10px var(--accent-glow, rgba(120,80,255,0.4));
     }
 
-    /* ── 圖示圓角方塊 ── */
-    .card-icon {
-      width: 76px;
-      height: 76px;
-      border-radius: 22px;
-      background: linear-gradient(145deg, var(--accent), var(--accent-dark, #000a));
+    /* 卡片頂部互動畫布區 */
+    .card-canvas-wrap {
+      width: 100%;
+      height: 110px;
+      position: relative;
+      overflow: hidden;
+      background: rgba(0,0,0,0.25);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .card-canvas-wrap canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* hover 時顯示「動畫層」 */
+    .card-canvas-wrap .anim-hint {
+      position: absolute;
+      inset: 0;
       display: flex;
       align-items: center;
       justify-content: center;
-      flex-shrink: 0;
-      box-shadow: 0 8px 24px -4px var(--accent-glow, rgba(0,0,0,0.4));
-      position: relative;
+      font-size: 11px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.2);
+      pointer-events: none;
+      transition: opacity 0.3s;
+    }
+    .card:hover .anim-hint { opacity: 0; }
+
+    /* 卡片內容區 */
+    .card-body {
+      padding: 18px 18px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex: 1;
     }
 
-    /* 圖示內光澤 */
-    .card-icon::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      border-radius: inherit;
-      background: linear-gradient(160deg, rgba(255,255,255,0.2) 0%, transparent 55%);
-    }
-
-    .card-icon svg {
-      width: 44px;
-      height: 44px;
-      image-rendering: pixelated;
-      position: relative;
-      z-index: 1;
+    .card-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
     }
 
     .card h2 {
-      font-size: 16px;
-      font-weight: 600;
+      font-size: 15px;
+      font-weight: 700;
       color: rgba(255,255,255,0.95);
-      letter-spacing: -0.1px;
-      text-align: center;
+      letter-spacing: -0.2px;
+    }
+
+    .badge {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 3px 9px;
+      border-radius: 99px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.38);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      white-space: nowrap;
+      flex-shrink: 0;
     }
 
     .card p {
-      font-size: 12.5px;
-      color: rgba(255,255,255,0.45);
-      text-align: center;
+      font-size: 12px;
+      color: rgba(255,255,255,0.38);
       line-height: 1.65;
     }
 
-    /* ── Badge ── */
-    .badge {
-      font-size: 10.5px;
-      font-weight: 500;
-      padding: 4px 12px;
-      border-radius: 99px;
-      background: rgba(255,255,255,0.08);
-      border: 1px solid rgba(255,255,255,0.1);
-      color: rgba(255,255,255,0.45);
-      letter-spacing: 0.6px;
-      text-transform: uppercase;
-    }
-
-    /* ── Footer ── */
-    footer {
-      margin-top: 64px;
-      font-size: 12px;
-      color: rgba(255,255,255,0.2);
-      border-top: 1px solid rgba(255,255,255,0.07);
-      padding-top: 20px;
+    /* ═══════════════════════════════════
+       Footer
+    ═══════════════════════════════════ */
+    .site-footer {
+      position: relative;
+      z-index: 1;
+      margin-top: auto;
       width: 100%;
-      max-width: 760px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      padding: 20px 28px;
       text-align: center;
+      font-size: 12px;
+      color: rgba(255,255,255,0.18);
     }
-    footer a {
-      color: rgba(255,255,255,0.3);
+    .site-footer a {
+      color: rgba(255,255,255,0.28);
       text-decoration: none;
+      transition: color 0.2s;
     }
-    footer a:hover {
-      color: rgba(255,255,255,0.6);
-    }
+    .site-footer a:hover { color: rgba(255,255,255,0.6); }
   </style>
 </head>
 <body>
 
-<header>
-  <div class="header-eyebrow">Game Collection</div>
-  <h1>小遊戲合輯</h1>
-  <p>選擇一個遊戲，開始你的挑戰</p>
+<!-- 星空 canvas 背景 -->
+<canvas id="star-canvas"></canvas>
+
+<!-- ═══════════ 頁首 ═══════════ -->
+<header class="site-header">
+  <div class="header-inner">
+    <a class="header-logo" href="/">
+      <div class="header-logo-icon">
+        <svg viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="2" y="6" width="3" height="3" fill="white" opacity="0.9"/>
+          <rect x="7" y="3" width="3" height="3" fill="white" opacity="0.7"/>
+          <rect x="12" y="6" width="3" height="3" fill="white" opacity="0.9"/>
+          <rect x="7" y="10" width="3" height="3" fill="white" opacity="0.6"/>
+          <rect x="4" y="13" width="3" height="2" fill="white" opacity="0.5"/>
+          <rect x="11" y="13" width="3" height="2" fill="white" opacity="0.5"/>
+        </svg>
+      </div>
+      <span class="header-logo-text">GameHub</span>
+    </a>
+    <div class="header-divider"></div>
+    <span class="header-sub">小遊戲合輯</span>
+    <div class="header-spacer"></div>
+    <span class="header-count">9 款遊戲</span>
+    <a class="header-github" href="https://github.com/bebe0207/game" target="_blank">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+      </svg>
+      GitHub
+    </a>
+  </div>
 </header>
 
-<div class="grid">
+<!-- ═══════════ 主體 ═══════════ -->
+<main class="main-content">
 
-  <!-- 俄羅斯方塊 -->
-  <a class="card" href="games/tetris.html" style="--accent:#00cfcf; --accent-dark:#005f5f; --accent-glow:rgba(0,207,207,0.35);">
-    <div class="card-icon">
-      <!-- pixel: tetromino L+S piece on 8x8 grid -->
-      <svg viewBox="0 0 8 8" xmlns="http://www.w3.org/2000/svg">
-        <!-- I-piece row -->
-        <rect x="0" y="1" width="1" height="1" fill="#fff"/>
-        <rect x="1" y="1" width="1" height="1" fill="#fff"/>
-        <rect x="2" y="1" width="1" height="1" fill="#fff"/>
-        <rect x="3" y="1" width="1" height="1" fill="#fff"/>
-        <!-- L-piece -->
-        <rect x="1" y="3" width="1" height="1" fill="#fff"/>
-        <rect x="1" y="4" width="1" height="1" fill="#fff"/>
-        <rect x="1" y="5" width="1" height="1" fill="#fff"/>
-        <rect x="2" y="5" width="1" height="1" fill="#fff"/>
-        <!-- S-piece -->
-        <rect x="4" y="4" width="1" height="1" fill="#ffffffcc"/>
-        <rect x="5" y="4" width="1" height="1" fill="#ffffffcc"/>
-        <rect x="3" y="5" width="1" height="1" fill="#ffffffcc"/>
-        <rect x="4" y="5" width="1" height="1" fill="#ffffffcc"/>
-        <!-- T-piece -->
-        <rect x="5" y="2" width="1" height="1" fill="#ffffffaa"/>
-        <rect x="6" y="2" width="1" height="1" fill="#ffffffaa"/>
-        <rect x="7" y="2" width="1" height="1" fill="#ffffffaa"/>
-        <rect x="6" y="3" width="1" height="1" fill="#ffffffaa"/>
-        <!-- floor line -->
-        <rect x="0" y="7" width="8" height="1" fill="#ffffff55"/>
-      </svg>
-    </div>
-    <h2>俄羅斯方塊</h2>
-    <p>經典俄羅斯方塊，嘗試得到最高分吧</p>
-    <span class="badge">Tetris</span>
-  </a>
+  <div class="hero">
+    <div class="hero-eyebrow">Game Collection · v2.0</div>
+    <h1>選個遊戲<br>開始挑戰</h1>
+    <p>滑鼠移到卡片上，看看每個遊戲的預覽動畫</p>
+  </div>
 
-  <!-- 貪吃蛇 -->
-  <a class="card" href="games/snake.html" style="--accent:#22c55e; --accent-dark:#0a5a28; --accent-glow:rgba(34,197,94,0.35);">
-    <div class="card-icon">
-      <!-- pixel: snake body winding + apple -->
-      <svg viewBox="0 0 8 8" xmlns="http://www.w3.org/2000/svg">
-        <!-- snake body (bright) -->
-        <rect x="1" y="1" width="1" height="1" fill="#fff"/>
-        <rect x="2" y="1" width="1" height="1" fill="#fff"/>
-        <rect x="3" y="1" width="1" height="1" fill="#fff"/>
-        <rect x="3" y="2" width="1" height="1" fill="#fff"/>
-        <rect x="3" y="3" width="1" height="1" fill="#fff"/>
-        <rect x="2" y="3" width="1" height="1" fill="#fff"/>
-        <rect x="1" y="3" width="1" height="1" fill="#fff"/>
-        <rect x="1" y="4" width="1" height="1" fill="#fff"/>
-        <rect x="1" y="5" width="1" height="1" fill="#fff"/>
-        <!-- snake head (eye) -->
-        <rect x="2" y="5" width="1" height="1" fill="#fff"/>
-        <rect x="3" y="5" width="1" height="1" fill="#fff"/>
-        <rect x="3" y="4" width="1" height="1" fill="#000" opacity="0.5"/>
-        <!-- apple -->
-        <rect x="5" y="2" width="2" height="2" fill="#fff"/>
-        <rect x="6" y="1" width="1" height="1" fill="#ffffffaa"/>
-      </svg>
-    </div>
-    <h2>貪吃蛇</h2>
-    <p>想辦法吃更多東西，小心不要撞到自己的身體</p>
-    <span class="badge">Snake</span>
-  </a>
+  <div class="grid">
 
-  <!-- 打磚塊 -->
-  <a class="card" href="games/breakout.html" style="--accent:#f97316; --accent-dark:#7a3000; --accent-glow:rgba(249,115,22,0.35);">
-    <div class="card-icon">
-      <!-- pixel: bricks top, ball + paddle bottom -->
-      <svg viewBox="0 0 8 8" xmlns="http://www.w3.org/2000/svg">
-        <!-- bricks row 1 -->
-        <rect x="0" y="0" width="3" height="1" fill="#fff"/>
-        <rect x="4" y="0" width="4" height="1" fill="#ffffffcc"/>
-        <!-- bricks row 2 -->
-        <rect x="0" y="2" width="4" height="1" fill="#ffffffcc"/>
-        <rect x="5" y="2" width="3" height="1" fill="#fff"/>
-        <!-- bricks row 3 (partial — ball hit) -->
-        <rect x="0" y="4" width="2" height="1" fill="#ffffff66"/>
-        <rect x="3" y="4" width="2" height="1" fill="#ffffff66"/>
-        <rect x="6" y="4" width="2" height="1" fill="#ffffff66"/>
-        <!-- ball -->
-        <rect x="4" y="3" width="1" height="1" fill="#fff"/>
-        <!-- paddle -->
-        <rect x="2" y="7" width="4" height="1" fill="#fff"/>
-      </svg>
-    </div>
-    <h2>打磚塊</h2>
-    <p>童年遊戲，試著把全部磚塊都打掉吧</p>
-    <span class="badge">Breakout</span>
-  </a>
+    <!-- 俄羅斯方塊 -->
+    <a class="card" href="games/tetris.html" data-game="tetris"
+       style="--accent:#00cfcf; --accent-glow:rgba(0,207,207,0.4);">
+      <div class="card-canvas-wrap">
+        <canvas class="game-canvas"></canvas>
+        <div class="anim-hint">Preview</div>
+      </div>
+      <div class="card-body">
+        <div class="card-title-row">
+          <h2>俄羅斯方塊</h2>
+          <span class="badge" style="color:#00cfcf;border-color:rgba(0,207,207,0.3);">Tetris</span>
+        </div>
+        <p>經典俄羅斯方塊，嘗試得到最高分吧</p>
+      </div>
+    </a>
 
-  <!-- 塔羅占卜 -->
-  <a class="card" href="games/tarot.html" style="--accent:#a855f7; --accent-dark:#4a1a7a; --accent-glow:rgba(168,85,247,0.4);">
-    <div class="card-icon">
-      <!-- pixel: tarot card with star symbol -->
-      <svg viewBox="0 0 8 8" xmlns="http://www.w3.org/2000/svg">
-        <!-- card outline -->
-        <rect x="1" y="0" width="6" height="8" fill="none" stroke="#fff" stroke-width="0.3"/>
-        <!-- star center -->
-        <rect x="3" y="2" width="2" height="1" fill="#fff"/>
-        <rect x="4" y="1" width="1" height="1" fill="#fff"/>
-        <rect x="4" y="3" width="1" height="1" fill="#fff"/>
-        <rect x="2" y="2" width="1" height="1" fill="#ffffffaa"/>
-        <rect x="5" y="2" width="1" height="1" fill="#ffffffaa"/>
-        <!-- sparkles small -->
-        <rect x="2" y="5" width="1" height="1" fill="#ffffffaa"/>
-        <rect x="5" y="5" width="1" height="1" fill="#ffffffaa"/>
-        <rect x="4" y="6" width="1" height="1" fill="#ffffff66"/>
-      </svg>
-    </div>
-    <h2>塔羅占卜</h2>
-    <p>有迷惘的事情嗎?想知道他/她在想什麼嗎?來試試塔羅牌吧</p>
-    <span class="badge">Tarot</span>
-  </a>
+    <!-- 貪吃蛇 -->
+    <a class="card" href="games/snake.html" data-game="snake"
+       style="--accent:#22c55e; --accent-glow:rgba(34,197,94,0.4);">
+      <div class="card-canvas-wrap">
+        <canvas class="game-canvas"></canvas>
+        <div class="anim-hint">Preview</div>
+      </div>
+      <div class="card-body">
+        <div class="card-title-row">
+          <h2>貪吃蛇</h2>
+          <span class="badge" style="color:#22c55e;border-color:rgba(34,197,94,0.3);">Snake</span>
+        </div>
+        <p>想辦法吃更多東西，小心不要撞到自己的身體</p>
+      </div>
+    </a>
 
-  <!-- 俄羅斯方塊對戰 -->
-  <a class="card" href="games/tetris-battle.html" style="--accent:#ef4444; --accent-dark:#6a0a0a; --accent-glow:rgba(239,68,68,0.35);">
-    <div class="card-icon">
-      <!-- pixel: two mini grids side by side with VS in middle -->
-      <svg viewBox="0 0 8 8" xmlns="http://www.w3.org/2000/svg">
-        <!-- left mini board -->
-        <rect x="0" y="2" width="1" height="1" fill="#fff"/>
-        <rect x="0" y="3" width="1" height="1" fill="#fff"/>
-        <rect x="1" y="3" width="1" height="1" fill="#fff"/>
-        <rect x="0" y="4" width="1" height="1" fill="#fff"/>
-        <rect x="0" y="5" width="2" height="1" fill="#fff"/>
-        <!-- right mini board -->
-        <rect x="7" y="2" width="1" height="1" fill="#ffffffcc"/>
-        <rect x="6" y="3" width="2" height="1" fill="#ffffffcc"/>
-        <rect x="7" y="4" width="1" height="1" fill="#ffffffcc"/>
-        <rect x="6" y="5" width="2" height="1" fill="#ffffffcc"/>
-        <!-- VS divider -->
-        <rect x="3" y="3" width="1" height="1" fill="#fff"/>
-        <rect x="4" y="4" width="1" height="1" fill="#fff"/>
-        <rect x="3" y="5" width="1" height="1" fill="#fff"/>
-        <rect x="4" y="3" width="1" height="1" fill="#fff"/>
-        <rect x="3" y="4" width="1" height="1" fill="#fff"/>
-        <rect x="4" y="5" width="1" height="1" fill="#fff"/>
-      </svg>
-    </div>
-    <h2>俄羅斯方塊對戰</h2>
-    <p>俄羅斯方塊，與你的朋友一起對戰吧!</p>
-    <span class="badge">Battle</span>
-  </a>
+    <!-- 打磚塊 -->
+    <a class="card" href="games/breakout.html" data-game="breakout"
+       style="--accent:#f97316; --accent-glow:rgba(249,115,22,0.4);">
+      <div class="card-canvas-wrap">
+        <canvas class="game-canvas"></canvas>
+        <div class="anim-hint">Preview</div>
+      </div>
+      <div class="card-body">
+        <div class="card-title-row">
+          <h2>打磚塊</h2>
+          <span class="badge" style="color:#f97316;border-color:rgba(249,115,22,0.3);">Breakout</span>
+        </div>
+        <p>童年遊戲，試著把全部磚塊都打掉吧</p>
+      </div>
+    </a>
 
-  <!-- 貪吃蛇對戰 -->
-  <a class="card" href="games/snake-battle.html" style="--accent:#22c55e; --accent-dark:#0a5a28; --accent-glow:rgba(34,197,94,0.35);">
-    <div class="card-icon">
-      <!-- pixel: two snakes facing each other -->
-      <svg viewBox="0 0 8 8" xmlns="http://www.w3.org/2000/svg">
-        <!-- snake 1 (top-left, moving right) -->
-        <rect x="0" y="1" width="1" height="1" fill="#fff"/>
-        <rect x="1" y="1" width="1" height="1" fill="#fff"/>
-        <rect x="2" y="1" width="1" height="1" fill="#fff"/>
-        <rect x="2" y="2" width="1" height="1" fill="#fff"/>
-        <rect x="3" y="2" width="1" height="1" fill="#fff"/>
-        <!-- snake 1 head dot eye -->
-        <rect x="3" y="1" width="1" height="1" fill="#fff"/>
-        <!-- snake 2 (bottom-right, moving left) -->
-        <rect x="7" y="6" width="1" height="1" fill="#ffffffcc"/>
-        <rect x="6" y="6" width="1" height="1" fill="#ffffffcc"/>
-        <rect x="5" y="6" width="1" height="1" fill="#ffffffcc"/>
-        <rect x="5" y="5" width="1" height="1" fill="#ffffffcc"/>
-        <rect x="4" y="5" width="1" height="1" fill="#ffffffcc"/>
-        <!-- snake 2 head -->
-        <rect x="4" y="6" width="1" height="1" fill="#ffffffcc"/>
-        <!-- center collision spark -->
-        <rect x="3" y="3" width="1" height="1" fill="#ffffff66"/>
-        <rect x="4" y="4" width="1" height="1" fill="#ffffff66"/>
-      </svg>
-    </div>
-    <h2>貪吃蛇對戰</h2>
-    <p>想辦法活下去，殺死你的對手</p>
-    <span class="badge">Snake Battle</span>
-  </a>
+    <!-- 塔羅占卜 -->
+    <a class="card" href="games/tarot.html" data-game="tarot"
+       style="--accent:#a855f7; --accent-glow:rgba(168,85,247,0.4);">
+      <div class="card-canvas-wrap">
+        <canvas class="game-canvas"></canvas>
+        <div class="anim-hint">Preview</div>
+      </div>
+      <div class="card-body">
+        <div class="card-title-row">
+          <h2>塔羅占卜</h2>
+          <span class="badge" style="color:#a855f7;border-color:rgba(168,85,247,0.3);">Tarot</span>
+        </div>
+        <p>有迷惘的事情嗎？來試試塔羅牌吧</p>
+      </div>
+    </a>
 
-  <!-- 問答遊戲 -->
-  <a class="card" href="games/quiz.html" style="--accent:#a855f7; --accent-dark:#4a1a7a; --accent-glow:rgba(168,85,247,0.4);">
-    <div class="card-icon">
-      <!-- pixel: question mark -->
-      <svg viewBox="0 0 8 8" xmlns="http://www.w3.org/2000/svg">
-        <!-- ? top arc -->
-        <rect x="2" y="0" width="4" height="1" fill="#fff"/>
-        <rect x="5" y="1" width="1" height="1" fill="#fff"/>
-        <rect x="5" y="2" width="1" height="1" fill="#fff"/>
-        <rect x="4" y="3" width="1" height="1" fill="#fff"/>
-        <rect x="3" y="3" width="1" height="1" fill="#fff"/>
-        <!-- ? stem -->
-        <rect x="3" y="4" width="1" height="1" fill="#fff"/>
-        <!-- ? dot -->
-        <rect x="3" y="6" width="1" height="1" fill="#fff"/>
-        <!-- left side arc -->
-        <rect x="2" y="1" width="1" height="1" fill="#fff"/>
-      </svg>
-    </div>
-    <h2>問答遊戲</h2>
-    <p>問與答，想辦法得到最高分吧</p>
-    <span class="badge">Quiz</span>
-  </a>
+    <!-- 俄羅斯方塊對戰 -->
+    <a class="card" href="games/tetris-battle.html" data-game="tetris-battle"
+       style="--accent:#ef4444; --accent-glow:rgba(239,68,68,0.4);">
+      <div class="card-canvas-wrap">
+        <canvas class="game-canvas"></canvas>
+        <div class="anim-hint">Preview</div>
+      </div>
+      <div class="card-body">
+        <div class="card-title-row">
+          <h2>俄羅斯方塊對戰</h2>
+          <span class="badge" style="color:#ef4444;border-color:rgba(239,68,68,0.3);">Battle</span>
+        </div>
+        <p>俄羅斯方塊，與你的朋友一起對戰吧！</p>
+      </div>
+    </a>
 
-  <!-- 深淵地下城 -->
-  <a class="card" href="games/dungeon.html" style="--accent:#ef4444; --accent-dark:#6a0a0a; --accent-glow:rgba(239,68,68,0.35);">
-    <div class="card-icon">
-      <!-- pixel: sword + shield -->
-      <svg viewBox="0 0 8 8" xmlns="http://www.w3.org/2000/svg">
-        <!-- sword blade (diagonal top-right) -->
-        <rect x="5" y="0" width="1" height="1" fill="#fff"/>
-        <rect x="4" y="1" width="1" height="1" fill="#fff"/>
-        <rect x="3" y="2" width="1" height="1" fill="#fff"/>
-        <rect x="2" y="3" width="1" height="1" fill="#fff"/>
-        <!-- crossguard -->
-        <rect x="1" y="3" width="1" height="1" fill="#ffffffcc"/>
-        <rect x="3" y="3" width="1" height="1" fill="#ffffffcc"/>
-        <!-- handle -->
-        <rect x="1" y="4" width="1" height="1" fill="#fff"/>
-        <rect x="0" y="5" width="1" height="1" fill="#fff"/>
-        <!-- shield (bottom-right) -->
-        <rect x="5" y="3" width="3" height="1" fill="#ffffffcc"/>
-        <rect x="5" y="4" width="3" height="1" fill="#ffffffcc"/>
-        <rect x="5" y="5" width="3" height="1" fill="#ffffffcc"/>
-        <rect x="6" y="6" width="1" height="1" fill="#ffffffcc"/>
-      </svg>
-    </div>
-    <h2>深淵地下城</h2>
-    <p>文字 RPG！三種職業、20 層地下城、回合制戰鬥、商店裝備、Boss 結局！</p>
-    <span class="badge">Dungeon RPG</span>
-  </a>
+    <!-- 貪吃蛇對戰 -->
+    <a class="card" href="games/snake-battle.html" data-game="snake-battle"
+       style="--accent:#86efac; --accent-glow:rgba(134,239,172,0.4);">
+      <div class="card-canvas-wrap">
+        <canvas class="game-canvas"></canvas>
+        <div class="anim-hint">Preview</div>
+      </div>
+      <div class="card-body">
+        <div class="card-title-row">
+          <h2>貪吃蛇對戰</h2>
+          <span class="badge" style="color:#86efac;border-color:rgba(134,239,172,0.3);">Snake Battle</span>
+        </div>
+        <p>想辦法活下去，殺死你的對手</p>
+      </div>
+    </a>
 
-  <!-- 問答聯線對戰 -->
-  <a class="card" href="games/quiz-lobby.html" style="--accent:#f5c518; --accent-dark:#7a5e00; --accent-glow:rgba(245,197,24,0.35);">
-    <div class="card-icon">
-      <!-- pixel: wifi / broadcast waves -->
-      <svg viewBox="0 0 8 8" xmlns="http://www.w3.org/2000/svg">
-        <!-- outermost arc -->
-        <rect x="0" y="3" width="1" height="1" fill="#ffffff55"/>
-        <rect x="1" y="2" width="1" height="1" fill="#ffffff55"/>
-        <rect x="2" y="1" width="1" height="1" fill="#ffffff55"/>
-        <rect x="3" y="0" width="2" height="1" fill="#ffffff55"/>
-        <rect x="5" y="1" width="1" height="1" fill="#ffffff55"/>
-        <rect x="6" y="2" width="1" height="1" fill="#ffffff55"/>
-        <rect x="7" y="3" width="1" height="1" fill="#ffffff55"/>
-        <!-- mid arc -->
-        <rect x="1" y="4" width="1" height="1" fill="#ffffffaa"/>
-        <rect x="2" y="3" width="1" height="1" fill="#ffffffaa"/>
-        <rect x="3" y="2" width="2" height="1" fill="#ffffffaa"/>
-        <rect x="5" y="3" width="1" height="1" fill="#ffffffaa"/>
-        <rect x="6" y="4" width="1" height="1" fill="#ffffffaa"/>
-        <!-- inner arc -->
-        <rect x="2" y="5" width="1" height="1" fill="#fff"/>
-        <rect x="3" y="4" width="2" height="1" fill="#fff"/>
-        <rect x="5" y="5" width="1" height="1" fill="#fff"/>
-        <!-- dot center -->
-        <rect x="3" y="6" width="2" height="1" fill="#fff"/>
-      </svg>
-    </div>
-    <h2>問答聯線對戰</h2>
-    <p>主持人出題、玩家搶答，多人即時排行！</p>
-    <span class="badge">Live Quiz</span>
-  </a>
+    <!-- 問答遊戲 -->
+    <a class="card" href="games/quiz.html" data-game="quiz"
+       style="--accent:#a855f7; --accent-glow:rgba(168,85,247,0.4);">
+      <div class="card-canvas-wrap">
+        <canvas class="game-canvas"></canvas>
+        <div class="anim-hint">Preview</div>
+      </div>
+      <div class="card-body">
+        <div class="card-title-row">
+          <h2>問答遊戲</h2>
+          <span class="badge" style="color:#a855f7;border-color:rgba(168,85,247,0.3);">Quiz</span>
+        </div>
+        <p>問與答，想辦法得到最高分吧</p>
+      </div>
+    </a>
 
-</div>
+    <!-- 深淵地下城 -->
+    <a class="card" href="games/dungeon.html" data-game="dungeon"
+       style="--accent:#ef4444; --accent-glow:rgba(239,68,68,0.4);">
+      <div class="card-canvas-wrap">
+        <canvas class="game-canvas"></canvas>
+        <div class="anim-hint">Preview</div>
+      </div>
+      <div class="card-body">
+        <div class="card-title-row">
+          <h2>深淵地下城</h2>
+          <span class="badge" style="color:#ef4444;border-color:rgba(239,68,68,0.3);">Dungeon RPG</span>
+        </div>
+        <p>文字 RPG！三種職業、20 層地下城、回合制戰鬥！</p>
+      </div>
+    </a>
 
-<footer>小遊戲合輯 v2.0 &nbsp;·&nbsp; <a href="https://github.com/bebe0207/game" target="_blank" style="color:#555;text-decoration:none;">GitHub</a></footer>
+    <!-- 問答聯線對戰 -->
+    <a class="card" href="games/quiz-lobby.html" data-game="quiz-live"
+       style="--accent:#f5c518; --accent-glow:rgba(245,197,24,0.4);">
+      <div class="card-canvas-wrap">
+        <canvas class="game-canvas"></canvas>
+        <div class="anim-hint">Preview</div>
+      </div>
+      <div class="card-body">
+        <div class="card-title-row">
+          <h2>問答聯線對戰</h2>
+          <span class="badge" style="color:#f5c518;border-color:rgba(245,197,24,0.3);">Live Quiz</span>
+        </div>
+        <p>主持人出題、玩家搶答，多人即時排行！</p>
+      </div>
+    </a>
 
+  </div>
+</main>
+
+<footer class="site-footer">
+  小遊戲合輯 v2.0 &nbsp;·&nbsp;
+  <a href="https://github.com/bebe0207/game" target="_blank">GitHub</a>
+</footer>
+
+<script>
+/* ════════════════════════════════════════════════
+   星空背景
+════════════════════════════════════════════════ */
+(function () {
+  const canvas = document.getElementById('star-canvas');
+  const ctx = canvas.getContext('2d');
+  const stars = [];
+
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  for (let i = 0; i < 120; i++) {
+    stars.push({
+      x: Math.random(),
+      y: Math.random(),
+      r: Math.random() * 1.2 + 0.3,
+      alpha: Math.random() * 0.5 + 0.1,
+      speed: Math.random() * 0.0003 + 0.0001,
+      phase: Math.random() * Math.PI * 2
+    });
+  }
+
+  let t = 0;
+  function drawStars() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    t += 0.016;
+    stars.forEach(s => {
+      const a = s.alpha * (0.6 + 0.4 * Math.sin(t * 1.2 + s.phase));
+      ctx.beginPath();
+      ctx.arc(s.x * canvas.width, s.y * canvas.height, s.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255,255,255,${a})`;
+      ctx.fill();
+    });
+    requestAnimationFrame(drawStars);
+  }
+  drawStars();
+})();
+
+/* ════════════════════════════════════════════════
+   卡片互動動畫系統
+════════════════════════════════════════════════ */
+document.querySelectorAll('.card').forEach(card => {
+  const wrap = card.querySelector('.card-canvas-wrap');
+  const canvas = card.querySelector('canvas.game-canvas');
+  const gameType = card.dataset.game;
+  let animId = null;
+  let isRunning = false;
+  let state = null;
+
+  function getSize() {
+    return { w: wrap.clientWidth, h: wrap.clientHeight };
+  }
+
+  function initCanvas() {
+    const { w, h } = getSize();
+    canvas.width = w * devicePixelRatio;
+    canvas.height = h * devicePixelRatio;
+    canvas.style.width = w + 'px';
+    canvas.style.height = h + 'px';
+  }
+
+  /* ── 靜態預覽（不動） ── */
+  function drawIdle(ctx, w, h) {
+    ctx.clearRect(0, 0, w, h);
+    const accentColor = getAccent();
+    // 背景微光
+    const grd = ctx.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, h);
+    grd.addColorStop(0, accentColor.replace(')', ',0.08)').replace('rgb', 'rgba'));
+    grd.addColorStop(1, 'transparent');
+    ctx.fillStyle = grd;
+    ctx.fillRect(0, 0, w, h);
+  }
+
+  function getAccent() {
+    const s = card.style.getPropertyValue('--accent').trim();
+    return s || '#ffffff';
+  }
+
+  /* ════ SNAKE 動畫 ════ */
+  function initSnake(w, h) {
+    const CELL = 10;
+    const cols = Math.floor(w / CELL);
+    const rows = Math.floor(h / CELL);
+    const cx = Math.floor(cols / 2), cy = Math.floor(rows / 2);
+    const body = [
+      { x: cx, y: cy }, { x: cx - 1, y: cy }, { x: cx - 2, y: cy },
+      { x: cx - 3, y: cy }, { x: cx - 4, y: cy }
+    ];
+    return {
+      CELL, cols, rows, body,
+      dir: { x: 1, y: 0 },
+      food: { x: cx + 4, y: cy - 2 },
+      tick: 0,
+      turnTimer: 0,
+      color: getAccent()
+    };
+  }
+
+  function stepSnake(s) {
+    s.tick++;
+    if (s.tick % 8 !== 0) return;
+    // 簡單 AI：朝食物走
+    const head = s.body[0];
+    s.turnTimer++;
+    if (s.turnTimer > 5) {
+      s.turnTimer = 0;
+      const dx = s.food.x - head.x;
+      const dy = s.food.y - head.y;
+      if (Math.abs(dx) >= Math.abs(dy)) {
+        s.dir = { x: Math.sign(dx), y: 0 };
+      } else {
+        s.dir = { x: 0, y: Math.sign(dy) };
+      }
+    }
+    const nx = ((head.x + s.dir.x) + s.cols) % s.cols;
+    const ny = ((head.y + s.dir.y) + s.rows) % s.rows;
+    s.body.unshift({ x: nx, y: ny });
+    if (nx === s.food.x && ny === s.food.y) {
+      s.food = {
+        x: Math.floor(Math.random() * (s.cols - 2)) + 1,
+        y: Math.floor(Math.random() * (s.rows - 2)) + 1
+      };
+    } else {
+      s.body.pop();
+    }
+  }
+
+  function drawSnake(ctx, s, dpr) {
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    const C = s.CELL * dpr;
+    // 食物
+    ctx.fillStyle = '#ff4d6d';
+    ctx.fillRect(s.food.x * C + 1, s.food.y * C + 1, C - 2, C - 2);
+    // 蛇身
+    s.body.forEach((seg, i) => {
+      const alpha = 1 - i / (s.body.length + 2);
+      ctx.fillStyle = s.color;
+      ctx.globalAlpha = alpha * 0.9 + 0.1;
+      ctx.fillRect(seg.x * C + 1, seg.y * C + 1, C - 2, C - 2);
+    });
+    ctx.globalAlpha = 1;
+    // 眼睛
+    const h = s.body[0];
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(h.x * C + C * 0.6, h.y * C + C * 0.2, C * 0.2, C * 0.2);
+  }
+
+  /* ════ TETRIS 動畫 ════ */
+  function initTetris(w, h) {
+    const CELL = 10;
+    const PIECES = [
+      { shape: [[1,1,1,1]], color: '#00cfcf' },
+      { shape: [[1,1],[1,1]], color: '#f5c518' },
+      { shape: [[0,1,0],[1,1,1]], color: '#a855f7' },
+      { shape: [[1,0],[1,0],[1,1]], color: '#f97316' },
+      { shape: [[0,1],[0,1],[1,1]], color: '#3b82f6' },
+      { shape: [[1,1,0],[0,1,1]], color: '#22c55e' },
+      { shape: [[0,1,1],[1,1,0]], color: '#ef4444' },
+    ];
+    const cols = Math.floor(w / CELL);
+    const rows = Math.floor(h / CELL);
+    const board = Array.from({ length: rows }, () => Array(cols).fill(null));
+    // 預填幾行
+    for (let r = rows - 1; r >= rows - 3; r--) {
+      for (let c = 0; c < cols; c++) {
+        if (Math.random() > 0.35) board[r][c] = PIECES[Math.floor(Math.random() * PIECES.length)].color;
+      }
+    }
+    function newPiece() {
+      const p = PIECES[Math.floor(Math.random() * PIECES.length)];
+      return {
+        shape: p.shape, color: p.color,
+        x: Math.floor(cols / 2) - Math.floor(p.shape[0].length / 2),
+        y: -1
+      };
+    }
+    return { CELL, cols, rows, board, piece: newPiece(), newPiece, tick: 0, falling: 0 };
+  }
+
+  function stepTetris(s) {
+    s.tick++;
+    s.falling++;
+    if (s.falling < 6) return;
+    s.falling = 0;
+    const { piece, board, rows, cols } = s;
+    const ny = piece.y + 1;
+    // 碰撞檢測
+    let hit = false;
+    for (let r = 0; r < piece.shape.length; r++) {
+      for (let c = 0; c < piece.shape[r].length; c++) {
+        if (!piece.shape[r][c]) continue;
+        if (ny + r >= rows) { hit = true; break; }
+        if (ny + r >= 0 && board[ny + r][piece.x + c]) { hit = true; break; }
+      }
+      if (hit) break;
+    }
+    if (hit) {
+      // 固定到棋盤
+      piece.shape.forEach((row, r) => row.forEach((v, c) => {
+        if (v && piece.y + r >= 0) board[piece.y + r][piece.x + c] = piece.color;
+      }));
+      // 消行
+      for (let r = rows - 1; r >= 0; r--) {
+        if (board[r].every(Boolean)) {
+          board.splice(r, 1);
+          board.unshift(Array(cols).fill(null));
+        }
+      }
+      s.piece = s.newPiece();
+    } else {
+      piece.y = ny;
+    }
+  }
+
+  function drawTetris(ctx, s, dpr) {
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    const C = s.CELL * dpr;
+    // 棋盤
+    s.board.forEach((row, r) => row.forEach((color, c) => {
+      if (!color) return;
+      ctx.fillStyle = color;
+      ctx.globalAlpha = 0.75;
+      ctx.fillRect(c * C + 0.5, r * C + 0.5, C - 1, C - 1);
+    }));
+    // 當前方塊
+    const { piece } = s;
+    piece.shape.forEach((row, r) => row.forEach((v, c) => {
+      if (!v) return;
+      ctx.fillStyle = piece.color;
+      ctx.globalAlpha = 1;
+      ctx.fillRect((piece.x + c) * C + 0.5, (piece.y + r) * C + 0.5, C - 1, C - 1);
+    }));
+    ctx.globalAlpha = 1;
+  }
+
+  /* ════ BREAKOUT 動畫 ════ */
+  function initBreakout(w, h) {
+    const brickW = w / 8, brickH = h / 8;
+    const bricks = [];
+    const COLORS = ['#f97316','#fb923c','#fdba74','#fef08a','#86efac'];
+    for (let r = 0; r < 3; r++) {
+      for (let c = 0; c < 8; c++) {
+        if (Math.random() > 0.25)
+          bricks.push({ x: c * brickW, y: r * brickH + 8, w: brickW - 3, h: brickH - 3, color: COLORS[r % COLORS.length], alive: true });
+      }
+    }
+    const px = w / 2, pw = w * 0.28, ph = h * 0.07;
+    return {
+      bricks, brickW, brickH,
+      ball: { x: w / 2, y: h * 0.65, vx: 2.2, vy: -2.8, r: 5 },
+      paddle: { x: px - pw / 2, y: h - ph - 6, w: pw, h: ph },
+      w, h, tick: 0
+    };
+  }
+
+  function stepBreakout(s) {
+    s.tick++;
+    const { ball, paddle, bricks, w, h } = s;
+    ball.x += ball.vx;
+    ball.y += ball.vy;
+    if (ball.x - ball.r < 0) { ball.x = ball.r; ball.vx *= -1; }
+    if (ball.x + ball.r > w) { ball.x = w - ball.r; ball.vx *= -1; }
+    if (ball.y - ball.r < 0) { ball.y = ball.r; ball.vy *= -1; }
+    if (ball.y + ball.r > h) {
+      ball.y = h * 0.65; ball.x = w / 2;
+      ball.vx = (Math.random() - 0.5) * 4 + 1.5;
+      ball.vy = -2.8;
+    }
+    // 球拍跟球
+    paddle.x = ball.x - paddle.w / 2;
+    paddle.x = Math.max(0, Math.min(w - paddle.w, paddle.x));
+    // 球拍碰撞
+    if (ball.y + ball.r >= paddle.y && ball.y - ball.r <= paddle.y + paddle.h &&
+        ball.x >= paddle.x && ball.x <= paddle.x + paddle.w) {
+      ball.vy = -Math.abs(ball.vy);
+      ball.vx += ((ball.x - (paddle.x + paddle.w / 2)) / paddle.w) * 2;
+    }
+    // 磚塊碰撞
+    bricks.forEach(br => {
+      if (!br.alive) return;
+      if (ball.x + ball.r > br.x && ball.x - ball.r < br.x + br.w &&
+          ball.y + ball.r > br.y && ball.y - ball.r < br.y + br.h) {
+        br.alive = false;
+        ball.vy *= -1;
+      }
+    });
+    // 全打完就重置
+    if (bricks.every(b => !b.alive)) {
+      bricks.forEach(b => { b.alive = true; });
+    }
+  }
+
+  function drawBreakout(ctx, s, dpr) {
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    const sc = dpr;
+    const { ball, paddle, bricks } = s;
+    // 磚塊
+    bricks.forEach(br => {
+      if (!br.alive) return;
+      ctx.fillStyle = br.color;
+      ctx.fillRect(br.x * sc, br.y * sc, br.w * sc, br.h * sc);
+    });
+    // 球拍
+    ctx.fillStyle = '#fff';
+    ctx.globalAlpha = 0.85;
+    ctx.fillRect(paddle.x * sc, paddle.y * sc, paddle.w * sc, paddle.h * sc);
+    // 球
+    ctx.globalAlpha = 1;
+    ctx.beginPath();
+    ctx.arc(ball.x * sc, ball.y * sc, ball.r * sc, 0, Math.PI * 2);
+    ctx.fillStyle = '#fff';
+    ctx.fill();
+  }
+
+  /* ════ TAROT 動畫 ════ */
+  function initTarot(w, h) {
+    const cards = [];
+    const cardW = w * 0.14, cardH = h * 0.55;
+    const total = 5;
+    for (let i = 0; i < total; i++) {
+      cards.push({
+        x: (w / (total + 1)) * (i + 1),
+        y: h / 2 + h * 0.12,
+        w: cardW, h: cardH,
+        angle: (i - 2) * 0.18,
+        hovered: false,
+        phase: Math.random() * Math.PI * 2,
+        color: ['#a855f7','#7c3aed','#9333ea','#6d28d9','#8b5cf6'][i]
+      });
+    }
+    return { cards, tick: 0, w, h };
+  }
+
+  function stepTarot(s) {
+    s.tick++;
+    s.cards.forEach((c, i) => {
+      c.hovered = Math.sin(s.tick * 0.04 + i) > 0.5;
+    });
+  }
+
+  function drawTarot(ctx, s, dpr) {
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    const sc = dpr;
+    // 星星粒子
+    for (let i = 0; i < 8; i++) {
+      const x = (Math.sin(s.tick * 0.03 + i * 0.9) * 0.4 + 0.5) * s.w * sc;
+      const y = (Math.cos(s.tick * 0.02 + i * 1.1) * 0.4 + 0.5) * s.h * sc;
+      const alpha = (Math.sin(s.tick * 0.05 + i) + 1) / 2 * 0.5;
+      ctx.beginPath();
+      ctx.arc(x, y, 1.5 * sc, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(168,85,247,${alpha})`;
+      ctx.fill();
+    }
+    s.cards.forEach(c => {
+      ctx.save();
+      ctx.translate(c.x * sc, c.y * sc);
+      const lift = c.hovered ? -c.h * 0.2 * sc : 0;
+      ctx.translate(0, lift + Math.sin(s.tick * 0.05 + c.phase) * 3 * sc);
+      ctx.rotate(c.angle);
+      // 卡背
+      ctx.fillStyle = c.color;
+      ctx.globalAlpha = 0.7;
+      const cw = c.w * sc, ch = c.h * sc;
+      ctx.fillRect(-cw / 2, -ch / 2, cw, ch);
+      // 卡邊
+      ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+      ctx.lineWidth = 1 * sc;
+      ctx.strokeRect(-cw / 2, -ch / 2, cw, ch);
+      // 星號
+      ctx.globalAlpha = 0.6;
+      ctx.fillStyle = '#fff';
+      ctx.font = `${cw * 0.7}px serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('★', 0, 0);
+      ctx.restore();
+    });
+    ctx.globalAlpha = 1;
+  }
+
+  /* ════ DUNGEON 動畫 ════ */
+  function initDungeon(w, h) {
+    const hero = { x: w * 0.3, y: h * 0.5, frame: 0 };
+    const enemy = { x: w * 0.7, y: h * 0.5, frame: 0 };
+    const sparks = [];
+    return { hero, enemy, sparks, tick: 0, phase: 0, w, h };
+  }
+
+  function stepDungeon(s) {
+    s.tick++;
+    s.phase = Math.floor(s.tick / 40) % 3;
+    // 產生火花
+    if (s.tick % 20 === 0) {
+      for (let i = 0; i < 5; i++) {
+        s.sparks.push({
+          x: s.w / 2, y: s.h / 2,
+          vx: (Math.random() - 0.5) * 4,
+          vy: (Math.random() - 0.5) * 4,
+          life: 30, maxLife: 30
+        });
+      }
+    }
+    s.sparks = s.sparks.filter(sp => {
+      sp.x += sp.vx; sp.y += sp.vy;
+      sp.life--;
+      return sp.life > 0;
+    });
+  }
+
+  function drawDungeon(ctx, s, dpr) {
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    const sc = dpr;
+    const { hero, enemy, sparks, w, h, tick } = s;
+
+    // 地板格子
+    ctx.strokeStyle = 'rgba(239,68,68,0.08)';
+    ctx.lineWidth = 0.5 * sc;
+    const gs = 12 * sc;
+    for (let x = 0; x < w * sc; x += gs) {
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h * sc); ctx.stroke();
+    }
+    for (let y = 0; y < h * sc; y += gs) {
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w * sc, y); ctx.stroke();
+    }
+
+    function drawChar(x, y, color, label, wobble) {
+      const bx = x * sc, by = (y + Math.sin(tick * 0.08 + wobble) * 3) * sc;
+      // 身體
+      ctx.fillStyle = color;
+      ctx.globalAlpha = 0.85;
+      ctx.fillRect(bx - 8 * sc, by - 14 * sc, 16 * sc, 20 * sc);
+      // 頭
+      ctx.fillRect(bx - 7 * sc, by - 26 * sc, 14 * sc, 14 * sc);
+      // 眼睛
+      ctx.fillStyle = '#000';
+      ctx.globalAlpha = 0.6;
+      ctx.fillRect(bx - 4 * sc, by - 23 * sc, 3 * sc, 3 * sc);
+      ctx.fillRect(bx + 2 * sc, by - 23 * sc, 3 * sc, 3 * sc);
+      ctx.globalAlpha = 1;
+    }
+
+    drawChar(hero.x, hero.y, '#3b82f6', 'Hero', 0);
+    drawChar(enemy.x, enemy.y, '#ef4444', 'Enemy', Math.PI);
+
+    // 劍
+    const swing = Math.sin(tick * 0.12) * 0.5;
+    ctx.save();
+    ctx.translate(hero.x * sc, hero.y * sc);
+    ctx.rotate(swing);
+    ctx.fillStyle = '#d1d5db';
+    ctx.fillRect(10 * sc, -20 * sc, 4 * sc, 20 * sc);
+    ctx.restore();
+
+    // 火花
+    sparks.forEach(sp => {
+      const alpha = sp.life / sp.maxLife;
+      ctx.beginPath();
+      ctx.arc(sp.x * sc, sp.y * sc, 2 * sc, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(249,115,22,${alpha})`;
+      ctx.fill();
+    });
+  }
+
+  /* ════ QUIZ 動畫 ════ */
+  function initQuiz(w, h) {
+    const opts = ['A', 'B', 'C', 'D'];
+    const buttons = opts.map((label, i) => ({
+      label,
+      x: (i % 2) * (w / 2) + w / 4,
+      y: i < 2 ? h * 0.38 : h * 0.7,
+      w: w * 0.38, h: h * 0.22,
+      correct: i === 1,
+      lit: false,
+      litTimer: 0
+    }));
+    return { buttons, tick: 0, w, h, cycle: 0 };
+  }
+
+  function stepQuiz(s) {
+    s.tick++;
+    if (s.tick % 60 === 0) {
+      s.buttons.forEach(b => { b.lit = false; });
+      s.buttons[s.cycle % 4].lit = true;
+      s.buttons[s.cycle % 4].litTimer = 45;
+      s.cycle++;
+    }
+    s.buttons.forEach(b => { if (b.litTimer > 0) b.litTimer--; });
+  }
+
+  function drawQuiz(ctx, s, dpr) {
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    const sc = dpr;
+    const { buttons, w, h, tick } = s;
+    // 問號
+    ctx.fillStyle = 'rgba(168,85,247,0.15)';
+    ctx.font = `bold ${h * 0.35 * sc}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('?', w / 2 * sc, h * 0.18 * sc);
+    // 按鈕
+    buttons.forEach((b, i) => {
+      const lit = b.litTimer > 0;
+      const colors = ['#ef4444','#22c55e','#3b82f6','#f5c518'];
+      ctx.fillStyle = lit ? colors[i] : 'rgba(255,255,255,0.06)';
+      ctx.globalAlpha = lit ? 0.85 : 0.5;
+      const bx = (b.x - b.w / 2) * sc, by = (b.y - b.h / 2) * sc;
+      const bw = b.w * sc, bh = b.h * sc;
+      ctx.beginPath();
+      ctx.roundRect(bx, by, bw, bh, 6 * sc);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = lit ? '#fff' : 'rgba(255,255,255,0.4)';
+      ctx.font = `bold ${h * 0.17 * sc}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(b.label, b.x * sc, b.y * sc);
+    });
+    ctx.globalAlpha = 1;
+  }
+
+  /* ════ QUIZ-LIVE 動畫 ════ */
+  function initQuizLive(w, h) {
+    const bars = Array.from({ length: 5 }, (_, i) => ({
+      label: `P${i + 1}`,
+      val: Math.random() * 0.6 + 0.1,
+      target: Math.random() * 0.6 + 0.1,
+      color: ['#f5c518','#3b82f6','#22c55e','#ef4444','#a855f7'][i]
+    }));
+    return { bars, tick: 0, w, h };
+  }
+
+  function stepQuizLive(s) {
+    s.tick++;
+    if (s.tick % 90 === 0) {
+      s.bars.forEach(b => { b.target = Math.random() * 0.7 + 0.1; });
+    }
+    s.bars.forEach(b => { b.val += (b.target - b.val) * 0.05; });
+  }
+
+  function drawQuizLive(ctx, s, dpr) {
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    const sc = dpr;
+    const { bars, w, h } = s;
+    const barW = w / (bars.length * 1.8);
+    const gap = w / bars.length;
+    bars.forEach((b, i) => {
+      const x = (gap * i + gap * 0.3) * sc;
+      const maxH = h * 0.65;
+      const bh = b.val * maxH * sc;
+      const y = (h - b.val * maxH - h * 0.12) * sc;
+      ctx.fillStyle = b.color;
+      ctx.globalAlpha = 0.8;
+      ctx.fillRect(x, y, barW * sc, bh);
+      ctx.globalAlpha = 0.4;
+      ctx.fillStyle = '#fff';
+      ctx.font = `${9 * sc}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.fillText(b.label, x + barW * sc / 2, (h - h * 0.1) * sc);
+    });
+    ctx.globalAlpha = 1;
+  }
+
+  /* ════ TETRIS-BATTLE 動畫 ════ */
+  function initTetrisBattle(w, h) {
+    const CELL = 9;
+    const halfW = w / 2;
+    function makeBoard() {
+      const cols = Math.floor(halfW / CELL) - 1;
+      const rows = Math.floor(h / CELL);
+      const board = Array.from({ length: rows }, () => Array(cols).fill(null));
+      const COLORS = ['#ef4444','#f97316','#f5c518'];
+      for (let r = rows - 1; r >= rows - 4; r--) {
+        for (let c = 0; c < cols; c++) {
+          if (Math.random() > 0.4) board[r][c] = COLORS[Math.floor(Math.random() * COLORS.length)];
+        }
+      }
+      return { board, cols, rows };
+    }
+    const left = makeBoard(), right = makeBoard();
+    const PIECES = [
+      { shape: [[1,1,1,1]], color: '#00cfcf' },
+      { shape: [[1,1],[1,1]], color: '#f5c518' },
+      { shape: [[0,1,0],[1,1,1]], color: '#a855f7' },
+    ];
+    function newPiece(cols) {
+      const p = PIECES[Math.floor(Math.random() * PIECES.length)];
+      return { shape: p.shape, color: p.color, x: Math.floor(cols / 2), y: 0 };
+    }
+    left.piece = newPiece(left.cols);
+    right.piece = newPiece(right.cols);
+    return { CELL, left, right, halfW, tick: 0 };
+  }
+
+  function stepTetrisBattle(s) {
+    s.tick++;
+    if (s.tick % 7 !== 0) return;
+    [s.left, s.right].forEach(side => {
+      const p = side.piece;
+      let hit = false;
+      for (let r = 0; r < p.shape.length; r++) {
+        for (let c = 0; c < p.shape[r].length; c++) {
+          if (!p.shape[r][c]) continue;
+          if (p.y + r + 1 >= side.rows) { hit = true; break; }
+          if (p.y + r + 1 >= 0 && side.board[p.y + r + 1][p.x + c]) { hit = true; break; }
+        }
+        if (hit) break;
+      }
+      if (hit) {
+        p.shape.forEach((row, r) => row.forEach((v, c) => {
+          if (v && p.y + r >= 0 && p.x + c < side.cols) side.board[p.y + r][p.x + c] = p.color;
+        }));
+        for (let r = side.rows - 1; r >= 0; r--) {
+          if (side.board[r].every(Boolean)) {
+            side.board.splice(r, 1);
+            side.board.unshift(Array(side.cols).fill(null));
+          }
+        }
+        side.piece = { shape: p.shape, color: p.color, x: Math.floor(side.cols / 2), y: 0 };
+      } else {
+        p.y++;
+      }
+    });
+  }
+
+  function drawTetrisBattle(ctx, s, dpr) {
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    const sc = dpr;
+    const C = s.CELL * sc;
+
+    function drawSide(side, offsetX) {
+      side.board.forEach((row, r) => row.forEach((color, c) => {
+        if (!color) return;
+        ctx.fillStyle = color;
+        ctx.globalAlpha = 0.7;
+        ctx.fillRect(offsetX + c * C + 0.5, r * C + 0.5, C - 1, C - 1);
+      }));
+      const p = side.piece;
+      p.shape.forEach((row, r) => row.forEach((v, c) => {
+        if (!v) return;
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = 1;
+        ctx.fillRect(offsetX + (p.x + c) * C + 0.5, (p.y + r) * C + 0.5, C - 1, C - 1);
+      }));
+    }
+
+    drawSide(s.left, 0);
+    // VS
+    ctx.globalAlpha = 0.6;
+    ctx.fillStyle = '#ef4444';
+    ctx.font = `bold ${10 * sc}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('VS', s.halfW * sc, ctx.canvas.height / 2);
+    drawSide(s.right, (s.halfW + 4) * sc);
+    ctx.globalAlpha = 1;
+  }
+
+  /* ════ SNAKE-BATTLE 動畫 ════ */
+  function initSnakeBattle(w, h) {
+    const CELL = 10;
+    const cols = Math.floor(w / CELL), rows = Math.floor(h / CELL);
+    function makeSnake(sx, sy, color, dir) {
+      return {
+        body: [{ x: sx, y: sy }, { x: sx - dir.x, y: sy - dir.y }, { x: sx - dir.x * 2, y: sy - dir.y * 2 }],
+        dir, color, turnTimer: 0
+      };
+    }
+    return {
+      CELL, cols, rows,
+      s1: makeSnake(Math.floor(cols * 0.3), Math.floor(rows * 0.5), '#22c55e', { x: 1, y: 0 }),
+      s2: makeSnake(Math.floor(cols * 0.7), Math.floor(rows * 0.5), '#86efac', { x: -1, y: 0 }),
+      food: { x: Math.floor(cols / 2), y: Math.floor(rows / 2) },
+      tick: 0
+    };
+  }
+
+  function stepSnakeBattle(s) {
+    s.tick++;
+    if (s.tick % 8 !== 0) return;
+    [s.s1, s.s2].forEach((snake, si) => {
+      snake.turnTimer++;
+      const target = si === 0 ? s.food : s.s1.body[0];
+      if (snake.turnTimer > 4) {
+        snake.turnTimer = 0;
+        const dx = target.x - snake.body[0].x;
+        const dy = target.y - snake.body[0].y;
+        if (Math.abs(dx) >= Math.abs(dy)) snake.dir = { x: Math.sign(dx), y: 0 };
+        else snake.dir = { x: 0, y: Math.sign(dy) };
+      }
+      const head = snake.body[0];
+      const nx = ((head.x + snake.dir.x) + s.cols) % s.cols;
+      const ny = ((head.y + snake.dir.y) + s.rows) % s.rows;
+      snake.body.unshift({ x: nx, y: ny });
+      if (nx === s.food.x && ny === s.food.y) {
+        s.food = { x: Math.floor(Math.random() * s.cols), y: Math.floor(Math.random() * s.rows) };
+      } else {
+        snake.body.pop();
+      }
+    });
+  }
+
+  function drawSnakeBattle(ctx, s, dpr) {
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    const C = s.CELL * dpr;
+    ctx.fillStyle = '#ff4d6d';
+    ctx.fillRect(s.food.x * C + 1, s.food.y * C + 1, C - 2, C - 2);
+    [s.s1, s.s2].forEach(snake => {
+      snake.body.forEach((seg, i) => {
+        ctx.fillStyle = snake.color;
+        ctx.globalAlpha = 1 - i / (snake.body.length + 3);
+        ctx.fillRect(seg.x * C + 1, seg.y * C + 1, C - 2, C - 2);
+      });
+    });
+    ctx.globalAlpha = 1;
+  }
+
+  /* ════ 動畫分派 ════ */
+  const animMap = {
+    'snake':         { init: initSnake,        step: stepSnake,        draw: drawSnake },
+    'snake-battle':  { init: initSnakeBattle,  step: stepSnakeBattle,  draw: drawSnakeBattle },
+    'tetris':        { init: initTetris,        step: stepTetris,        draw: drawTetris },
+    'tetris-battle': { init: initTetrisBattle, step: stepTetrisBattle, draw: drawTetrisBattle },
+    'breakout':      { init: initBreakout,     step: stepBreakout,     draw: drawBreakout },
+    'tarot':         { init: initTarot,        step: stepTarot,        draw: drawTarot },
+    'dungeon':       { init: initDungeon,      step: stepDungeon,      draw: drawDungeon },
+    'quiz':          { init: initQuiz,         step: stepQuiz,         draw: drawQuiz },
+    'quiz-live':     { init: initQuizLive,     step: stepQuizLive,     draw: drawQuizLive },
+  };
+
+  const anim = animMap[gameType];
+
+  function startAnim() {
+    if (isRunning) return;
+    isRunning = true;
+    initCanvas();
+    const { w, h } = getSize();
+    const dpr = devicePixelRatio;
+    if (anim) state = anim.init(w, h);
+    const ctx = canvas.getContext('2d');
+    function loop() {
+      if (!isRunning) return;
+      if (anim) { anim.step(state); anim.draw(ctx, state, dpr); }
+      animId = requestAnimationFrame(loop);
+    }
+    loop();
+  }
+
+  function stopAnim() {
+    isRunning = false;
+    if (animId) { cancelAnimationFrame(animId); animId = null; }
+    // 清除畫布
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    state = null;
+  }
+
+  card.addEventListener('mouseenter', startAnim);
+  card.addEventListener('mouseleave', stopAnim);
+  card.addEventListener('focusin', startAnim);
+  card.addEventListener('focusout', stopAnim);
+});
+</script>
 </body>
 </html>
