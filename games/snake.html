@@ -265,25 +265,25 @@
 <body>
 
 <div id="topbar">
-  <a href="../index.html">← 返回目錄</a>
-  <h1>🐍 貪吃蛇</h1>
+  <a href="../index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;width:14px;height:14px"><path d="m15 18-6-6 6-6"/></svg> 返回目錄</a>
+  <h1><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;width:28px;height:28px;margin-right:6px"><path d="M6 4c0 0 4 0 4 4s-4 4-4 8 4 4 4 4"/><path d="M14 4c0 0 4 0 4 4s-4 4-4 8 2 4 2 4"/></svg>貪吃蛇</h1>
   <div id="topbar-right"></div>
 </div>
 
 <!-- ══ 模式選擇 ══════════════════════════════════════════ -->
 <div id="mode-screen" class="screen active">
   <div class="mode-title">
-    <h2>🐍 貪吃蛇</h2>
+    <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;width:28px;height:28px;margin-right:6px"><path d="M6 4c0 0 4 0 4 4s-4 4-4 8 4 4 4 4"/><path d="M14 4c0 0 4 0 4 4s-4 4-4 8 2 4 2 4"/></svg>貪吃蛇</h2>
     <p>選擇遊戲模式</p>
   </div>
   <div class="mode-grid">
     <div class="mode-card solo" id="btnModeSolo">
-      <div class="mc-icon">🐍</div>
+      <div class="mc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:40px;height:40px"><path d="M6 4c0 0 4 0 4 4s-4 4-4 8 4 4 4 4"/><path d="M14 4c0 0 4 0 4 4s-4 4-4 8 2 4 2 4"/></svg></div>
       <div class="mc-name">單人模式</div>
       <div class="mc-desc">挑戰自己的最高分，吃食物越多越難！</div>
     </div>
     <div class="mode-card battle" id="btnModeBattle">
-      <div class="mc-icon">⚔️</div>
+      <div class="mc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:40px;height:40px"><path d="m14.5 17.5 3 3a2.83 2.83 0 1 0 4-4l-3-3"/><path d="m13 13-8.5 8.5"/><path d="M22 2 12 12"/><path d="M13 13 3 3l9 9"/></svg></div>
       <div class="mc-name">聯線對戰</div>
       <div class="mc-desc">兩條蛇同場競技，碰到對方就輸！</div>
     </div>
@@ -304,8 +304,8 @@
   <div id="wrap">
     <canvas id="cv" width="420" height="420"></canvas>
     <div id="msg">
-      <h2>🐍 貪吃蛇</h2>
-      <div class="sub">吃食物得分，別碰到牆或自己！<br>🍎 普通食物 +1 分<br>⭐ 黃金食物 +3 分（限時！）<br>💜 紫色食物 +5 分（極稀有！）</div>
+      <h2>貪吃蛇</h2>
+      <div class="sub">吃食物得分，別碰到牆或自己！<br><span style="color:#ef4444">●</span> 普通食物 +1 分<br><span style="color:#f5c518">★</span> 黃金食物 +3 分（限時！）<br><span style="color:#a855f7">◆</span> 紫色食物 +5 分（極稀有！）</div>
       <button class="btn-green" id="btnStart">開始遊戲</button>
     </div>
   </div>
@@ -318,13 +318,13 @@
 
   <div id="controls"><span>↑↓←→ / WASD</span> 移動 &nbsp; <span>P</span> 暫停 &nbsp; <span>Enter</span> 重新開始</div>
 
-  <button class="back-to-mode" id="btnSoloBack">← 返回模式選擇</button>
+  <button class="back-to-mode" id="btnSoloBack"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;width:14px;height:14px"><path d="m15 18-6-6 6-6"/></svg> 返回模式選擇</button>
 </div>
 
 <!-- ══ 對戰大廳 ══════════════════════════════════════════ -->
 <div id="battle-lobby-screen" class="screen">
   <div class="lobby-title">
-    <h2>⚔️ 雙人同場對戰</h2>
+    <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;width:28px;height:28px;margin-right:6px"><path d="m14.5 17.5 3 3a2.83 2.83 0 1 0 4-4l-3-3"/><path d="m13 13-8.5 8.5"/><path d="M22 2 12 12"/><path d="M13 13 3 3l9 9"/></svg>雙人同場對戰</h2>
     <p>兩條蛇在同一棋盤，碰到對方身體就死！</p>
   </div>
   <div class="lobby-box">
@@ -344,15 +344,15 @@
     </div>
   </div>
   <div id="lobbyError"></div>
-  <button class="back-to-mode" id="btnBattleLobbyBack">← 返回模式選擇</button>
+  <button class="back-to-mode" id="btnBattleLobbyBack"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;width:14px;height:14px"><path d="m15 18-6-6 6-6"/></svg> 返回模式選擇</button>
 </div>
 
 <!-- ══ 對戰遊戲 ══════════════════════════════════════════ -->
 <div id="battle-game-screen" class="screen">
   <div id="scorebar">
-    <div class="score-block"><span class="s-label p1">🟢 你</span><span class="s-val p1" id="myScore">0</span></div>
+    <div class="score-block"><span class="s-label p1"><span style="color:#4ade80">●</span> 你</span><span class="s-val p1" id="myScore">0</span></div>
     <div class="vs-mid">VS</div>
-    <div class="score-block"><span class="s-label p2">🔴 對手</span><span class="s-val p2" id="oppScore">0</span></div>
+    <div class="score-block"><span class="s-label p2"><span style="color:#f87171">●</span> 對手</span><span class="s-val p2" id="oppScore">0</span></div>
   </div>
   <div id="room-tag">房間 <span id="battleRoomCode">----</span></div>
   <div id="game-wrap">
@@ -377,7 +377,7 @@
 <!-- 結果覆蓋層 -->
 <div id="result">
   <div class="result-box">
-    <h2 id="resultTitle">🏆 你贏了！</h2>
+    <h2 id="resultTitle">你贏了！</h2>
     <p id="resultSub">精彩對決！</p>
     <div class="result-btns">
       <button class="rbtn primary" id="btnRematch">再來一局</button>
@@ -418,9 +418,9 @@ let particles = [];
 
 const SPEEDS = [190, 160, 130, 105, 82, 64, 50, 40, 32, 25];
 const FOOD_TYPES = {
-  normal: { color: '#ef4444', glow: '#ff6b6b', points: 1, emoji: '🍎' },
-  bonus:  { color: '#f5c518', glow: '#ffd700', points: 3, emoji: '⭐' },
-  rare:   { color: '#a855f7', glow: '#c084fc', points: 5, emoji: '💜' },
+  normal: { color: '#ef4444', glow: '#ff6b6b', points: 1, emoji: '●' },
+  bonus:  { color: '#f5c518', glow: '#ffd700', points: 3, emoji: '★' },
+  rare:   { color: '#a855f7', glow: '#c084fc', points: 5, emoji: '◆' },
 };
 
 function initGame() {
@@ -510,7 +510,7 @@ function triggerDeath() {
     gameOver = true;
     if (score > best) best = score;
     updateHUD();
-    showMsg('💀 遊戲結束', `分數：${score}　最高：${best}`);
+    showMsg('遊戲結束', `分數：${score}　最高：${best}`);
   }, 300);
 }
 
@@ -723,7 +723,7 @@ function handleMsg(msg) {
     case 'opponent_lost': oppAlive = false; endGame(true, '對手撞牆了！'); break;
     case 'opponent_disconnected': showResult(true, '對手已離線'); break;
     case 'room_error':
-      document.getElementById('lobbyError').textContent = '❌ ' + msg.reason;
+      document.getElementById('lobbyError').textContent = '✗ ' + msg.reason;
       break;
   }
 }
@@ -773,7 +773,7 @@ function endGame(iWon, reason = '') {
 
 function showResult(win, sub) {
   gameRunning = false; clearTimeout(stepTimer);
-  document.getElementById('resultTitle').textContent = win ? '🏆 你贏了！' : '💀 你輸了';
+  document.getElementById('resultTitle').textContent = win ? '你贏了！' : '你輸了';
   document.getElementById('resultTitle').className   = win ? 'win' : 'lose';
   document.getElementById('resultSub').textContent   = sub;
   document.getElementById('result').classList.add('show');

@@ -112,8 +112,8 @@
 <body>
 
 <div id="topbar">
-  <a href="../index.html">← 返回目錄</a>
-  <h1>🧱 打磚塊</h1>
+  <a href="../index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;width:14px;height:14px"><path d="m15 18-6-6 6-6"/></svg> 返回目錄</a>
+  <h1><svg viewBox="0 0 24 24" fill="currentColor" style="display:inline-block;vertical-align:middle;width:28px;height:28px;margin-right:6px"><rect x="1" y="2" width="10" height="5" rx="1"/><rect x="13" y="2" width="10" height="5" rx="1"/><rect x="1" y="9" width="6" height="5" rx="1"/><rect x="9" y="9" width="14" height="5" rx="1"/><rect x="1" y="16" width="10" height="5" rx="1"/><rect x="13" y="16" width="10" height="5" rx="1"/></svg>打磚塊</h1>
   <div style="width:100px"></div>
 </div>
 
@@ -143,11 +143,11 @@
 <div id="wrap">
   <canvas id="cv" width="480" height="520"></canvas>
   <div id="msg">
-    <h2>🧱 打磚塊</h2>
+    <h2>打磚塊</h2>
     <div class="sub">
       用球拍反彈小球，打破所有磚塊！<br>
-      🔵 道具磚：拾取可獲得特殊能力<br>
-      🟡 寬球拍 &nbsp; 🟣 多重球 &nbsp; 🔴 火球穿透<br>
+      [道具磚]：拾取可獲得特殊能力<br>
+      [寬拍] 寬球拍 &nbsp; [多球] 多重球 &nbsp; [火球] 火球穿透<br>
       球拍擊中位置影響反彈角度
     </div>
     <button class="btn-orange" id="btnStart">開始遊戲</button>
@@ -373,9 +373,9 @@ function applyPower(type) {
 
 function updatePowerBar() {
   const tags = [];
-  if (powers.wide>0)  tags.push('<span class="power-tag pw-wide">🟡 寬球拍</span>');
-  if (powers.multi)   tags.push('<span class="power-tag pw-multi">🟣 多重球</span>');
-  if (powers.fire)    tags.push('<span class="power-tag pw-fire">🔴 火球</span>');
+  if (powers.wide>0)  tags.push('<span class="power-tag pw-wide">[寬拍] 寬球拍</span>');
+  if (powers.multi)   tags.push('<span class="power-tag pw-multi">[多球] 多重球</span>');
+  if (powers.fire)    tags.push('<span class="power-tag pw-fire">[火球] 火球</span>');
   document.getElementById('powerStatus').innerHTML = tags.length ? tags.join(' ') : '無';
 }
 
@@ -439,11 +439,11 @@ function draw() {
   // 道具掉落
   for (const d of drops) {
     const colors={wide:'#3b82f6',multi:'#a855f7',fire:'#ef4444'};
-    const emojis={wide:'🟡',multi:'🟣',fire:'🔴'};
+    const letters={wide:'W',multi:'M',fire:'F'};
     ctx.fillStyle=colors[d.type]+'99';
     ctx.beginPath(); ctx.arc(d.x,d.y,9,0,Math.PI*2); ctx.fill();
-    ctx.font='12px serif'; ctx.textAlign='center';
-    ctx.fillText(emojis[d.type],d.x,d.y+5);
+    ctx.fillStyle='#fff'; ctx.font='bold 11px Segoe UI'; ctx.textAlign='center';
+    ctx.fillText(letters[d.type],d.x,d.y+4);
   }
 
   // 粒子

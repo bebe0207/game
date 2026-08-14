@@ -329,7 +329,7 @@
     .lb-rank { width: 28px; text-align: center; font-size: 16px; }
     .lb-name { flex: 1; font-weight: 600; }
     .lb-score { font-weight: 800; color: var(--accent); }
-    .lb-row.me .lb-name::after { content: ' 👈'; font-size: 12px; }
+    .lb-row.me .lb-name::after { content: ' ◀'; font-size: 12px; }
     .lb-row.me .lb-score { color: #f5c518; }
     .my-rank-big { font-size: 48px; font-weight: 900; text-align: center; }
     .my-score-big { font-size: 28px; font-weight: 700; color: var(--accent); text-align: center; }
@@ -339,25 +339,25 @@
 <body>
 
 <div id="topbar">
-  <a href="../index.html">← 返回目錄</a>
-  <h1>🎯 爆爆<em>問答</em></h1>
+  <a href="../index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;width:14px;height:14px"><path d="m15 18-6-6 6-6"/></svg> 返回目錄</a>
+  <h1><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;width:28px;height:28px;margin-right:6px"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>爆爆<em>問答</em></h1>
   <div id="topbar-right"></div>
 </div>
 
 <!-- ══ 模式選擇 ══════════════════════════════════════════ -->
 <div id="mode-screen" class="screen active">
   <div class="mode-title">
-    <h2>🎯 爆爆問答</h2>
+    <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;width:28px;height:28px;margin-right:6px"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>爆爆問答</h2>
     <p>選擇遊戲模式</p>
   </div>
   <div class="mode-grid">
     <div class="mode-card solo" id="btnModeSolo">
-      <div class="mc-icon">🧠</div>
+      <div class="mc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:40px;height:40px"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.46 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.84A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.46 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.84A2.5 2.5 0 0 0 14.5 2Z"/></svg></div>
       <div class="mc-name">單人模式</div>
       <div class="mc-desc">選題庫、設定題數，挑戰自己！</div>
     </div>
     <div class="mode-card online" id="btnModeOnline">
-      <div class="mc-icon">📡</div>
+      <div class="mc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:40px;height:40px"><path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"/><path d="M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.4"/><circle cx="12" cy="12" r="2"/><path d="M16.2 7.8c2.3 2.3 2.3 6.1 0 8.4"/><path d="M19.1 4.9C23 8.8 23 15.2 19.1 19.1"/></svg></div>
       <div class="mc-name">聯線對戰</div>
       <div class="mc-desc">主持人出題，多人即時搶答！</div>
     </div>
@@ -391,14 +391,14 @@
         </select>
       </div>
     </div>
-    <button class="big-btn" id="btnStartGame" disabled style="margin-top:12px">🚀 開始遊戲</button>
+    <button class="big-btn" id="btnStartGame" disabled style="margin-top:12px">開始遊戲</button>
   </div>
   <button class="back-to-mode" id="btnSoloBack">← 返回模式選擇</button>
 </div>
 
 <div id="editor-screen" class="screen">
   <div class="editor-header">
-    <h3>✏️ 自訂題庫</h3>
+    <h3>自訂題庫</h3>
     <button class="sec-btn outline" id="btnEditorBack" style="padding:8px 16px;font-size:13px">← 返回</button>
   </div>
   <div id="questionList"></div>
@@ -435,15 +435,15 @@
 
 <div id="result-screen" class="screen">
   <div class="result-header">
-    <h2 id="resultEmoji">🏆 完美！</h2>
+    <h2 id="resultEmoji">完美！</h2>
     <p id="resultSub">答題結果</p>
   </div>
   <div class="score-big" id="finalScore">0</div>
   <div class="score-label" id="finalLabel">0 / 0 題正確</div>
   <div class="review-list" id="reviewList"></div>
   <div class="result-btns">
-    <button class="r-btn purple" id="btnPlayAgain">🔁 再玩一次</button>
-    <button class="r-btn ghost"  id="btnChangeSet">📚 換題庫</button>
+    <button class="r-btn purple" id="btnPlayAgain"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;width:16px;height:16px;margin-right:6px"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>再玩一次</button>
+    <button class="r-btn ghost"  id="btnChangeSet">換題庫</button>
   </div>
 </div>
 
@@ -459,12 +459,12 @@
   </div>
   <div class="role-grid">
     <div class="role-card host" id="btnRoleHost">
-      <div class="ri">🎙️</div>
+      <div class="ri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:40px;height:40px;display:block;margin:0 auto"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg></div>
       <div class="rn">我是主持人</div>
       <div class="rd">選題庫、建立自訂題目、開房間控制遊戲</div>
     </div>
     <div class="role-card player" id="btnRolePlayer">
-      <div class="ri">🎮</div>
+      <div class="ri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:40px;height:40px;display:block;margin:0 auto"><line x1="6" y1="12" x2="10" y2="12"/><line x1="8" y1="10" x2="8" y2="14"/><circle cx="15" cy="11" r="1"/><circle cx="17" cy="13" r="1"/><rect x="2" y="6" width="20" height="12" rx="4"/></svg></div>
       <div class="rn">我是玩家</div>
       <div class="rd">輸入房間碼和暱稱即可加入搶答</div>
     </div>
@@ -493,7 +493,7 @@
     </div>
   </div>
   <div class="err" id="setupErr"></div>
-  <button class="big-btn" id="btnCreate" disabled>🚀 建立房間</button>
+  <button class="big-btn" id="btnCreate" disabled>建立房間</button>
   <button class="sec-btn outline" id="btnSetupBack" style="max-width:760px">← 返回選擇角色</button>
 </div>
 
@@ -548,7 +548,7 @@
 
 <!-- 主持人遊戲結束 -->
 <div id="host-ended" class="screen">
-  <div class="trophy">🏆</div>
+  <div class="trophy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:80px;height:80px;display:block;margin:0 auto"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg></div>
   <div class="winner-name" id="winnerName">冠軍</div>
   <table class="lb-table" id="finalLbTable">
     <thead><tr><th class="rank-icon">#</th><th>玩家</th><th style="text-align:right">總分</th></tr></thead>
@@ -603,7 +603,7 @@
   <div class="pts-big" id="ptsBig">+500</div>
   <div class="pts-sub" id="ptsSub"></div>
   <div class="lb-box">
-    <div class="lb-title">📊 即時排行</div>
+    <div class="lb-title">即時排行</div>
     <div id="lbRows"></div>
   </div>
   <div class="wait-text">等待主持人進入下一題...</div>
@@ -611,11 +611,11 @@
 
 <!-- 玩家結束 -->
 <div id="player-ended" class="screen">
-  <div class="trophy">🏆</div>
+  <div class="trophy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:80px;height:80px;display:block;margin:0 auto"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg></div>
   <div class="my-rank-big" id="myRankBig"></div>
   <div class="my-score-big" id="myScoreBig"></div>
   <div class="lb-box">
-    <div class="lb-title">🏁 最終排行榜</div>
+    <div class="lb-title">最終排行榜</div>
     <div id="finalLbRows"></div>
   </div>
   <button class="big-btn" style="max-width:560px" id="btnPlayerRestart">↺ 再玩一次</button>
@@ -776,11 +776,11 @@ function handleAnswer(chosen) {
   const fb = document.getElementById('feedback-bar');
   fb.style.display = 'block';
   if (!chosen) {
-    fb.className = 'timeout'; fb.textContent = `⏰ 時間到！正確答案是 ${correct} — ${q.opts['ABCD'.indexOf(correct)]}`;
+    fb.className = 'timeout'; fb.textContent = `時間到！正確答案是 ${correct} — ${q.opts['ABCD'.indexOf(correct)]}`;
   } else if (isRight) {
-    fb.className = 'correct'; fb.textContent = `✅ 正確！+${pts} 分`;
+    fb.className = 'correct'; fb.textContent = `✓ 正確！+${pts} 分`;
   } else {
-    fb.className = 'wrong'; fb.textContent = `❌ 答錯！正確答案是 ${correct} — ${q.opts['ABCD'.indexOf(correct)]}`;
+    fb.className = 'wrong'; fb.textContent = `✗ 答錯！正確答案是 ${correct} — ${q.opts['ABCD'.indexOf(correct)]}`;
   }
   setTimeout(() => { currentQIndex++; if (currentQIndex < gameQuestions.length) loadQuestion(); else showResults(); }, 1800);
 }
@@ -809,10 +809,10 @@ function showResults() {
   document.getElementById('finalScore').textContent = playerScore.toLocaleString();
   document.getElementById('finalLabel').textContent = `${correct} / ${gameQuestions.length} 題正確`;
   const [emoji, sub] =
-    pct >= .9 ? ['🏆 完美！','你是答題王！'] :
-    pct >= .7 ? ['🎉 優秀！','大部分都答對了！'] :
-    pct >= .5 ? ['😊 不錯！','繼續加油！'] :
-               ['💪 加油！','多練習就會進步！'];
+    pct >= .9 ? ['完美！','你是答題王！'] :
+    pct >= .7 ? ['優秀！','大部分都答對了！'] :
+    pct >= .5 ? ['不錯！','繼續加油！'] :
+               ['加油！','多練習就會進步！'];
   document.getElementById('resultEmoji').textContent = emoji;
   document.getElementById('resultSub').textContent   = sub;
   const list = document.getElementById('reviewList'); list.innerHTML = '';
@@ -821,14 +821,14 @@ function showResults() {
     const labels = ['A','B','C','D'];
     const item = document.createElement('div');
     item.className = 'review-item';
-    item.innerHTML = `<div class="r-q">${i+1}. ${r.q}</div><div class="r-row"><span class="r-badge ${status}">${{correct:'✅ 答對',wrong:'❌ 答錯',skip:'⏰ 超時'}[status]}</span><span style="color:var(--muted)">正確：${r.correct} — ${r.opts[labels.indexOf(r.correct)]}</span>${r.pts>0?`<span style="color:#a855f7;font-weight:700">+${r.pts}</span>`:''}</div>`;
+    item.innerHTML = `<div class="r-q">${i+1}. ${r.q}</div><div class="r-row"><span class="r-badge ${status}">${{correct:'✓ 答對',wrong:'✗ 答錯',skip:'超時'}[status]}</span><span style="color:var(--muted)">正確：${r.correct} — ${r.opts[labels.indexOf(r.correct)]}</span>${r.pts>0?`<span style="color:#a855f7;font-weight:700">+${r.pts}</span>`:''}</div>`;
     list.appendChild(item);
   });
   if (pct >= .7) spawnConfetti();
 }
 
 function spawnConfetti() {
-  const s = ['🎉','⭐','✨','🎊','🏆','💫'];
+  const s = ['★','◆','✦','◇','▲','●'];
   for (let i = 0; i < 20; i++) {
     setTimeout(() => {
       const el = document.createElement('div');
@@ -960,7 +960,7 @@ function handleHostMsg(msg) {
     case 'quiz_answer_count': document.getElementById('ansCount').textContent = msg.count; break;
     case 'quiz_reveal': hShowRevealScreen(msg); break;
     case 'quiz_ended': hShowEndedScreen(msg); break;
-    case 'quiz_error': document.getElementById('setupErr').textContent = '❌ ' + msg.reason; break;
+    case 'quiz_error': document.getElementById('setupErr').textContent = '✗ ' + msg.reason; break;
   }
 }
 
@@ -997,10 +997,10 @@ function hShowQuestionScreen(msg) {
 
 function hShowRevealScreen(msg) {
   clearInterval(hTimerInterval); hShowScreen('host-reveal');
-  document.getElementById('hRevealCorrect').textContent = `✅ 正確答案：${msg.correctAns} — ${msg.correctText}`;
+  document.getElementById('hRevealCorrect').textContent = `✓ 正確答案：${msg.correctAns} — ${msg.correctText}`;
   renderLbTable(document.getElementById('hLbBody'), msg.leaderboard);
   const btn = document.getElementById('btnNext');
-  btn.textContent = msg.isLast ? '查看最終結果 🏆' : '下一題 →';
+  btn.textContent = msg.isLast ? '查看最終結果' : '下一題 →';
 }
 document.getElementById('btnNext').addEventListener('click', () => hWsSend({ type:'quiz_next' }));
 
@@ -1012,7 +1012,7 @@ function hShowEndedScreen(msg) {
 
 function renderLbTable(tbody, lb) {
   tbody.innerHTML = '';
-  const icons = ['🥇','🥈','🥉'];
+  const icons = ['#1','#2','#3'];
   lb.forEach((p, i) => {
     const tr = document.createElement('tr');
     tr.className = i===0?'top1':i===1?'top2':i===2?'top3':'';
@@ -1056,14 +1056,14 @@ function handlePlayerMsg(msg) {
       document.querySelectorAll('#opts-grid .opt-btn').forEach(b => b.disabled = true);
       const fb = document.getElementById('p-feedback');
       fb.style.display = 'block';
-      if (msg.correct) { fb.className = 'correct'; fb.textContent = `✅ 正確！+${msg.pts} 分`; spawnScorePop('+' + msg.pts); }
-      else { fb.className = 'wrong'; fb.textContent = '❌ 答錯了！'; }
+      if (msg.correct) { fb.className = 'correct'; fb.textContent = `✓ 正確！+${msg.pts} 分`; spawnScorePop('+' + msg.pts); }
+      else { fb.className = 'wrong'; fb.textContent = '✗ 答錯了！'; }
       break;
     }
     case 'quiz_reveal': clearInterval(pTimerInterval); pShowRevealScreen(msg); break;
     case 'quiz_ended': pShowEndedScreen(msg); break;
     case 'quiz_host_left': alert('主持人已離開，遊戲結束'); location.reload(); break;
-    case 'quiz_error': document.getElementById('joinErr').textContent = '❌ ' + msg.reason; break;
+    case 'quiz_error': document.getElementById('joinErr').textContent = '✗ ' + msg.reason; break;
   }
 }
 
@@ -1106,7 +1106,7 @@ function pStartTimer(sec) {
       if (!pAnswered) {
         pAnswered = true;
         const fb = document.getElementById('p-feedback');
-        fb.style.display = 'block'; fb.className = 'timeout'; fb.textContent = '⏰ 時間到！';
+        fb.style.display = 'block'; fb.className = 'timeout'; fb.textContent = '時間到！';
       }
     }
   }, 1000);
@@ -1147,7 +1147,7 @@ function pShowRevealScreen(msg) {
       ptsBig.textContent = `+${msg.myPts}`; ptsBig.className = 'pts-big correct';
       ptsSub.textContent = `累計 ${msg.myScore} 分`; spawnScorePop('+' + msg.myPts);
     } else {
-      ptsBig.textContent = '❌'; ptsBig.className = 'pts-big wrong';
+      ptsBig.textContent = '✗'; ptsBig.className = 'pts-big wrong';
       ptsSub.textContent = `正確答案：${msg.correctAns} — ${msg.correctText}`;
     }
     renderLbRows(document.getElementById('lbRows'), msg.leaderboard, myName);
@@ -1157,7 +1157,7 @@ function pShowRevealScreen(msg) {
 function pShowEndedScreen(msg) {
   showScreen('player-ended');
   const rank = msg.leaderboard.findIndex(p => p.name === myName) + 1;
-  const rankIcons = ['🥇','🥈','🥉'];
+  const rankIcons = ['#1','#2','#3'];
   document.getElementById('myRankBig').textContent = rankIcons[rank-1] || `第 ${rank} 名`;
   const myEntry = msg.leaderboard.find(p => p.name === myName);
   document.getElementById('myScoreBig').textContent = `${myEntry?.score?.toLocaleString()||0} 分`;
@@ -1166,7 +1166,7 @@ function pShowEndedScreen(msg) {
 
 function renderLbRows(container, lb, me) {
   container.innerHTML = '';
-  const icons = ['🥇','🥈','🥉'];
+  const icons = ['#1','#2','#3'];
   lb.forEach((p, i) => {
     const row = document.createElement('div');
     row.className = 'lb-row' + (p.name === me ? ' me' : '');

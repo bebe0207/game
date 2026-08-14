@@ -253,25 +253,25 @@
 <body>
 
 <div id="topbar">
-  <a href="../index.html">← 返回目錄</a>
-  <h1>🟩 俄羅斯方塊</h1>
+  <a href="../index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;width:14px;height:14px"><path d="m15 18-6-6 6-6"/></svg> 返回目錄</a>
+  <h1><svg viewBox="0 0 24 24" fill="currentColor" style="display:inline-block;vertical-align:middle;width:28px;height:28px;margin-right:6px"><rect x="2" y="2" width="9" height="9" rx="1"/><rect x="13" y="2" width="9" height="9" rx="1"/><rect x="2" y="13" width="9" height="9" rx="1"/><rect x="13" y="13" width="9" height="9" rx="1"/></svg>俄羅斯方塊</h1>
   <div id="topbar-right"></div>
 </div>
 
 <!-- ══ 模式選擇 ══════════════════════════════════════════ -->
 <div id="mode-screen" class="screen active">
   <div class="mode-title">
-    <h2>🟩 俄羅斯方塊</h2>
+    <h2><svg viewBox="0 0 24 24" fill="currentColor" style="display:inline-block;vertical-align:middle;width:28px;height:28px;margin-right:6px"><rect x="2" y="2" width="9" height="9" rx="1"/><rect x="13" y="2" width="9" height="9" rx="1"/><rect x="2" y="13" width="9" height="9" rx="1"/><rect x="13" y="13" width="9" height="9" rx="1"/></svg>俄羅斯方塊</h2>
     <p>選擇遊戲模式</p>
   </div>
   <div class="mode-grid">
     <div class="mode-card solo" id="btnModeSolo">
-      <div class="mc-icon">🟩</div>
+      <div class="mc-icon"><svg viewBox="0 0 24 24" fill="currentColor" style="width:40px;height:40px"><rect x="2" y="2" width="9" height="9" rx="1"/><rect x="13" y="2" width="9" height="9" rx="1"/><rect x="2" y="13" width="9" height="9" rx="1"/><rect x="13" y="13" width="9" height="9" rx="1"/></svg></div>
       <div class="mc-name">單人模式</div>
       <div class="mc-desc">經典俄羅斯方塊，挑戰最高分！</div>
     </div>
     <div class="mode-card battle" id="btnModeBattle">
-      <div class="mc-icon">⚔️</div>
+      <div class="mc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:40px;height:40px"><path d="m14.5 17.5 3 3a2.83 2.83 0 1 0 4-4l-3-3"/><path d="m13 13-8.5 8.5"/><path d="M22 2 12 12"/><path d="M13 13 3 3l9 9"/></svg></div>
       <div class="mc-name">聯線對戰</div>
       <div class="mc-desc">消行攻擊對手，先撐不住的輸！</div>
     </div>
@@ -306,13 +306,13 @@
       </div>
     </div>
   </div>
-  <button class="back-to-mode" id="btnSoloBack">← 返回模式選擇</button>
+  <button class="back-to-mode" id="btnSoloBack"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;width:14px;height:14px"><path d="m15 18-6-6 6-6"/></svg> 返回模式選擇</button>
 </div>
 
 <!-- ══ 對戰大廳 ══════════════════════════════════════════ -->
 <div id="battle-lobby-screen" class="screen">
   <div class="lobby-title">
-    <h2>⚔️ 聯線對戰</h2>
+    <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;width:28px;height:28px;margin-right:6px"><path d="m14.5 17.5 3 3a2.83 2.83 0 1 0 4-4l-3-3"/><path d="m13 13-8.5 8.5"/><path d="M22 2 12 12"/><path d="M13 13 3 3l9 9"/></svg>聯線對戰</h2>
     <p>建立房間並把房間碼傳給對手，或輸入對方的房間碼加入</p>
   </div>
   <div class="lobby-box">
@@ -332,7 +332,7 @@
     </div>
   </div>
   <div id="lobbyError"></div>
-  <button class="back-to-mode" id="btnBattleLobbyBack">← 返回模式選擇</button>
+  <button class="back-to-mode" id="btnBattleLobbyBack"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;width:14px;height:14px"><path d="m15 18-6-6 6-6"/></svg> 返回模式選擇</button>
 </div>
 
 <!-- ══ 對戰遊戲 ══════════════════════════════════════════ -->
@@ -387,7 +387,7 @@
 <!-- 遊戲結果 -->
 <div id="result-overlay">
   <div class="result-box">
-    <h2 id="resultTitle">🏆 你贏了！</h2>
+    <h2 id="resultTitle">你贏了！</h2>
     <p id="resultSub">精彩對決！</p>
     <div class="result-btns">
       <button class="result-btn primary" id="btnRematch">再來一局</button>
@@ -640,7 +640,7 @@ function endBattle(iWon) {
 function showResult(win, sub) {
   bGameOver = true; cancelAnimationFrame(bAnimId);
   const o = document.getElementById('result-overlay');
-  document.getElementById('resultTitle').textContent = win ? '🏆 你贏了！' : '💀 你輸了';
+  document.getElementById('resultTitle').textContent = win ? '你贏了！' : '你輸了';
   document.getElementById('resultTitle').className   = win ? 'win' : 'lose';
   document.getElementById('resultSub').textContent   = sub;
   o.classList.add('show');
